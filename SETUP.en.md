@@ -9,6 +9,7 @@
 ### Arch Linux
 
 ```bash
+sudo pacman -Syu
 git clone https://github.com/tmy7533018/mugen-shell.git
 cd mugen-shell
 ./install.sh
