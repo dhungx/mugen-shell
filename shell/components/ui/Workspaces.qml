@@ -43,26 +43,25 @@ Item {
 
     Process {
         id: workspacesProc
-        command: ["bash", "-c", "hyprctl workspaces | awk '/^workspace ID/ {id=$3} /windows:/ {if ($2 > 0) print id}'"]
+        command: ["hyprctl", "workspaces", "-j"]
         running: false
 
-        property var ids: []
-
-        stdout: SplitParser {
-            onRead: data => {
-                let trimmed = data.trim();
-                if (trimmed.length > 0) {
-                    let id = parseInt(trimmed);
-                    if (!isNaN(id) && workspacesProc.ids.indexOf(id) === -1) {
-                        workspacesProc.ids.push(id);
-                    }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let list;
+                try {
+                    list = JSON.parse(this.text);
+                } catch (e) {
+                    return;
                 }
+                if (!Array.isArray(list)) return;
+                const ids = [];
+                for (const w of list) {
+                    if (typeof w.id === "number" && w.id >= 1 && w.windows > 0 && ids.indexOf(w.id) === -1)
+                        ids.push(w.id);
+                }
+                workspacesRoot.existingWorkspaces = ids.sort((x, y) => x - y);
             }
-        }
-
-        onExited: () => {
-            workspacesRoot.existingWorkspaces = workspacesProc.ids;
-            workspacesProc.ids = [];
         }
     }
 
