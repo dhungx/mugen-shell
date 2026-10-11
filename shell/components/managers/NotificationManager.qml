@@ -16,6 +16,8 @@ QtObject {
     readonly property string soundsDir: Theme.Paths.soundsDir
     readonly property string stateFile: Theme.Paths.stateDir + "/notifications.json"
 
+    property real readAt: 0
+
     property int keySeq: 0
     property var pendingRefresh: ({})
     property bool stateRead: false
@@ -89,15 +91,19 @@ QtObject {
         pendingRefresh = ({})
         let next = null
         const updated = []
+        const now = Date.now()
+        let reopened = 0
         for (let i = 0; i < notifications.length; i++) {
             const entry = notifications[i]
             if (!keys[entry.key] || !entry.source) continue
             if (!next) next = notifications.slice(0)
-            next[i] = Object.assign({}, entry, fieldsFrom(entry.source))
+            if (entry.timestamp <= readAt) reopened++
+            next[i] = Object.assign({}, entry, fieldsFrom(entry.source), { timestamp: now, time: "just now" })
             updated.push(next[i])
         }
         if (!next) return
         notifications = next
+        unreadCount = Math.min(unreadCount + reopened, notifications.length)
         for (const entry of updated) root.notificationUpdated(entry)
         saveDebounce.restart()
     }
@@ -234,6 +240,7 @@ QtObject {
     
     function markAllAsRead() {
         unreadCount = 0
+        readAt = Date.now()
     }
     
     function save() {

@@ -52,33 +52,39 @@ Item {
             && root.settingsManager.notificationSuppressOnFullscreen
     }
 
+    function show(notification) {
+        if (suppressed()) {
+            return
+        }
+
+        currentNotification = notification
+
+        if (modeManager.isMode("normal")) {
+            modeManager.switchMode("notification-popup")
+            restartAutoClose()
+        } else if (modeManager.isMode("notification-popup")) {
+            // Otherwise a burst's later arrivals inherit the first one's deadline.
+            restartAutoClose()
+        }
+    }
+
     Connections {
         target: notificationManager
         function onNotificationReceived(notification) {
-            if (root.suppressed()) {
-                return
-            }
-
-            root.currentNotification = notification
-
-            if (modeManager.isMode("normal")) {
-                modeManager.switchMode("notification-popup")
-                root.restartAutoClose()
-            } else if (root.modeManager.isMode("notification-popup")) {
-                // Otherwise a burst's later arrivals inherit the first one's deadline.
-                root.restartAutoClose()
-            }
+            root.show(notification)
         }
 
         function onNotificationUpdated(entry) {
             if (root.suppressed()) {
                 return
             }
-            if (!root.currentNotification || root.currentNotification.key !== entry.key) {
+            if (root.currentNotification && root.currentNotification.key === entry.key
+                    && root.modeManager.isMode("notification-popup")) {
+                root.currentNotification = entry
+                root.restartAutoClose()
                 return
             }
-
-            root.currentNotification = entry
+            root.show(entry)
         }
     }
 
