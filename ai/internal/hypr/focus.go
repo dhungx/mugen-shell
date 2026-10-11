@@ -50,9 +50,8 @@ func clients(ctx context.Context) []client {
 	return parsed
 }
 
-// FocusOrLaunch raises the window matching desktopEntry, or starts it when none
-// is open. Reports whether a matching window was focused.
-func FocusOrLaunch(ctx context.Context, desktopEntry string) (bool, error) {
+// Focus raises the window matching desktopEntry. Reports whether one matched; (false, nil) means none is open.
+func Focus(ctx context.Context, desktopEntry string) (bool, error) {
 	term := strings.ToLower(strings.TrimSuffix(strings.ToLower(desktopEntry), ".desktop"))
 
 	for _, c := range clients(ctx) {
@@ -67,6 +66,15 @@ func FocusOrLaunch(ctx context.Context, desktopEntry string) (bool, error) {
 		}
 	}
 
+	return false, nil
+}
+
+// FocusOrLaunch raises the window matching desktopEntry, or starts it when none
+// is open. Reports whether a matching window was focused.
+func FocusOrLaunch(ctx context.Context, desktopEntry string) (bool, error) {
+	if matched, err := Focus(ctx, desktopEntry); matched {
+		return true, err
+	}
 	return false, launch(desktopEntry)
 }
 

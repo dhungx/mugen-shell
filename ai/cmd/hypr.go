@@ -29,7 +29,11 @@ var hyprFocusCmd = &cobra.Command{
 	Short: "Raise the window for a desktop entry, or launch it when none is open",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		matched, err := hypr.FocusOrLaunch(cmd.Context(), args[0])
+		focus := hypr.FocusOrLaunch
+		if noLaunch, _ := cmd.Flags().GetBool("no-launch"); noLaunch {
+			focus = hypr.Focus
+		}
+		matched, err := focus(cmd.Context(), args[0])
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "hypr focus-or-launch:", err)
 			if matched {
@@ -42,6 +46,7 @@ var hyprFocusCmd = &cobra.Command{
 }
 
 func init() {
+	hyprFocusCmd.Flags().Bool("no-launch", false, "only raise a matching window, never start the app")
 	hyprCmd.AddCommand(hyprMonitorCmd)
 	hyprCmd.AddCommand(hyprFocusCmd)
 	rootCmd.AddCommand(hyprCmd)
