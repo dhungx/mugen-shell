@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Toggle the floating calendar; a separate quickshell process keeps the bar responsive.
+# Toggle the floating calendar (--open never closes it); a separate quickshell process keeps the bar responsive.
 
 set -uo pipefail
 
@@ -7,7 +7,7 @@ set -uo pipefail
 SHELL_PATH="$(dirname "$0")/../calendar-shell.qml"
 
 if pgrep -f "calendar-shell\.qml" >/dev/null 2>&1; then
-    pkill -f "calendar-shell\.qml"
+    [[ "${1:-}" == "--open" ]] || pkill -f "calendar-shell\.qml"
     exit 0
 fi
 
