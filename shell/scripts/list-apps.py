@@ -486,8 +486,7 @@ def collect_apps() -> list[dict]:
         if not name or not exec_cmd:
             continue
 
-        exec_base = exec_cmd.split()[0] if exec_cmd else ""
-        key = (name.lower(), exec_base.lower())
+        key = (name.lower(), exec_cmd)
         if key in seen:
             continue
         seen.add(key)
