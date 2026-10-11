@@ -93,6 +93,7 @@ func TestToolsListMarksTheToolsChatHoldsForApproval(t *testing.T) {
 	resp := handle(t, h, `{"jsonrpc":"2.0","id":2,"method":"tools/list"}`)
 
 	marked := map[string]bool{}
+	plain := map[string]bool{}
 	listed := map[string]bool{}
 	for _, item := range resp["result"].(map[string]any)["tools"].([]any) {
 		tool := item.(map[string]any)
@@ -102,17 +103,26 @@ func TestToolsListMarksTheToolsChatHoldsForApproval(t *testing.T) {
 		if annotations["readOnlyHint"] == nil {
 			t.Errorf("%s: readOnlyHint dropped: %v", name, annotations)
 		}
-		if hint, present := annotations["destructiveHint"]; present {
-			if hint != true {
-				t.Errorf("%s: destructiveHint = %v, want it present only as true", name, hint)
-			}
+		hint, present := annotations["destructiveHint"]
+		if annotations["readOnlyHint"] == true && present {
+			t.Errorf("%s: read-only tool carries destructiveHint %v", name, hint)
+		}
+		if present && hint == true {
 			marked[name] = true
+		}
+		if present && hint == false {
+			plain[name] = true
 		}
 	}
 
-	for _, name := range []string{"calendar_add", "calendar_list_today", "notification_unread", "memory_save", "memory_list"} {
-		if !listed[name] || marked[name] {
-			t.Errorf("%s: listed = %v, marked = %v, want listed and unmarked", name, listed[name], marked[name])
+	for _, name := range []string{"calendar_list_today", "notification_unread", "memory_list"} {
+		if !listed[name] || marked[name] || plain[name] {
+			t.Errorf("%s: listed = %v, want listed with no destructiveHint", name, listed[name])
+		}
+	}
+	for _, name := range []string{"calendar_add", "memory_save"} {
+		if !plain[name] {
+			t.Errorf("%s: want destructiveHint false", name)
 		}
 	}
 	want := map[string]bool{"calendar_delete": true, "notification_clear_all": true, "memory_delete": true}

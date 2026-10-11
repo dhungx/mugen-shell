@@ -144,8 +144,8 @@ func (h *Handler) listTools() map[string]any {
 	list := make([]map[string]any, 0, len(exposed))
 	for _, t := range exposed {
 		annotations := map[string]any{"readOnlyHint": t.IsReadOnly()}
-		if t.NeedsConfirm() {
-			annotations["destructiveHint"] = true
+		if !t.IsReadOnly() {
+			annotations["destructiveHint"] = t.NeedsConfirm()
 		}
 		list = append(list, map[string]any{
 			"name":        t.Name,
