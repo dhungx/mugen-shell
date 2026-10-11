@@ -10,7 +10,7 @@ Item {
     property real frameHeight: height
     property int blurRadius: 64
     property int blurTexels: 96
-    property int fadeDuration: 600
+    property int fadeDuration: Theme.Motion.slow
 
     property bool _aIsFront: true
 

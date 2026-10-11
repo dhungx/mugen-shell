@@ -1,5 +1,6 @@
 import QtQuick
 import "../ui" as UI
+import "../../lib" as Theme
 
 Item {
     id: root
@@ -18,7 +19,7 @@ Item {
     property int iconSize: scaled(24)
     property real normalOpacity: 0.6
     property real hoverOpacity: 1.0
-    property int opacityDuration: 400
+    property int opacityDuration: Theme.Motion.gentle
 
     property string fontFamily: "M PLUS 2"
     property int fontSize: scaled(14)

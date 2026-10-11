@@ -45,7 +45,7 @@ Item {
             target: root
             property: "pulseScale"
             to: 1.12
-            duration: 130
+            duration: Theme.Motion.dur(130)
             easing.type: Easing.OutCubic
         }
         PropertyAnimation {

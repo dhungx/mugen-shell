@@ -360,7 +360,7 @@ Item {
                     property: "layerScale"
                     from: blobLayer.layerScale
                     to: 1.0
-                    duration: 450
+                    duration: Theme.Motion.dur(450)
                     easing.type: Easing.OutElastic
                     easing.amplitude: 1.15
                     easing.period: 0.4
