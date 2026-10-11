@@ -39,6 +39,8 @@ ShellRoot {
         id: calendarWindow
 
         visible: true
+        // A compositor close only hides the window, and the toggle script reads a live process as open.
+        onVisibleChanged: if (!visible) Qt.quit()
         title: "Mugen Calendar"
         color: "transparent"
         implicitWidth: 900

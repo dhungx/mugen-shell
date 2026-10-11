@@ -74,6 +74,8 @@ ShellRoot {
         id: yuraSettingsWindow
 
         visible: true
+        // A compositor close only hides the window, and the toggle script reads a live process as open.
+        onVisibleChanged: if (!visible) Qt.quit()
         title: "Yura Settings"
         color: "transparent"
         implicitWidth: 1100

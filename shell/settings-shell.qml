@@ -255,6 +255,8 @@ ShellRoot {
         id: settingsWindow
 
         visible: true
+        // A compositor close only hides the window, and the toggle script reads a live process as open.
+        onVisibleChanged: if (!visible) Qt.quit()
         title: "Mugen Settings"
         color: "transparent"
         // Without an implicit size the window opens at its minimum, which fits four rows.
