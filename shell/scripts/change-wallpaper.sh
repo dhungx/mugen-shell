@@ -119,7 +119,12 @@ run_matugen() {
   if matugen image --help 2>/dev/null | grep -q -- '--prefer'; then
     args+=(--prefer saturation)
   fi
-  "${args[@]}" 2>&1
+  "${args[@]}" 2>&1 || return
+  # config.toml is reverted at every login, so a user's own templates live beside it.
+  local user_config="${XDG_CONFIG_HOME:-$HOME/.config}/matugen/user.toml"
+  if [[ -f "$user_config" ]]; then
+    "${args[@]}" --config "$user_config" 2>&1 || true
+  fi
 }
 
 swww_ready() {

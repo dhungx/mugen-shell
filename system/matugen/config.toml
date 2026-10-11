@@ -23,16 +23,6 @@ input_path  = '~/.config/matugen/templates/matugen-cava'
 output_path = '~/.config/cava/themes/colors.conf'
 post_hook   = "pkill -USR1 cava"
 
-[templates.sunayama]
-input_path  = '~/.config/matugen/templates/matugen-sunayama'
-output_path = '~/.config/sunayama/colors.conf'
-post_hook   = "pkill -USR1 sunayama"
-
-[templates.hitodama]
-input_path  = '~/.config/matugen/templates/matugen-hitodama'
-output_path = '~/.config/hitodama/colors.conf'
-post_hook   = "pkill -USR1 hitodama"
-
 # Dark ramp always: the shell's light mode is clear glass with white text, which a light accent muddies.
 [templates.quickshell-json]
 input_path = '~/.config/matugen/templates/quickshell-colors.json'
