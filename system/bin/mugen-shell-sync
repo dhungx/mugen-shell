@@ -76,6 +76,8 @@ install_product_tree "$SHARE/hypr" "$CONFIG/hypr" \
   configs/user-overrides.lua configs/keybind-overrides.lua
 install_product_tree "$SHARE/matugen" "$CONFIG/matugen"
 install_dir  "$SHARE/cava"          "$CONFIG/cava"
+# cava exits on a missing theme, and matugen only writes this one after the first wallpaper change.
+install_file "$SHARE/cava/themes/solarized_dark" "$CONFIG/cava/themes/colors.conf"
 install_dir  "$SHARE/kitty"         "$CONFIG/kitty"
 install_dir  "$SHARE/fastfetch"     "$CONFIG/fastfetch"
 install_file "$SHARE/starship.toml" "$CONFIG/starship.toml"
