@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -185,12 +186,46 @@ func (t *httpTransport) redactURL(s string) string {
 	if err != nil {
 		return s
 	}
-	for _, part := range []string{u.RawQuery, u.Query().Encode(), u.EscapedPath(), u.Path} {
-		if len(part) > 1 {
-			s = strings.ReplaceAll(s, part, "<redacted>")
-		}
+	s = strings.ReplaceAll(s, "\\/", "/")
+	for _, part := range secretCandidates(u) {
+		s = strings.ReplaceAll(s, part, "<redacted>")
 	}
 	return s
+}
+
+const minSecretPartLen = 8
+
+// Longest first, so a shorter candidate never leaves fragments of a longer one.
+func secretCandidates(u *url.URL) []string {
+	seen := map[string]bool{}
+	var out []string
+	add := func(c string) {
+		if c != "" && !seen[c] {
+			seen[c] = true
+			out = append(out, c)
+		}
+	}
+	for _, whole := range []string{u.RawQuery, u.Query().Encode(), u.EscapedPath(), u.Path} {
+		if len(whole) > 1 {
+			add(whole)
+		}
+	}
+	for _, seg := range strings.Split(u.Path, "/") {
+		if len(seg) >= minSecretPartLen {
+			add(seg)
+			add(url.PathEscape(seg))
+		}
+	}
+	for _, values := range u.Query() {
+		for _, v := range values {
+			if len(v) >= minSecretPartLen {
+				add(v)
+				add(url.QueryEscape(v))
+			}
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool { return len(out[i]) > len(out[j]) })
+	return out
 }
 
 // A scanner error surfaces as a JSON-RPC error rather than a truncated fragment.

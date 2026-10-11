@@ -553,3 +553,24 @@ func TestHTTPTransportReusesTheConnectionAfterAnSSEReply(t *testing.T) {
 		t.Errorf("5 requests used %d connections, want 1", n)
 	}
 }
+
+func TestHTTPTransportRedactURL(t *testing.T) {
+	const seg = "s3cr3tT0ken-abc"
+	tests := []struct {
+		name, url, in, want string
+	}{
+		{"path segment echoed alone", "http://h/s/" + seg + "/mcp", `{"error":"invalid token ` + seg + `"}`, `{"error":"invalid token <redacted>"}`},
+		{"json-escaped slashes", "http://h/s/" + seg + "/mcp", `"Cannot POST \/s\/` + seg + `\/mcp"`, `"Cannot POST <redacted>"`},
+		{"query value alone", "http://h/mcp?key=abcdef123456", "bad key abcdef123456", "bad key <redacted>"},
+		{"percent-encoded segment", "http://h/s/tok%20en-secret/mcp", "no route tok%20en-secret", "no route <redacted>"},
+		{"short segments kept", "http://h/v1/mcp", "GET /v1/mcp failed in mcp v1", "GET <redacted> failed in mcp v1"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tr := &httpTransport{url: tc.url}
+			if got := tr.redactURL(tc.in); got != tc.want {
+				t.Errorf("redactURL(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
