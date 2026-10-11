@@ -292,3 +292,22 @@ func TestLegacyImportSkipsBadRows(t *testing.T) {
 		t.Errorf("got %+v, want id=a time=09:00", events[0])
 	}
 }
+
+func TestGet(t *testing.T) {
+	st, err := Open(filepath.Join(t.TempDir(), "events.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	id, err := st.Add("2026-10-12", "09:30", "standup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ev, ok, err := st.Get(id)
+	if err != nil || !ok || ev.Title != "standup" || ev.Date != "2026-10-12" || ev.Time != "09:30" {
+		t.Fatalf("Get(%q) = %+v, %v, %v", id, ev, ok, err)
+	}
+	if _, ok, err := st.Get("nope"); ok || err != nil {
+		t.Fatalf("Get(missing) ok=%v err=%v", ok, err)
+	}
+}

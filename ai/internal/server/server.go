@@ -498,14 +498,16 @@ func (s *Server) awaitConfirm(ctx context.Context, tc provider.ToolCall, send fu
 	id, ch := s.confirms.register()
 	defer s.confirms.discard(id)
 
-	send(map[string]any{
-		"tool_confirm": map[string]any{
-			"confirm_id": id,
-			"name":       tc.Name,
-			"arguments":  tc.Arguments,
-			"expires_at": time.Now().Add(confirmTimeout).UnixMilli(),
-		},
-	})
+	payload := map[string]any{
+		"confirm_id": id,
+		"name":       tc.Name,
+		"arguments":  tc.Arguments,
+		"expires_at": time.Now().Add(confirmTimeout).UnixMilli(),
+	}
+	if t := s.tools.ConfirmTarget(tc.Name, tc.Arguments); t != "" {
+		payload["target"] = t
+	}
+	send(map[string]any{"tool_confirm": payload})
 
 	select {
 	case approved := <-ch:

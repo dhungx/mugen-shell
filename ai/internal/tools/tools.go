@@ -57,6 +57,7 @@ type Registry struct {
 	apps         *apps.Resolver
 	mcp          *mcp.Manager
 	memStore     *store.Store
+	calendarPath string
 	tools        []Tool
 	mu           sync.RWMutex
 

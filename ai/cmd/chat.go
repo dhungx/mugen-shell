@@ -140,7 +140,7 @@ func runChatTurn(rt *runtimeContext, scanner *bufio.Scanner, msgs []provider.Mes
 
 		for _, tc := range iterToolCalls {
 			var result string
-			if gate.Needs(tc.Name) && !cliConfirm(scanner, tc) {
+			if gate.Needs(tc.Name) && !cliConfirm(scanner, tc, rt.Tools.ConfirmTarget(tc.Name, tc.Arguments)) {
 				result = "error: the user declined this action. Do not retry it; acknowledge their choice and move on."
 				rt.Tools.Audit(tc.Name, tc.Arguments, result, nil)
 			} else {
@@ -160,9 +160,13 @@ func runChatTurn(rt *runtimeContext, scanner *bufio.Scanner, msgs []provider.Mes
 }
 
 // EOF or anything but y is a denial, mirroring the server's deny-by-default.
-func cliConfirm(scanner *bufio.Scanner, tc provider.ToolCall) bool {
+func cliConfirm(scanner *bufio.Scanner, tc provider.ToolCall, target string) bool {
 	args, _ := json.Marshal(tc.Arguments)
-	fmt.Printf("\n[confirm] %s %s — approve? [y/N]: ", tc.Name, args)
+	fmt.Printf("\n[confirm] %s %s\n", tc.Name, args)
+	if target != "" {
+		fmt.Printf("  target: %s\n", target)
+	}
+	fmt.Print("approve? [y/N]: ")
 	if !scanner.Scan() {
 		return false
 	}

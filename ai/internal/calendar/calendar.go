@@ -259,6 +259,15 @@ func (s *Store) query(q string, args ...any) ([]Event, error) {
 	return events, rows.Err()
 }
 
+// Get returns the event with the given id, and false when there is none.
+func (s *Store) Get(id string) (Event, bool, error) {
+	events, err := s.query("SELECT id, date, time, title FROM events WHERE id = ?", id)
+	if err != nil || len(events) == 0 {
+		return Event{}, false, err
+	}
+	return events[0], true, nil
+}
+
 func (s *Store) Add(date, eventTime, title string) (string, error) {
 	date, err := normalizeDate(date)
 	if err != nil {
