@@ -284,6 +284,7 @@ QtObject {
                     // Legacy key: enabled=false meant interval 0.
                     if (settings.autoCloseTimer.enabled === false) {
                         autoCloseTimerInterval = 0
+                        delete settings.autoCloseTimer.enabled
                     }
                 }
             } catch (e) {
