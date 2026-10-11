@@ -134,7 +134,8 @@ ShellRoot {
     }
 
     function applyCalendar(parsed) {
-        calendarEvents = Array.isArray(parsed.events) ? parsed.events : []
+        if (!Array.isArray(parsed.events)) return
+        calendarEvents = parsed.events
         // Latched only on a real answer; the clock tick retries a failed fetch at most once a minute.
         calendarDay = pendingCalendarDay
     }
