@@ -118,7 +118,7 @@ Item {
             Timer {
                 interval: 50
                 repeat: true
-                running: waterFill.visible && !(powerMenuRoot.settingsManager && powerMenuRoot.settingsManager.reduceMotion)
+                running: waterFill.visible && Theme.Motion.ambient
                 onTriggered: {
                     const speed = powerMenuRoot.batteryManager && powerMenuRoot.batteryManager.isCharging ? 0.25 : 0.08
                     waterCanvas.phase += speed
