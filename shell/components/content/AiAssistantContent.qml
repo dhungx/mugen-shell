@@ -463,6 +463,7 @@ FocusScope {
                     readonly property string serverName: sep > 0 ? fullName.substring(0, sep) : ""
                     readonly property string toolName: sep > 0 ? fullName.substring(sep + 2) : fullName
                     readonly property string argSummary: {
+                        if (typeof pc.target === "string" && pc.target !== "") return pc.target
                         let a = pc.arguments
                         if (!a) return ""
                         let parts = []

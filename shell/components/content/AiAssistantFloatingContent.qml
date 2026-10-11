@@ -1306,6 +1306,275 @@ FocusScope {
 
                 }
             }
+
+            footer: Item {
+                id: confirmFooter
+                // A footer is its own component scope, so the card reads the panel through these.
+                readonly property var theme: root.theme
+                readonly property var modeManager: root.modeManager
+                readonly property var pendingConfirm: root.pendingConfirm
+                function resolveConfirm(approved) { root.resolveConfirm(approved) }
+
+                width: chatList.width
+                height: pendingConfirm === null ? 0 : confirmCard.height + chatList.spacing
+
+                Rectangle {
+                    id: confirmCard
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.topMargin: chatList.spacing
+                    height: confirmCol.implicitHeight + confirmFooter.modeManager.scale(28)
+                    visible: confirmFooter.pendingConfirm !== null
+                    opacity: visible ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: Theme.Motion.fast; easing.type: Easing.OutCubic } }
+
+                    radius: confirmFooter.modeManager.scale(16)
+                    color: confirmFooter.theme ? confirmFooter.theme.popupFace : Qt.rgba(0.07, 0.06, 0.11, 0.97)
+                    border.width: 1
+                    border.color: Qt.rgba(0.95, 0.74, 0.42, 0.55)
+
+                    readonly property var pc: confirmFooter.pendingConfirm || ({})
+                    readonly property string fullName: pc.name || ""
+                    readonly property int sep: fullName.indexOf("__")
+                    readonly property string serverName: sep > 0 ? fullName.substring(0, sep) : ""
+                    readonly property string toolName: sep > 0 ? fullName.substring(sep + 2) : fullName
+                    readonly property string target: pc.target || ""
+                    readonly property var argKeys: pc.arguments ? Object.keys(pc.arguments) : []
+
+                    // The backend denies on timeout, so the card has to show that it is running out.
+                    readonly property real expiresAt: pc.expires_at || 0
+                    property real openedAt: 0
+                    property real nowMs: 0
+
+                    readonly property real remainingFraction: {
+                        let span = expiresAt - openedAt
+                        if (expiresAt <= 0 || span <= 0) return 0
+                        return Math.max(0, Math.min(1, (expiresAt - nowMs) / span))
+                    }
+
+                    onVisibleChanged: {
+                        if (!visible) return
+                        openedAt = Date.now()
+                        nowMs = openedAt
+                    }
+
+                    Timer {
+                        interval: 250
+                        repeat: true
+                        running: confirmCard.visible && confirmCard.expiresAt > 0
+                        onTriggered: confirmCard.nowMs = Date.now()
+                    }
+
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.bottom: parent.bottom
+                        anchors.leftMargin: confirmCard.radius
+                        anchors.bottomMargin: confirmFooter.modeManager.scale(2)
+                        height: confirmFooter.modeManager.scale(2)
+                        radius: height / 2
+                        visible: confirmCard.expiresAt > 0
+                        width: confirmCard.remainingFraction * (confirmCard.width - confirmCard.radius * 2)
+                        color: Qt.rgba(0.95, 0.74, 0.42, 0.75)
+                    }
+
+                    ColumnLayout {
+                        id: confirmCol
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: confirmFooter.modeManager.scale(14)
+                        spacing: confirmFooter.modeManager.scale(8)
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: confirmFooter.modeManager.scale(8)
+
+                            Text {
+                                text: "⚠"
+                                color: Qt.rgba(0.96, 0.78, 0.46, 0.95)
+                                font.pixelSize: confirmFooter.modeManager.scale(15)
+                            }
+
+                            Text {
+                                text: "Approval needed"
+                                color: confirmFooter.theme ? confirmFooter.theme.textPrimary : Qt.rgba(0.95, 0.93, 0.98, 0.95)
+                                font.pixelSize: confirmFooter.modeManager.scale(13)
+                                font.family: "M PLUS 2"
+                                font.weight: Font.Medium
+                                font.letterSpacing: 0.3
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                visible: confirmCard.serverName !== ""
+                                Layout.preferredHeight: confirmFooter.modeManager.scale(18)
+                                Layout.preferredWidth: serverTag.implicitWidth + confirmFooter.modeManager.scale(14)
+                                radius: height / 2
+                                color: confirmFooter.theme ? Qt.rgba(confirmFooter.theme.accent.r, confirmFooter.theme.accent.g, confirmFooter.theme.accent.b, 0.22) : Qt.rgba(0.65, 0.55, 0.85, 0.22)
+
+                                Text {
+                                    id: serverTag
+                                    anchors.centerIn: parent
+                                    textFormat: Text.PlainText
+                                    text: confirmCard.serverName
+                                    color: confirmFooter.theme ? confirmFooter.theme.textSecondary : Qt.rgba(0.82, 0.80, 0.90, 0.9)
+                                    font.pixelSize: confirmFooter.modeManager.scale(10)
+                                    font.family: "M PLUS 2"
+                                }
+                            }
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            textFormat: Text.PlainText
+                            text: "Yura wants to run " + confirmCard.toolName
+                            color: confirmFooter.theme ? confirmFooter.theme.textSecondary : Qt.rgba(0.80, 0.80, 0.88, 0.88)
+                            font.pixelSize: confirmFooter.modeManager.scale(12)
+                            font.family: "M PLUS 2"
+                            wrapMode: Text.WordWrap
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            visible: confirmCard.target !== "" || confirmCard.argKeys.length > 0
+                            Layout.preferredHeight: confirmCard.target !== ""
+                                ? targetText.implicitHeight + confirmFooter.modeManager.scale(16)
+                                : Math.min(argCol.implicitHeight, confirmFooter.modeManager.scale(150)) + confirmFooter.modeManager.scale(16)
+                            radius: confirmFooter.modeManager.scale(10)
+                            color: Qt.rgba(0, 0, 0, 0.22)
+
+                            Text {
+                                id: targetText
+                                visible: confirmCard.target !== ""
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.margins: confirmFooter.modeManager.scale(8)
+                                textFormat: Text.PlainText
+                                text: confirmCard.target
+                                color: confirmFooter.theme ? confirmFooter.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.95)
+                                font.pixelSize: confirmFooter.modeManager.scale(12)
+                                font.family: "M PLUS 2"
+                                wrapMode: Text.Wrap
+                            }
+
+                            Flickable {
+                                id: argFlick
+                                visible: confirmCard.target === ""
+                                anchors.fill: parent
+                                anchors.margins: confirmFooter.modeManager.scale(8)
+                                contentHeight: argCol.implicitHeight
+                                clip: true
+                                boundsBehavior: Flickable.StopAtBounds
+
+                                ColumnLayout {
+                                    id: argCol
+                                    width: argFlick.width
+                                    spacing: confirmFooter.modeManager.scale(5)
+
+                                    Repeater {
+                                        model: confirmCard.argKeys
+
+                                        ColumnLayout {
+                                            id: argRow
+                                            required property var modelData
+                                            Layout.fillWidth: true
+                                            spacing: 1
+
+                                            Text {
+                                                textFormat: Text.PlainText
+                                                text: argRow.modelData
+                                                color: confirmFooter.theme ? confirmFooter.theme.textFaint : Qt.rgba(0.62, 0.62, 0.72, 0.75)
+                                                font.pixelSize: confirmFooter.modeManager.scale(10)
+                                                font.family: "M PLUS 2"
+                                                font.letterSpacing: 0.4
+                                            }
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                textFormat: Text.PlainText
+                                                text: {
+                                                    let v = confirmCard.pc.arguments[argRow.modelData]
+                                                    return (typeof v === "string") ? v : JSON.stringify(v)
+                                                }
+                                                color: confirmFooter.theme ? confirmFooter.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.95)
+                                                font.pixelSize: confirmFooter.modeManager.scale(12)
+                                                font.family: "M PLUS 2"
+                                                wrapMode: Text.Wrap
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.topMargin: confirmFooter.modeManager.scale(2)
+                            spacing: confirmFooter.modeManager.scale(8)
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                Layout.preferredWidth: confirmFooter.modeManager.scale(86)
+                                Layout.preferredHeight: confirmFooter.modeManager.scale(32)
+                                radius: height / 2
+                                color: denyMouse.containsMouse ? Qt.rgba(0.85, 0.42, 0.42, 0.30) : Qt.rgba(0.85, 0.42, 0.42, 0.15)
+                                border.width: 1
+                                border.color: Qt.rgba(0.88, 0.50, 0.50, 0.45)
+                                Behavior on color { ColorAnimation { duration: Theme.Motion.micro } }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "Deny"
+                                    color: Qt.rgba(0.96, 0.79, 0.79, 0.95)
+                                    font.pixelSize: confirmFooter.modeManager.scale(12)
+                                    font.family: "M PLUS 2"
+                                }
+
+                                MouseArea {
+                                    id: denyMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: confirmFooter.resolveConfirm(false)
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.preferredWidth: confirmFooter.modeManager.scale(100)
+                                Layout.preferredHeight: confirmFooter.modeManager.scale(32)
+                                radius: height / 2
+                                color: approveMouse.containsMouse
+                                    ? (confirmFooter.theme ? Qt.rgba(confirmFooter.theme.accent.r, confirmFooter.theme.accent.g, confirmFooter.theme.accent.b, 0.55) : Qt.rgba(0.65, 0.55, 0.85, 0.55))
+                                    : (confirmFooter.theme ? Qt.rgba(confirmFooter.theme.accent.r, confirmFooter.theme.accent.g, confirmFooter.theme.accent.b, 0.34) : Qt.rgba(0.65, 0.55, 0.85, 0.34))
+                                border.width: 1
+                                border.color: confirmFooter.theme ? confirmFooter.theme.accent : Qt.rgba(0.65, 0.55, 0.85, 0.9)
+                                Behavior on color { ColorAnimation { duration: Theme.Motion.micro } }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "Approve"
+                                    color: confirmFooter.theme ? confirmFooter.theme.textPrimary : Qt.rgba(0.96, 0.95, 1.0, 0.98)
+                                    font.pixelSize: confirmFooter.modeManager.scale(12)
+                                    font.family: "M PLUS 2"
+                                    font.weight: Font.Medium
+                                }
+
+                                MouseArea {
+                                    id: approveMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: confirmFooter.resolveConfirm(true)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         Rectangle {
@@ -1625,245 +1894,6 @@ FocusScope {
         onAccepted: root.addAttachments(attachDialog.selectedFiles)
     }
 
-    Rectangle {
-        id: confirmCard
-        anchors.left: inputBar.left
-        anchors.right: inputBar.right
-        anchors.bottom: inputBar.top
-        anchors.bottomMargin: modeManager.scale(14)
-        height: confirmCol.implicitHeight + modeManager.scale(28)
-        z: 6
-        visible: root.pendingConfirm !== null
-        opacity: visible ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: Theme.Motion.fast; easing.type: Easing.OutCubic } }
-
-        radius: modeManager.scale(16)
-        color: root.theme ? root.theme.popupFace : Qt.rgba(0.07, 0.06, 0.11, 0.97)
-        border.width: 1
-        border.color: Qt.rgba(0.95, 0.74, 0.42, 0.55)
-
-        readonly property var pc: root.pendingConfirm || ({})
-        readonly property string fullName: pc.name || ""
-        readonly property int sep: fullName.indexOf("__")
-        readonly property string serverName: sep > 0 ? fullName.substring(0, sep) : ""
-        readonly property string toolName: sep > 0 ? fullName.substring(sep + 2) : fullName
-        readonly property var argKeys: pc.arguments ? Object.keys(pc.arguments) : []
-
-        // The backend denies on timeout, so the card has to show that it is running out.
-        readonly property real expiresAt: pc.expires_at || 0
-        property real openedAt: 0
-        property real nowMs: 0
-
-        readonly property real remainingFraction: {
-            let span = expiresAt - openedAt
-            if (expiresAt <= 0 || span <= 0) return 0
-            return Math.max(0, Math.min(1, (expiresAt - nowMs) / span))
-        }
-
-        onVisibleChanged: {
-            if (!visible) return
-            openedAt = Date.now()
-            nowMs = openedAt
-        }
-
-        Timer {
-            interval: 250
-            repeat: true
-            running: confirmCard.visible && confirmCard.expiresAt > 0
-            onTriggered: confirmCard.nowMs = Date.now()
-        }
-
-        Rectangle {
-            anchors.left: parent.left
-            anchors.bottom: parent.bottom
-            anchors.leftMargin: confirmCard.radius
-            anchors.bottomMargin: modeManager.scale(2)
-            height: modeManager.scale(2)
-            radius: height / 2
-            visible: confirmCard.expiresAt > 0
-            width: confirmCard.remainingFraction * (confirmCard.width - confirmCard.radius * 2)
-            color: Qt.rgba(0.95, 0.74, 0.42, 0.75)
-        }
-
-        ColumnLayout {
-            id: confirmCol
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: modeManager.scale(14)
-            spacing: modeManager.scale(8)
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: modeManager.scale(8)
-
-                Text {
-                    text: "⚠"
-                    color: Qt.rgba(0.96, 0.78, 0.46, 0.95)
-                    font.pixelSize: modeManager.scale(15)
-                }
-
-                Text {
-                    text: "Approval needed"
-                    color: root.theme ? root.theme.textPrimary : Qt.rgba(0.95, 0.93, 0.98, 0.95)
-                    font.pixelSize: modeManager.scale(13)
-                    font.family: "M PLUS 2"
-                    font.weight: Font.Medium
-                    font.letterSpacing: 0.3
-                }
-
-                Item { Layout.fillWidth: true }
-
-                Rectangle {
-                    visible: confirmCard.serverName !== ""
-                    Layout.preferredHeight: modeManager.scale(18)
-                    Layout.preferredWidth: serverTag.implicitWidth + modeManager.scale(14)
-                    radius: height / 2
-                    color: root.theme ? Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.22) : Qt.rgba(0.65, 0.55, 0.85, 0.22)
-
-                    Text {
-                        id: serverTag
-                        anchors.centerIn: parent
-                        textFormat: Text.PlainText
-                        text: confirmCard.serverName
-                        color: root.theme ? root.theme.textSecondary : Qt.rgba(0.82, 0.80, 0.90, 0.9)
-                        font.pixelSize: modeManager.scale(10)
-                        font.family: "M PLUS 2"
-                    }
-                }
-            }
-
-            Text {
-                Layout.fillWidth: true
-                textFormat: Text.PlainText
-                text: "Yura wants to run " + confirmCard.toolName
-                color: root.theme ? root.theme.textSecondary : Qt.rgba(0.80, 0.80, 0.88, 0.88)
-                font.pixelSize: modeManager.scale(12)
-                font.family: "M PLUS 2"
-                wrapMode: Text.WordWrap
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                visible: confirmCard.argKeys.length > 0
-                Layout.preferredHeight: Math.min(argCol.implicitHeight, modeManager.scale(150)) + modeManager.scale(16)
-                radius: modeManager.scale(10)
-                color: Qt.rgba(0, 0, 0, 0.22)
-
-                Flickable {
-                    id: argFlick
-                    anchors.fill: parent
-                    anchors.margins: modeManager.scale(8)
-                    contentHeight: argCol.implicitHeight
-                    clip: true
-                    boundsBehavior: Flickable.StopAtBounds
-
-                    ColumnLayout {
-                        id: argCol
-                        width: argFlick.width
-                        spacing: modeManager.scale(5)
-
-                        Repeater {
-                            model: confirmCard.argKeys
-
-                            ColumnLayout {
-                                id: argRow
-                                required property var modelData
-                                Layout.fillWidth: true
-                                spacing: 1
-
-                                Text {
-                                    textFormat: Text.PlainText
-                                    text: argRow.modelData
-                                    color: root.theme ? root.theme.textFaint : Qt.rgba(0.62, 0.62, 0.72, 0.75)
-                                    font.pixelSize: modeManager.scale(10)
-                                    font.family: "M PLUS 2"
-                                    font.letterSpacing: 0.4
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    textFormat: Text.PlainText
-                                    text: {
-                                        let v = confirmCard.pc.arguments[argRow.modelData]
-                                        return (typeof v === "string") ? v : JSON.stringify(v)
-                                    }
-                                    color: root.theme ? root.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.95)
-                                    font.pixelSize: modeManager.scale(12)
-                                    font.family: "M PLUS 2"
-                                    wrapMode: Text.Wrap
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.topMargin: modeManager.scale(2)
-                spacing: modeManager.scale(8)
-
-                Item { Layout.fillWidth: true }
-
-                Rectangle {
-                    Layout.preferredWidth: modeManager.scale(86)
-                    Layout.preferredHeight: modeManager.scale(32)
-                    radius: height / 2
-                    color: denyMouse.containsMouse ? Qt.rgba(0.85, 0.42, 0.42, 0.30) : Qt.rgba(0.85, 0.42, 0.42, 0.15)
-                    border.width: 1
-                    border.color: Qt.rgba(0.88, 0.50, 0.50, 0.45)
-                    Behavior on color { ColorAnimation { duration: Theme.Motion.micro } }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Deny"
-                        color: Qt.rgba(0.96, 0.79, 0.79, 0.95)
-                        font.pixelSize: modeManager.scale(12)
-                        font.family: "M PLUS 2"
-                    }
-
-                    MouseArea {
-                        id: denyMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.resolveConfirm(false)
-                    }
-                }
-
-                Rectangle {
-                    Layout.preferredWidth: modeManager.scale(100)
-                    Layout.preferredHeight: modeManager.scale(32)
-                    radius: height / 2
-                    color: approveMouse.containsMouse
-                        ? (root.theme ? Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.55) : Qt.rgba(0.65, 0.55, 0.85, 0.55))
-                        : (root.theme ? Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.34) : Qt.rgba(0.65, 0.55, 0.85, 0.34))
-                    border.width: 1
-                    border.color: root.theme ? root.theme.accent : Qt.rgba(0.65, 0.55, 0.85, 0.9)
-                    Behavior on color { ColorAnimation { duration: Theme.Motion.micro } }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Approve"
-                        color: root.theme ? root.theme.textPrimary : Qt.rgba(0.96, 0.95, 1.0, 0.98)
-                        font.pixelSize: modeManager.scale(12)
-                        font.family: "M PLUS 2"
-                        font.weight: Font.Medium
-                    }
-
-                    MouseArea {
-                        id: approveMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.resolveConfirm(true)
-                    }
-                }
-            }
-        }
-    }
-
     Item {
         anchors.fill: parent
         z: 3
@@ -1959,6 +1989,8 @@ FocusScope {
                     }
                     if (obj.tool_confirm) {
                         root.pendingConfirm = obj.tool_confirm
+                        root.userScrolled = false
+                        Qt.callLater(() => chatList.positionViewAtEnd())
                         return
                     }
                     if (obj.thinking) {
