@@ -201,7 +201,7 @@ func mcpServerConfigs(c config.MCP, trusted map[string]bool) map[string]mcp.Serv
 			Command:  s.Command,
 			Args:     s.Args,
 			Env:      expandEnv(s.Env),
-			URL:      expandURLEnv(s.URL),
+			URL:      expandURLEnv(name, s.URL),
 			Disabled: s.Disabled,
 			Trusted:  trusted[name],
 		}
@@ -224,9 +224,14 @@ func expandEnv(in map[string]string) map[string]string {
 var urlEnvRef = regexp.MustCompile(`\$\{([A-Za-z_][A-Za-z0-9_]*)\}`)
 
 // Only the ${NAME} form: a URL may carry a literal $ (OData's ?$select=).
-func expandURLEnv(s string) string {
+func expandURLEnv(server, s string) string {
 	return urlEnvRef.ReplaceAllStringFunc(s, func(ref string) string {
-		return os.Getenv(ref[2 : len(ref)-1])
+		name := ref[2 : len(ref)-1]
+		v, ok := os.LookupEnv(name)
+		if !ok {
+			fmt.Fprintf(os.Stderr, "mcp[%s]: url references unset ${%s}\n", server, name)
+		}
+		return v
 	})
 }
 
