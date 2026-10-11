@@ -144,10 +144,6 @@ Item {
 
             opacity: 0.6
 
-            Behavior on opacity {
-                NumberAnimation { duration: 450; easing.type: Easing.OutCubic }
-            }
-
             property real heartbeatScale: 1.0
 
             SequentialAnimation on heartbeatScale {

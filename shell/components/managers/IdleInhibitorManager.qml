@@ -8,7 +8,6 @@ QtObject {
 
     property bool isInhibited: false
     property bool isBusy: false
-    property string lastError: ""
     property bool isLoadingState: false
     property bool stateSaveQueued: false
 
@@ -27,7 +26,6 @@ QtObject {
         }
         pendingRestoreState = null
         isBusy = true
-        lastError = ""
         toggleProcess.command = ["bash", toggleScript]
         toggleProcess.running = true
     }
@@ -94,12 +92,6 @@ QtObject {
     property Process toggleProcess: Process {
         command: []
         running: false
-
-        stderr: SplitParser {
-            onRead: data => {
-                idleInhibitorManager.lastError = data.trim()
-            }
-        }
 
         onExited: () => {
             idleInhibitorManager.isBusy = false
