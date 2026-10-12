@@ -272,7 +272,7 @@ Rectangle {
                 border.width: 1
                 border.color: Qt.rgba(0.95, 0.45, 0.45, section.confirmingClear ? 0.8 : 0.4)
 
-                Behavior on color { ColorAnimation { duration: 160 } }
+                Behavior on color { ColorAnimation { duration: Theme.Motion.micro } }
 
                 Text {
                     id: clearLabel

@@ -437,7 +437,7 @@ Rectangle {
                     color: section.isAllowed(modelData.binary)
                         ? (section.theme ? Qt.rgba(section.theme.accent.r, section.theme.accent.g, section.theme.accent.b, 0.18) : Qt.rgba(0.65, 0.55, 0.85, 0.18))
                         : (rowMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.04) : "transparent")
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color { ColorAnimation { duration: Theme.Motion.micro } }
 
                     RowLayout {
                         anchors.fill: parent
