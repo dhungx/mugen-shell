@@ -329,7 +329,7 @@ in
         if [[ -n "$DRY_RUN_CMD" ]]; then
           syncFlag="--dry-run"
         fi
-        PATH=${lib.makeBinPath [ pkgs.coreutils pkgs.findutils pkgs.gnused ]}:$PATH \
+        PATH=${lib.makeBinPath [ pkgs.coreutils pkgs.findutils pkgs.gnused pkgs.gawk ]}:$PATH \
         MUGEN_SHELL_SHARE=${share} \
         XDG_CONFIG_HOME=${config.xdg.configHome} \
         XDG_CACHE_HOME=${config.xdg.cacheHome} \
