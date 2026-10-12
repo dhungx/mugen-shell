@@ -392,3 +392,41 @@ func TestParallelToolResultsShareOneUserMessage(t *testing.T) {
 		t.Errorf("messages = %v, want %v", shape, want)
 	}
 }
+
+func TestUserTextAfterToolResultsJoinsTheirMessage(t *testing.T) {
+	var body []byte
+	srv := stubAnthropic(t, "data: {\"type\":\"message_stop\"}\n", &body)
+	defer srv.Close()
+
+	msgs := []Message{
+		{Role: "user", Content: "volume?"},
+		{Role: "assistant", ToolCalls: []ToolCall{{ID: "h1_0", Name: "a"}}},
+		{Role: "tool", ToolCallID: "h1_0", Content: "40"},
+		{Role: "user", Content: "thanks"},
+	}
+	if err := testAnthropic(srv.URL).Chat(context.Background(), "claude-x", msgs, ChatOptions{},
+		func(ChatChunk) error { return nil }); err != nil {
+		t.Fatalf("chat: %v", err)
+	}
+
+	var payload struct {
+		Messages []struct {
+			Role    string           `json:"role"`
+			Content []map[string]any `json:"content"`
+		} `json:"messages"`
+	}
+	if err := json.Unmarshal(body, &payload); err != nil {
+		t.Fatalf("request body: %v", err)
+	}
+	var roles []string
+	for _, m := range payload.Messages {
+		roles = append(roles, m.Role)
+	}
+	if fmt.Sprint(roles) != "[user assistant user]" {
+		t.Fatalf("roles = %v, want alternating user assistant user", roles)
+	}
+	last := payload.Messages[2].Content
+	if len(last) != 2 || last[0]["type"] != "tool_result" || last[1]["type"] != "text" || last[1]["text"] != "thanks" {
+		t.Fatalf("last message content = %v, want [tool_result, text]", last)
+	}
+}

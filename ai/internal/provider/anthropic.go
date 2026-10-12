@@ -255,6 +255,7 @@ func (a *Anthropic) chat(ctx context.Context, model string, messages []Message, 
 
 	lastWasTool := false
 	for _, m := range messages {
+		afterTool := lastWasTool
 		if m.Role == "system" {
 			continue
 		}
@@ -302,6 +303,12 @@ func (a *Anthropic) chat(ctx context.Context, model string, messages []Message, 
 			content = append(content, toolUseBlock(tc))
 		}
 		if len(content) == 0 {
+			continue
+		}
+		// Consecutive user messages are a 400, so text after tool results joins their message.
+		if afterTool && role == "user" {
+			last := msgs[len(msgs)-1]
+			last["content"] = append(last["content"].([]map[string]any), content...)
 			continue
 		}
 		msgs = append(msgs, map[string]any{"role": role, "content": content})
