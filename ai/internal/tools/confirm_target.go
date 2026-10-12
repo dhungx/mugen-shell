@@ -52,7 +52,7 @@ func (r *Registry) calendarTarget(args map[string]any) string {
 		return "no event with that id"
 	}
 	if ev.Time == "" {
-		return ev.Date + " (all day) " + ev.Title
+		return ev.Date + " (all day) " + oneLine(ev.Title)
 	}
-	return ev.Date + " " + ev.Time + " " + ev.Title
+	return ev.Date + " " + ev.Time + " " + oneLine(ev.Title)
 }
