@@ -112,6 +112,7 @@ jobs:
           check 'mugen-shell-*.pkg.tar.zst' 'usr/share/mugen-shell/qml/scripts/mpvpaper-opts.sh'
           check 'mugen-shell-*.pkg.tar.zst' 'usr/share/mugen-shell/matugen/config.toml'
           check 'mugen-shell-*.pkg.tar.zst' 'usr/share/mugen-shell/cava/config'
+          check 'mugen-shell-*.pkg.tar.zst' 'usr/share/mugen-shell/cava/themes/solarized_dark'
           check 'mugen-shell-*.pkg.tar.zst' 'usr/share/mugen-shell/kitty/kitty.conf'
           check 'mugen-shell-*.pkg.tar.zst' 'usr/share/mugen-shell/fastfetch/config.jsonc'
           check 'mugen-shell-*.pkg.tar.zst' 'usr/share/mugen-shell/starship.toml'
