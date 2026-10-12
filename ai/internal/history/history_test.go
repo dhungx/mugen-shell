@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/tmy7533018/mugen-ai/internal/attach"
 	"github.com/tmy7533018/mugen-ai/internal/provider"
@@ -367,5 +370,190 @@ func TestSwitchPicksUpRowsWrittenDuringATurn(t *testing.T) {
 	}
 	if want := []string{"gui-q1", "gui-a1", "gui-q2", "cli-q", "cli-a", "gui-a2"}; fmt.Sprint(got) != fmt.Sprint(want) {
 		t.Errorf("messages = %v, want %v", got, want)
+	}
+}
+
+func toolRecords(results ...string) []ToolRecord {
+	recs := make([]ToolRecord, len(results))
+	for i, r := range results {
+		recs[i] = ToolRecord{
+			ToolCall: provider.ToolCall{ID: fmt.Sprintf("srv%d", i), Name: fmt.Sprintf("tool%d", i), Arguments: map[string]any{"n": float64(i)}},
+			Result:   r,
+		}
+	}
+	return recs
+}
+
+func addToolTurn(t *testing.T, h *History, user, reply string, recs []ToolRecord) {
+	t.Helper()
+	if err := h.Add("user", user, "m", false); err != nil {
+		t.Fatalf("add user: %v", err)
+	}
+	if err := h.AddAssistantTo(h.ConvID(), reply, EncodeToolRecords(recs)); err != nil {
+		t.Fatalf("add assistant: %v", err)
+	}
+}
+
+func storedIDs(t *testing.T, s *store.Store, convID int64) []int64 {
+	t.Helper()
+	rows, err := s.ListMessages(convID)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	ids := make([]int64, len(rows))
+	for i, r := range rows {
+		ids[i] = r.ID
+	}
+	return ids
+}
+
+func reloaded(t *testing.T, h *History, convID int64) []provider.Message {
+	t.Helper()
+	other, err := h.NewConversation("m", false)
+	if err != nil {
+		t.Fatalf("new conversation: %v", err)
+	}
+	_ = other
+	if err := h.Switch(convID); err != nil {
+		t.Fatalf("switch back: %v", err)
+	}
+	return h.Messages()
+}
+
+func TestToolTurnReloadsAsCallResultsAndText(t *testing.T) {
+	h, s := newTestHistory(t)
+	convID, _ := h.NewConversation("m", false)
+	addToolTurn(t, h, "save it", "saved", toolRecords("ok one", "ok two"))
+	row := storedIDs(t, s, convID)[1]
+
+	msgs := reloaded(t, h, convID)
+	if len(msgs) != 5 {
+		t.Fatalf("got %d messages, want 5: %+v", len(msgs), msgs)
+	}
+	id0, id1 := fmt.Sprintf("h%d_0", row), fmt.Sprintf("h%d_1", row)
+	if msgs[0].Role != "user" {
+		t.Errorf("msgs[0] = %+v", msgs[0])
+	}
+	calls := msgs[1].ToolCalls
+	if msgs[1].Role != "assistant" || msgs[1].Content != "" || len(calls) != 2 || calls[0].ID != id0 || calls[1].ID != id1 {
+		t.Errorf("assistant call message = %+v", msgs[1])
+	}
+	for i, want := range []struct{ id, name, content string }{{id0, "tool0", "ok one"}, {id1, "tool1", "ok two"}} {
+		m := msgs[2+i]
+		if m.Role != "tool" || m.ToolCallID != want.id || m.ToolName != want.name || m.Content != want.content {
+			t.Errorf("tool message %d = %+v", i, m)
+		}
+	}
+	if msgs[4].Role != "assistant" || msgs[4].Content != "saved" || len(msgs[4].ToolCalls) != 0 {
+		t.Errorf("final text = %+v", msgs[4])
+	}
+}
+
+func TestLiveToolTurnMatchesAFreshReload(t *testing.T) {
+	h, _ := newTestHistory(t)
+	convID, _ := h.NewConversation("m", false)
+	addToolTurn(t, h, "q0", "a0", toolRecords("r0", "r1"))
+	addToolTurn(t, h, "q1", "", toolRecords("r2"))
+	addToolTurn(t, h, "q2", "plain", nil)
+
+	live := h.Messages()
+	fresh := reloaded(t, h, convID)
+	if !reflect.DeepEqual(live, fresh) {
+		t.Fatalf("live and reloaded history differ:\nlive:  %+v\nfresh: %+v", live, fresh)
+	}
+}
+
+func TestLegacyToolRowStaysOneTextMessage(t *testing.T) {
+	h, _ := newTestHistory(t)
+	convID, _ := h.NewConversation("m", false)
+	addToolTurn(t, h, "q", "answer", toolRecords("", ""))
+
+	msgs := reloaded(t, h, convID)
+	if len(msgs) != 2 || msgs[1].Role != "assistant" || msgs[1].Content != "answer" || len(msgs[1].ToolCalls) != 0 {
+		t.Fatalf("legacy row expanded: %+v", msgs)
+	}
+}
+
+func TestToolOnlyTurnEndsWithTheToolMessage(t *testing.T) {
+	h, _ := newTestHistory(t)
+	convID, _ := h.NewConversation("m", false)
+	addToolTurn(t, h, "q", "", toolRecords("done"))
+
+	msgs := reloaded(t, h, convID)
+	if len(msgs) != 3 || msgs[2].Role != "tool" {
+		t.Fatalf("want user, assistant calls, tool: %+v", msgs)
+	}
+}
+
+func TestLongToolResultIsBoundedOnARuneBoundary(t *testing.T) {
+	h, _ := newTestHistory(t)
+	convID, _ := h.NewConversation("m", false)
+	long := strings.Repeat("あ", 1000)
+	addToolTurn(t, h, "q", "x", toolRecords(long))
+
+	got := reloaded(t, h, convID)[2].Content
+	body, marker, found := strings.Cut(got, "\n[truncated in history:")
+	if !found {
+		t.Fatalf("no truncation marker: %q", got)
+	}
+	if !utf8.ValidString(body) || len(body) > maxReplayResultBytes {
+		t.Errorf("body invalid or too long: %d bytes, valid=%v", len(body), utf8.ValidString(body))
+	}
+	if want := fmt.Sprintf(" %d of %d bytes omitted]", len(long)-len(body), len(long)); marker != want {
+		t.Errorf("marker = %q, want %q", marker, want)
+	}
+}
+
+func TestEmptyToolResultReadsAsNoOutput(t *testing.T) {
+	h, _ := newTestHistory(t)
+	convID, _ := h.NewConversation("m", false)
+	recs := toolRecords("")
+	recs = append(recs, ToolRecord{ToolCall: provider.ToolCall{Name: "bad"}, Error: "boom"})
+	addToolTurn(t, h, "q", "x", recs)
+
+	msgs := reloaded(t, h, convID)
+	if msgs[2].Content != "(no output)" {
+		t.Errorf("tool content = %q", msgs[2].Content)
+	}
+}
+
+func TestWindowStartsOnAUserAndKeepsResultsWithTheirCalls(t *testing.T) {
+	h, _ := newTestHistory(t)
+	convID, _ := h.NewConversation("m", false)
+	for i := 0; i < 3; i++ {
+		addToolTurn(t, h, fmt.Sprintf("q%d", i), "a", toolRecords("r0", "r1"))
+	}
+
+	for limit := 1; limit <= 14; limit++ {
+		h.max = limit
+		msgs := reloaded(t, h, convID)
+		if len(msgs) > 0 && msgs[0].Role != "user" {
+			t.Fatalf("max=%d: window opens on %q", limit, msgs[0].Role)
+		}
+		issued := map[string]bool{}
+		for _, m := range msgs {
+			for _, tc := range m.ToolCalls {
+				issued[tc.ID] = true
+			}
+			if m.Role == "tool" && !issued[m.ToolCallID] {
+				t.Fatalf("max=%d: tool result %s has no call in the window", limit, m.ToolCallID)
+			}
+		}
+	}
+}
+
+func TestContextDroppedCountsStoredRows(t *testing.T) {
+	h, _ := newTestHistory(t)
+	convID, _ := h.NewConversation("m", false)
+	addToolTurn(t, h, "q0", "a0", toolRecords("r0", "r1"))
+	addToolTurn(t, h, "q1", "a1", nil)
+	h.max = 3
+
+	got, err := h.ContextDropped(convID)
+	if err != nil {
+		t.Fatalf("ContextDropped: %v", err)
+	}
+	if got != 2 {
+		t.Fatalf("dropped = %d, want 2 stored rows (user + tool turn)", got)
 	}
 }

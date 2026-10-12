@@ -1,6 +1,7 @@
 package history
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -54,7 +55,22 @@ func estimateTokens(s string) int {
 const imageTokens = 1600
 
 func messageTokens(m provider.Message) int {
-	return estimateTokens(m.Content) + len(m.Images)*imageTokens
+	n := estimateTokens(m.Content) + len(m.Images)*imageTokens
+	for _, tc := range m.ToolCalls {
+		args, _ := json.Marshal(tc.Arguments)
+		n += estimateTokens(tc.Name) + estimateTokens(string(args))
+	}
+	return n
+}
+
+func expandStored(stored []store.Message) (msgs []provider.Message, rowStarts []int) {
+	rowStarts = make([]int, len(stored))
+	for i, m := range stored {
+		rowStarts[i] = len(msgs)
+		att := attach.LoadBestEffort(m.Attachments)
+		msgs = append(msgs, expandRow(m.ID, m.Role, m.Content, m.ToolCalls, att)...)
+	}
+	return msgs, rowStarts
 }
 
 func (h *History) loadCurrent() error {
@@ -104,16 +120,11 @@ func (h *History) switchLocked(id int64) error {
 	}
 	h.lastMsgID = 0
 	h.msgCount = int64(len(msgs))
-	h.messages = h.messages[:0]
 	for _, m := range msgs {
 		h.lastMsgID = max(h.lastMsgID, m.ID)
-		att := attach.LoadBestEffort(m.Attachments)
-		h.messages = append(h.messages, provider.Message{
-			Role:    m.Role,
-			Content: att.Prompt(m.Content),
-			Images:  att.Images,
-		})
 	}
+	expanded, _ := expandStored(msgs)
+	h.messages = append(h.messages[:0], expanded...)
 	h.truncateLocked()
 	return nil
 }
@@ -273,7 +284,7 @@ func (h *History) AddAssistantTo(convID int64, content, toolCalls string) error 
 	if convID == h.convID {
 		h.lastMsgID = msgID
 		h.msgCount++
-		h.messages = append(h.messages, provider.Message{Role: "assistant", Content: content})
+		h.messages = append(h.messages, expandRow(msgID, "assistant", content, []byte(toolCalls), attach.Attachments{})...)
 		h.truncateLocked()
 	}
 	return nil
@@ -412,8 +423,8 @@ func dropCount(msgs []provider.Message, max, maxTokens int) int {
 			drop++
 		}
 	}
-	// Anthropic rejects a list that opens with an assistant message.
-	for drop < len(msgs)-1 && msgs[drop].Role != "user" {
+	// Anthropic rejects an opening assistant message, and a user start keeps every tool result with its call.
+	for drop < len(msgs) && msgs[drop].Role != "user" {
 		drop++
 	}
 	return drop
@@ -428,14 +439,17 @@ func (h *History) ContextDropped(convID int64) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	msgs := make([]provider.Message, 0, len(stored))
-	for _, m := range stored {
-		att := attach.LoadBestEffort(m.Attachments)
-		msgs = append(msgs, provider.Message{Role: m.Role, Content: att.Prompt(m.Content), Images: att.Images})
-	}
+	msgs, rowStarts := expandStored(stored)
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	return dropCount(msgs, h.max, h.maxTokens), nil
+	drop := dropCount(msgs, h.max, h.maxTokens)
+	rows := 0
+	for _, start := range rowStarts {
+		if start < drop {
+			rows++
+		}
+	}
+	return rows, nil
 }
 
 func (h *History) truncateLocked() {

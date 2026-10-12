@@ -310,13 +310,13 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var fullResponse string
-	var turnToolCalls []storedToolCall
+	var turnToolCalls []history.ToolRecord
 	// Once content has streamed or a tool fired, the user message can no longer be dropped.
 	var sideEffected bool
 
 	persistOnError := func(errMsg string) {
 		if sideEffected {
-			_ = s.history.AddAssistantTo(convID, history.MarkInterrupted(fullResponse), encodeToolCalls(turnToolCalls))
+			_ = s.history.AddAssistantTo(convID, history.MarkInterrupted(fullResponse), history.EncodeToolRecords(turnToolCalls))
 			s.events.broadcast("conversations", nil)
 			s.events.broadcast("messages", map[string]any{"conversation_id": convID})
 		} else {
@@ -373,7 +373,7 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 		if len(iterToolCalls) == 0 {
 			// Tool calls already had their side effects, so an empty final answer still needs a row.
 			if fullResponse != "" || len(turnToolCalls) > 0 {
-				_ = s.history.AddAssistantTo(convID, fullResponse, encodeToolCalls(turnToolCalls))
+				_ = s.history.AddAssistantTo(convID, fullResponse, history.EncodeToolRecords(turnToolCalls))
 				s.events.broadcast("conversations", nil)
 				s.events.broadcast("messages", map[string]any{"conversation_id": convID})
 				if isFirstExchange && fullResponse != "" {
@@ -392,7 +392,7 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 
 		firstOfIter := len(turnToolCalls)
 		for _, tc := range iterToolCalls {
-			turnToolCalls = append(turnToolCalls, storedToolCall{ToolCall: tc})
+			turnToolCalls = append(turnToolCalls, history.ToolRecord{ToolCall: tc})
 		}
 		sendEvent(map[string]any{"tool_calls": iterToolCalls})
 
@@ -473,24 +473,6 @@ func firstN(s string, n int) string {
 		return s
 	}
 	return string(rs[:n]) + "…"
-}
-
-// Kept with the call so a reloaded conversation shows what the chip showed live; the model never reads it back.
-type storedToolCall struct {
-	provider.ToolCall
-	Result string `json:"result,omitempty"`
-	Error  string `json:"error,omitempty"`
-}
-
-func encodeToolCalls(calls []storedToolCall) string {
-	if len(calls) == 0 {
-		return ""
-	}
-	b, err := json.Marshal(calls)
-	if err != nil {
-		return ""
-	}
-	return string(b)
 }
 
 // A timeout or disconnect counts as a denial, so an irreversible tool never runs unattended.

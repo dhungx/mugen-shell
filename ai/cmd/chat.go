@@ -82,21 +82,21 @@ func runChat(_ *cobra.Command, _ []string) error {
 			}
 		}
 
-		fullResponse, err := runChatTurn(rt, scanner, msgs, input)
+		fullResponse, recs, err := runChatTurn(rt, scanner, msgs, input)
 		fmt.Println()
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			// Dropping only the user message would leave two consecutive user turns.
-			if fullResponse == "" {
+			if fullResponse == "" && len(recs) == 0 {
 				rt.History.RemoveLast()
 			} else {
-				_ = rt.History.Add("assistant", history.MarkInterrupted(fullResponse), rt.Registry.Model(), false)
+				_ = rt.History.AddAssistantTo(rt.History.ConvID(), history.MarkInterrupted(fullResponse), history.EncodeToolRecords(recs))
 			}
 			continue
 		}
 
-		_ = rt.History.Add("assistant", fullResponse, rt.Registry.Model(), false)
+		_ = rt.History.AddAssistantTo(rt.History.ConvID(), fullResponse, history.EncodeToolRecords(recs))
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -105,13 +105,14 @@ func runChat(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func runChatTurn(rt *runtimeContext, scanner *bufio.Scanner, msgs []provider.Message, userText string) (string, error) {
+func runChatTurn(rt *runtimeContext, scanner *bufio.Scanner, msgs []provider.Message, userText string) (string, []history.ToolRecord, error) {
 	const maxIterations = 5
 	opts := provider.ChatOptions{Tools: cliProviderTools(rt.Tools.List())}
 	ctx := context.Background()
 	gate := rt.Tools.ChatGate(userText)
 
 	var fullResponse string
+	var recs []history.ToolRecord
 	for iteration := 0; iteration < maxIterations; iteration++ {
 		var iterContent string
 		var iterToolCalls []provider.ToolCall
@@ -126,10 +127,10 @@ func runChatTurn(rt *runtimeContext, scanner *bufio.Scanner, msgs []provider.Mes
 			return nil
 		})
 		if err != nil {
-			return fullResponse, err
+			return fullResponse, recs, err
 		}
 		if len(iterToolCalls) == 0 {
-			return fullResponse, nil
+			return fullResponse, recs, nil
 		}
 
 		msgs = append(msgs, provider.Message{
@@ -139,15 +140,19 @@ func runChatTurn(rt *runtimeContext, scanner *bufio.Scanner, msgs []provider.Mes
 		})
 
 		for _, tc := range iterToolCalls {
-			var result string
+			var result, errText string
 			if gate.Needs(tc.Name) && !cliConfirm(scanner, tc, rt.Tools.ConfirmTarget(tc.Name, tc.Arguments)) {
 				result = "error: the user declined this action. Do not retry it; acknowledge their choice and move on."
 				rt.Tools.Audit(tc.Name, tc.Arguments, result, nil)
 			} else {
 				res, callErr := rt.Tools.Call(ctx, tc.Name, tc.Arguments)
 				result = tools.ResultPayload(res, callErr)
+				if callErr != nil {
+					errText = callErr.Error()
+				}
 				fmt.Printf("\n[tool %s]\n", tc.Name)
 			}
+			recs = append(recs, history.ToolRecord{ToolCall: tc, Result: result, Error: errText})
 			msgs = append(msgs, provider.Message{
 				Role:       "tool",
 				ToolCallID: tc.ID,
@@ -156,7 +161,7 @@ func runChatTurn(rt *runtimeContext, scanner *bufio.Scanner, msgs []provider.Mes
 			})
 		}
 	}
-	return fullResponse, fmt.Errorf("max tool iterations exceeded")
+	return fullResponse, recs, fmt.Errorf("max tool iterations exceeded")
 }
 
 // EOF or anything but y is a denial, mirroring the server's deny-by-default.

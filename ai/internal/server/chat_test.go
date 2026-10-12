@@ -426,3 +426,27 @@ func TestChatSnapshotRidesAheadOfAnAttachmentPrompt(t *testing.T) {
 		t.Errorf("snapshot is not ahead of the attachment prompt:\n%s", last)
 	}
 }
+
+func TestChatReplaysAPastToolCallToTheModel(t *testing.T) {
+	p := &turnProvider{rounds: [][]provider.ToolCall{{{ID: "x", Name: "no_such_tool", Arguments: map[string]any{}}}}}
+	s, _ := newChatServer(t, p)
+
+	postChat(t, s, chatJSON(t, "first", 0))
+	postChat(t, s, chatJSON(t, "second", s.history.ConvID()))
+
+	if len(p.calls) != 3 {
+		t.Fatalf("provider saw %d calls, want 3", len(p.calls))
+	}
+	var call, result bool
+	for _, m := range p.calls[2] {
+		if m.Role == "assistant" && len(m.ToolCalls) == 1 && m.ToolCalls[0].Name == "no_such_tool" {
+			call = true
+		}
+		if m.Role == "tool" && m.ToolName == "no_such_tool" && m.Content != "" {
+			result = true
+		}
+	}
+	if !call || !result {
+		t.Fatalf("second turn lost the earlier tool call (call=%v result=%v): %+v", call, result, p.calls[2])
+	}
+}
