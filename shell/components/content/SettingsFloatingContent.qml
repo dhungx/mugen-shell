@@ -21,7 +21,10 @@ Item {
     signal openUrl(string url)
 
     function openCategory(id) {
-        frame.selectedCategory = id
+        const entry = frame.categoryById(id)
+        if (!entry) return
+        if (entry.action) frame.categoryAction(entry.action)
+        else frame.selectedCategory = id
     }
 
     readonly property var categories: [

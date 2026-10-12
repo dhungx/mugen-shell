@@ -28,9 +28,17 @@ Item {
     signal categoryAction(string action)
 
     property string initialCategory: ""
-    property string selectedCategory: initialCategory !== ""
-        ? initialCategory
-        : (categories.length > 0 ? categories[0].id : "")
+    function categoryById(id) {
+        for (let i = 0; i < frame.categories.length; i++)
+            if (frame.categories[i].id === id) return frame.categories[i]
+        return null
+    }
+
+    property string selectedCategory: {
+        const wanted = categoryById(initialCategory)
+        if (wanted && !wanted.action) return wanted.id
+        return categories.length > 0 ? categories[0].id : ""
+    }
     property string query: ""
 
     // "moduleBackground" -> "Module Background", so search needs no second copy of the titles.
@@ -45,11 +53,7 @@ Item {
             || String(category.label).toLowerCase().indexOf(needle) >= 0
     }
 
-    readonly property var selectedEntry: {
-        for (let i = 0; i < frame.categories.length; i++)
-            if (frame.categories[i].id === frame.selectedCategory) return frame.categories[i]
-        return null
-    }
+    readonly property var selectedEntry: categoryById(frame.selectedCategory)
 
     function selectCategoryAt(offset) {
         const ids = frame.categories.map(c => c.id)
