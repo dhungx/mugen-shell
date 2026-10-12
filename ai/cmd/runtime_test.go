@@ -70,6 +70,15 @@ func TestMCPServerURLExpandsEnv(t *testing.T) {
 	}
 }
 
+func TestDisabledMCPServerURLIsNotExpanded(t *testing.T) {
+	got := mcpServerConfigs(config.MCP{Servers: map[string]config.MCPServer{
+		"off": {URL: "https://example.com/${UNSET_FOR_TEST}/mcp", Disabled: true},
+	}}, nil)
+	if want := "https://example.com/${UNSET_FOR_TEST}/mcp"; got["off"].URL != want {
+		t.Errorf("URL = %q, want %q", got["off"].URL, want)
+	}
+}
+
 func TestToolingPromptNamesTheTagsTheToolsEmit(t *testing.T) {
 	for _, tag := range []string{"<desktop_state>", "[CONFIRM]", "[DESTRUCTIVE"} {
 		if !strings.Contains(toolingSystemPrompt, tag) {

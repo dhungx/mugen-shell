@@ -197,11 +197,15 @@ func mcpServerConfigs(c config.MCP, trusted map[string]bool) map[string]mcp.Serv
 	}
 	out := make(map[string]mcp.ServerConfig, len(c.Servers))
 	for name, s := range c.Servers {
+		url := s.URL
+		if !s.Disabled {
+			url = expandURLEnv(name, url)
+		}
 		out[name] = mcp.ServerConfig{
 			Command:  s.Command,
 			Args:     s.Args,
 			Env:      expandEnv(s.Env),
-			URL:      expandURLEnv(name, s.URL),
+			URL:      url,
 			Disabled: s.Disabled,
 			Trusted:  trusted[name],
 		}
