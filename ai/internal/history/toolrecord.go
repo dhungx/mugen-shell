@@ -17,6 +17,19 @@ type ToolRecord struct {
 	provider.ToolCall
 	Result string `json:"result,omitempty"`
 	Error  string `json:"error,omitempty"`
+	// Rows written before this field existed have no provider and count as local.
+	Provider string `json:"provider,omitempty"`
+}
+
+const withheldResult = "(withheld from cloud models: this result may have been fetched by a local model)"
+
+// WithholdLocalResults blanks the replayed results a local model fetched, for a request to a cloud provider.
+func WithholdLocalResults(msgs []provider.Message) {
+	for i := range msgs {
+		if msgs[i].LocalOnly {
+			msgs[i].Content = withheldResult
+		}
+	}
 }
 
 // EncodeToolRecords serializes a turn's tool calls for the messages.tool_calls column.
@@ -75,7 +88,13 @@ func expandRow(rowID int64, role, content string, toolCalls []byte, att attach.A
 		tc := r.ToolCall
 		tc.ID = id
 		calls[i] = tc
-		results[i] = provider.Message{Role: "tool", ToolCallID: id, ToolName: tc.Name, Content: boundReplayResult(r.Result)}
+		results[i] = provider.Message{
+			Role:       "tool",
+			ToolCallID: id,
+			ToolName:   tc.Name,
+			Content:    boundReplayResult(r.Result),
+			LocalOnly:  r.Provider == "" || r.Provider == "ollama",
+		}
 	}
 	out := make([]provider.Message, 0, len(recs)+2)
 	out = append(out, provider.Message{Role: "assistant", ToolCalls: calls})

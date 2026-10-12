@@ -450,3 +450,46 @@ func TestChatReplaysAPastToolCallToTheModel(t *testing.T) {
 		t.Fatalf("second turn lost the earlier tool call (call=%v result=%v): %+v", call, result, p.calls[2])
 	}
 }
+
+type renamedProvider struct {
+	*turnProvider
+	name string
+}
+
+func (p *renamedProvider) Name() string { return p.name }
+
+func TestChatWithholdsALocalModelsToolResultFromACloudModel(t *testing.T) {
+	p := &renamedProvider{
+		turnProvider: &turnProvider{rounds: [][]provider.ToolCall{{{ID: "x", Name: "no_such_tool", Arguments: map[string]any{}}}}},
+		name:         "ollama",
+	}
+	s, st := newChatServer(t, p)
+
+	postChat(t, s, chatJSON(t, "first", 0))
+	p.name = "anthropic"
+	postChat(t, s, chatJSON(t, "second", s.history.ConvID()))
+
+	if len(p.calls) != 3 {
+		t.Fatalf("provider saw %d calls, want 3", len(p.calls))
+	}
+	var call, withheld bool
+	for _, m := range p.calls[2] {
+		if m.Role == "assistant" && len(m.ToolCalls) == 1 && m.ToolCalls[0].Name == "no_such_tool" {
+			call = true
+		}
+		if m.Role == "tool" && m.ToolName == "no_such_tool" {
+			withheld = strings.HasPrefix(m.Content, "(withheld ")
+		}
+	}
+	if !call || !withheld {
+		t.Fatalf("cloud turn should keep the call but not the local result (call=%v withheld=%v): %+v", call, withheld, p.calls[2])
+	}
+
+	rows, err := st.ListMessages(s.history.ConvID())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if !strings.Contains(string(rows[1].ToolCalls), `"provider":"ollama"`) {
+		t.Errorf("stored tool_calls = %s, want the provider that ran them", rows[1].ToolCalls)
+	}
+}

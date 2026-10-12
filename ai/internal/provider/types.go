@@ -17,6 +17,9 @@ type Message struct {
 	// message.
 	ToolCallID string `json:"tool_call_id,omitempty"`
 	ToolName   string `json:"tool_name,omitempty"`
+
+	// A replayed result a local model fetched, which a cloud provider must not see.
+	LocalOnly bool `json:"-"`
 }
 
 // Image is one attachment, already base64-encoded.

@@ -71,19 +71,23 @@ func runChat(_ *cobra.Command, _ []string) error {
 		}
 
 		msgs := rt.History.Messages()
+		providerName := rt.Registry.ProviderNameFor(context.Background(), rt.Registry.Model())
 		// Must mirror the HTTP server's injections.
+		if providerName != "ollama" {
+			history.WithholdLocalResults(msgs)
+		}
 		if blk := rt.Tools.MemoryBlock(); blk != "" && len(msgs) > 0 && msgs[0].Role == "system" {
 			msgs[0].Content += "\n\n" + blk
 		}
 		if rt.Cfg.Context.DesktopState && len(msgs) > 0 &&
-			(rt.Cfg.Context.DesktopStateRemote || rt.Registry.ProviderNameFor(context.Background(), rt.Registry.Model()) == "ollama") {
+			(rt.Cfg.Context.DesktopStateRemote || providerName == "ollama") {
 			if blk := rt.Tools.DesktopContext(context.Background()); blk != "" {
 				last := len(msgs) - 1
 				msgs[last].Content = blk + "\n\n" + msgs[last].Content
 			}
 		}
 
-		fullResponse, recs, err := runChatTurn(rt, scanner, msgs, input)
+		fullResponse, recs, err := runChatTurn(rt, scanner, msgs, input, providerName)
 		fmt.Println()
 
 		if err != nil {
@@ -106,7 +110,7 @@ func runChat(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func runChatTurn(rt *runtimeContext, scanner *bufio.Scanner, msgs []provider.Message, userText string) (string, []history.ToolRecord, error) {
+func runChatTurn(rt *runtimeContext, scanner *bufio.Scanner, msgs []provider.Message, userText, providerName string) (string, []history.ToolRecord, error) {
 	const maxIterations = 5
 	opts := provider.ChatOptions{Tools: cliProviderTools(rt.Tools.List())}
 	ctx := context.Background()
@@ -153,7 +157,7 @@ func runChatTurn(rt *runtimeContext, scanner *bufio.Scanner, msgs []provider.Mes
 				}
 				fmt.Printf("\n[tool %s]\n", tc.Name)
 			}
-			recs = append(recs, history.ToolRecord{ToolCall: tc, Result: result, Error: errText})
+			recs = append(recs, history.ToolRecord{ToolCall: tc, Result: result, Error: errText, Provider: providerName})
 			msgs = append(msgs, provider.Message{
 				Role:       "tool",
 				ToolCallID: tc.ID,

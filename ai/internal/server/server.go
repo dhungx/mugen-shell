@@ -264,6 +264,9 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 	flusher.Flush()
 
 	providerName := s.registry.ProviderNameFor(r.Context(), model)
+	if providerName != "ollama" {
+		history.WithholdLocalResults(msgs)
+	}
 
 	// Behind the persona, an attachment with no prompt reads as "nothing was asked".
 	if last := len(msgs) - 1; last >= 0 && req.Message == "" && len(req.Attachments) > 0 {
@@ -392,7 +395,7 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 
 		firstOfIter := len(turnToolCalls)
 		for _, tc := range iterToolCalls {
-			turnToolCalls = append(turnToolCalls, history.ToolRecord{ToolCall: tc})
+			turnToolCalls = append(turnToolCalls, history.ToolRecord{ToolCall: tc, Provider: providerName})
 		}
 		sendEvent(map[string]any{"tool_calls": iterToolCalls})
 

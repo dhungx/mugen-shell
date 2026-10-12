@@ -557,3 +557,57 @@ func TestContextDroppedCountsStoredRows(t *testing.T) {
 		t.Fatalf("dropped = %d, want 2 stored rows (user + tool turn)", got)
 	}
 }
+
+func TestReplayedResultsRememberWhetherALocalModelFetchedThem(t *testing.T) {
+	h, _ := newTestHistory(t)
+	convID, _ := h.NewConversation("m", false)
+	recs := toolRecords("from ollama", "from an older row", "from claude")
+	recs[0].Provider = "ollama"
+	recs[2].Provider = "anthropic"
+	addToolTurn(t, h, "q", "a", recs)
+
+	want := map[string]bool{"from ollama": true, "from an older row": true, "from claude": false}
+	for _, msgs := range [][]provider.Message{h.Messages(), reloaded(t, h, convID)} {
+		for _, m := range msgs {
+			if m.Role != "tool" {
+				continue
+			}
+			if m.LocalOnly != want[m.Content] {
+				t.Errorf("%q: LocalOnly = %v, want %v", m.Content, m.LocalOnly, want[m.Content])
+			}
+		}
+	}
+}
+
+func TestWithholdLocalResultsBlanksOnlyTheLocalOnes(t *testing.T) {
+	msgs := []provider.Message{
+		{Role: "user", Content: "q"},
+		{Role: "tool", Content: "secret notification text", LocalOnly: true},
+		{Role: "tool", Content: "cloud result"},
+		{Role: "assistant", Content: "reply"},
+	}
+	WithholdLocalResults(msgs)
+
+	if msgs[1].Content != withheldResult {
+		t.Errorf("local result = %q, want it withheld", msgs[1].Content)
+	}
+	for _, i := range []int{0, 2, 3} {
+		if msgs[i].Content == withheldResult {
+			t.Errorf("message %d was withheld but did not come from a local model", i)
+		}
+	}
+}
+
+func TestWithholdingDoesNotTouchTheHistoryItself(t *testing.T) {
+	h, _ := newTestHistory(t)
+	h.NewConversation("m", false)
+	addToolTurn(t, h, "q", "a", toolRecords("kept"))
+
+	WithholdLocalResults(h.Messages())
+
+	for _, m := range h.Messages() {
+		if m.Role == "tool" && m.Content != "kept" {
+			t.Fatalf("history copy changed to %q", m.Content)
+		}
+	}
+}
