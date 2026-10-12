@@ -256,7 +256,7 @@ QtObject {
         // Same atomic tmp + rename as saveSettings — cp truncates in place.
         resetProcess.command = [
             "bash", "-c",
-            "mkdir -p \"$1\" && tmp=\"$3.$$.tmp\" && cp \"$2\" \"$tmp\" && mv \"$tmp\" \"$3\"",
+            "umask 077 && mkdir -p \"$1\" && tmp=\"$3.$$.tmp\" && cp \"$2\" \"$tmp\" && mv \"$tmp\" \"$3\"",
             "bash", configDir, defaultSettingsFile, userSettingsFile
         ]
         resetProcess.running = true
