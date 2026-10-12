@@ -22,6 +22,19 @@ Item {
     })
     
     property var currentNotification: null
+    readonly property int repopCooldownMs: 30000
+    property var hiddenAt: ({})
+    property bool popupWasOpen: false
+
+    function markHidden(key) {
+        const now = Date.now()
+        const next = {}
+        for (const k in hiddenAt) {
+            if (now - hiddenAt[k] < repopCooldownMs) next[k] = hiddenAt[k]
+        }
+        next[key] = now
+        hiddenAt = next
+    }
 
     Timer {
         id: autoCloseTimer
@@ -57,6 +70,10 @@ Item {
             return
         }
 
+        if (currentNotification && currentNotification.key !== notification.key
+                && modeManager.isMode("notification-popup")) {
+            markHidden(currentNotification.key)
+        }
         currentNotification = notification
 
         if (modeManager.isMode("normal")) {
@@ -81,7 +98,10 @@ Item {
             if (root.currentNotification && root.currentNotification.key === entry.key
                     && root.modeManager.isMode("notification-popup")) {
                 root.currentNotification = entry
-                root.restartAutoClose()
+                return
+            }
+            const hidden = root.hiddenAt[entry.key]
+            if (hidden !== undefined && Date.now() - hidden < root.repopCooldownMs) {
                 return
             }
             root.show(entry)
@@ -92,9 +112,14 @@ Item {
         target: modeManager
         function onCurrentModeChanged() {
             if (modeManager.isMode("notification-popup")) {
+                root.popupWasOpen = true
                 root.restartAutoClose()
             } else {
                 autoCloseTimer.stop()
+                if (root.popupWasOpen && root.currentNotification) {
+                    root.markHidden(root.currentNotification.key)
+                }
+                root.popupWasOpen = false
             }
         }
     }
