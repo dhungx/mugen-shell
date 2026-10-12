@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode"
 
 	"github.com/spf13/cobra"
 	"github.com/tmy7533018/mugen-ai/internal/history"
@@ -169,7 +170,12 @@ func cliConfirm(scanner *bufio.Scanner, tc provider.ToolCall, target string) boo
 	args, _ := json.Marshal(tc.Arguments)
 	fmt.Printf("\n[confirm] %s %s\n", tc.Name, args)
 	if target != "" {
-		fmt.Printf("  target: %s\n", target)
+		fmt.Printf("  target: %s\n", strings.Map(func(r rune) rune {
+			if unicode.IsControl(r) {
+				return -1
+			}
+			return r
+		}, target))
 	}
 	fmt.Print("approve? [y/N]: ")
 	if !scanner.Scan() {
