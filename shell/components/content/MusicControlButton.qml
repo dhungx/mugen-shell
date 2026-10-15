@@ -44,6 +44,7 @@ Item {
             id: heartbeatAnimation
             loops: Animation.Infinite
             running: mouseArea.containsMouse
+            paused: heartbeatAnimation.running && !Theme.Motion.ambient
             NumberAnimation { to: 1.14; duration: 420; easing.type: Easing.OutCubic }
             NumberAnimation { to: 1.0; duration: 420; easing.type: Easing.InCubic }
             PauseAnimation { duration: 200 }
@@ -74,8 +75,10 @@ Item {
     property real animDelay: Math.random() * 1600
 
     SequentialAnimation on floatX {
+        id: floatXAnimation
         loops: Animation.Infinite
         running: true
+        paused: floatXAnimation.running && !Theme.Motion.ambient
         PauseAnimation { duration: button.animDelay }
         NumberAnimation { to: button.offsetX * 8; duration: button.animDuration; easing.type: Easing.InOutSine }
         NumberAnimation { to: 0; duration: button.animDuration; easing.type: Easing.InOutSine }
@@ -84,8 +87,10 @@ Item {
     }
 
     SequentialAnimation on floatY {
+        id: floatYAnimation
         loops: Animation.Infinite
         running: true
+        paused: floatYAnimation.running && !Theme.Motion.ambient
         PauseAnimation { duration: button.animDelay }
         NumberAnimation { to: button.offsetY * 8; duration: button.animDuration; easing.type: Easing.InOutSine }
         NumberAnimation { to: 0; duration: button.animDuration; easing.type: Easing.InOutSine }

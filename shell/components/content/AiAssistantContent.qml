@@ -382,7 +382,7 @@ FocusScope {
                         SequentialAnimation on opacity {
                             id: breathAnim
                             loops: Animation.Infinite
-                            running: root.isThinking
+                            running: root.isThinking && Theme.Motion.ambient
                             NumberAnimation { to: 0.45; duration: 900; easing.type: Easing.InOutSine }
                             NumberAnimation { to: 1.0; duration: 900; easing.type: Easing.InOutSine }
                         }

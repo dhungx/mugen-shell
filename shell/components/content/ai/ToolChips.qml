@@ -67,7 +67,7 @@ Column {
             radius: root.modeManager.scale(9)
 
             property real pulse: 1.0
-            opacity: chip.pending ? chip.pulse : 1.0
+            opacity: chip.pending ? (Theme.Motion.ambient ? chip.pulse : 0.7) : 1.0
 
             color: chip.callError !== ""
                 ? Qt.rgba(0.85, 0.45, 0.45, 0.16)
@@ -80,7 +80,7 @@ Column {
             Behavior on color { ColorAnimation { duration: Theme.Motion.fast } }
 
             SequentialAnimation {
-                running: chip.pending
+                running: chip.pending && Theme.Motion.ambient
                 loops: Animation.Infinite
                 NumberAnimation { target: chip; property: "pulse"; to: 0.5; duration: 700; easing.type: Easing.InOutSine }
                 NumberAnimation { target: chip; property: "pulse"; to: 0.95; duration: 700; easing.type: Easing.InOutSine }

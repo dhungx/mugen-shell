@@ -695,8 +695,10 @@ Item {
                         }
                         
                         SequentialAnimation on yOffset {
+                            id: scrollArrowBounce
                             loops: Animation.Infinite
                             running: notificationList.hasMoreBelow
+                            paused: scrollArrowBounce.running && !Theme.Motion.ambient
                             
                             NumberAnimation {
                                 from: 0
@@ -730,8 +732,10 @@ Item {
                             opacity: 0.6
                             
                             SequentialAnimation on opacity {
+                                id: scrollArrowPulse
                                 loops: Animation.Infinite
                                 running: notificationList.hasMoreBelow
+                                paused: scrollArrowPulse.running && !Theme.Motion.ambient
                                 
                                 NumberAnimation {
                                     from: 0.6

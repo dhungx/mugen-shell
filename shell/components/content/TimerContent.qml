@@ -446,8 +446,10 @@ Item {
                 Behavior on color { ColorAnimation { duration: Theme.Motion.standard } }
 
                 SequentialAnimation on scale {
+                    id: urgentPulse
                     loops: Animation.Infinite
                     running: root.isUrgent
+                    paused: urgentPulse.running && !Theme.Motion.ambient
                     NumberAnimation { from: 1.0; to: 1.07; duration: 180; easing.type: Easing.OutQuad }
                     NumberAnimation { from: 1.07; to: 1.0; duration: 220; easing.type: Easing.InQuad }
                     PauseAnimation { duration: 600 }
@@ -547,8 +549,10 @@ Item {
                 font.letterSpacing: 1
 
                 SequentialAnimation on scale {
+                    id: alertingPulse
                     loops: Animation.Infinite
                     running: alertingLayout.visible
+                    paused: alertingPulse.running && Theme.Motion.reduced
                     NumberAnimation { from: 1.0; to: 1.08; duration: 500; easing.type: Easing.InOutSine }
                     NumberAnimation { from: 1.08; to: 1.0; duration: 500; easing.type: Easing.InOutSine }
                 }
