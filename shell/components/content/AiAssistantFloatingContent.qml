@@ -1310,7 +1310,7 @@ FocusScope {
 
             footer: Item {
                 id: confirmFooter
-                // A footer is its own component scope, so the card reads the panel through these.
+                // Lint reports one unqualified access per root.x read inside a footer, so relay them.
                 readonly property var theme: root.theme
                 readonly property var modeManager: root.modeManager
                 readonly property var pendingConfirm: root.pendingConfirm

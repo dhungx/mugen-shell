@@ -23,12 +23,12 @@ QtObject {
     property bool batteryIndicatorEnabled: false
     property string animationSpeed: "normal"  // "slow" | "normal" | "fast" | "instant"
     property real animationDurationMultiplier: 1.0
-    property string notificationSound: "None"  // filename in assets/sounds/, or "None"
+    property string notificationSound: "None"  // filename in Paths.soundsDir, or "None"
     property bool notificationsEnabled: true  // DnD = !notificationsEnabled
     property int notificationPopupTimeout: 5000  // ms, 0 = never auto-close
     property bool notificationSuppressOnFullscreen: false
     property string launcherTerminal: "kitty"  // command used to launch Terminal=true apps
-    property string timerSound: "None"  // filename in assets/sounds/, or "None"
+    property string timerSound: "None"  // filename in Paths.timerSoundsDir, or "None"
     property int lockTimerMinutes: 10  // hypridle screen-lock idle timeout
     property int idleSuspendMinutes: 30  // hypridle suspend timeout, 0 = disabled
     property int idleDpmsMinutes: 0  // hypridle screen-off timeout, 0 = disabled
