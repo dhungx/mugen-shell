@@ -213,6 +213,21 @@ func prefixKey(system, tools []map[string]any) string {
 	return hex.EncodeToString(sum[:])
 }
 
+func lastToolRoundLacksThinking(messages []Message, model, prefix string) bool {
+	for i := len(messages) - 1; i >= 0; i-- {
+		m := messages[i]
+		if m.Role != "assistant" {
+			continue
+		}
+		if len(m.ToolCalls) == 0 {
+			return false
+		}
+		turn := m.ToolCalls[0].anthropic
+		return turn == nil || !turn.signed() || (checksThinkingPrefix(model) && turn.prefix != prefix)
+	}
+	return false
+}
+
 func (a *Anthropic) Chat(ctx context.Context, model string, messages []Message, opts ChatOptions, fn func(ChatChunk) error) error {
 	return a.chat(ctx, model, messages, opts, thinkingAlwaysOn(model), fn)
 }
@@ -250,6 +265,10 @@ func (a *Anthropic) chat(ctx context.Context, model string, messages []Message, 
 	}
 
 	prefix := prefixKey(systemBlocks, toolsPayload)
+	if opts.Thinking && usesLegacyThinking(model) && lastToolRoundLacksThinking(messages, model, prefix) {
+		fmt.Fprintf(os.Stderr, "anthropic: %s can't think after a tool round that has no thinking block; sending this request without thinking\n", model)
+		opts.Thinking = false
+	}
 	thinkingOn := opts.Thinking || alwaysOn
 	msgs := make([]map[string]any, 0, len(messages))
 
