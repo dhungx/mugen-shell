@@ -47,10 +47,15 @@ Item {
         }
     }
 
+    function clearPairingError() {
+        bluetoothManager.pairingError = ""
+    }
+
     Connections {
         target: modeManager
         function onCurrentModeChanged() {
             if (modeManager.isMode("bluetooth")) {
+                root.clearPairingError()
                 bluetoothManager.refreshStatus()
                 bluetoothManager.refreshPairedDevices()
                 root.showAvailableDevices = false
@@ -175,7 +180,7 @@ Item {
                 if (idx < 0) return
                 if (root.showAvailableDevices) {
                     let dev = bluetoothManager.availableDevices[idx]
-                    if (dev) {
+                    if (dev && !root.bluetoothManager.isPairing) {
                         root.pairingDeviceIndex = idx
                         bluetoothManager.pairDevice(dev.address, dev.name || dev.address)
                     }
@@ -685,6 +690,7 @@ Item {
             modeManager.registerMode("bluetooth", root)
             if (modeManager.isMode("bluetooth")) {
                 modeManager.bump()
+                root.clearPairingError()
                 bluetoothManager.refreshStatus()
                 bluetoothManager.refreshPairedDevices()
                 root.showAvailableDevices = false

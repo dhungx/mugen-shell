@@ -13,6 +13,7 @@ QtObject {
     property bool isPairing: false
     property string connectionError: ""
     property string pairingError: ""
+    property string pairingAddress: ""
 
     readonly property bool hasConnectedDevices: {
         if (!pairedDevices || pairedDevices.length === 0) return false
@@ -82,6 +83,7 @@ QtObject {
     function pairDevice(deviceAddress, deviceName) {
         isPairing = true
         pairingError = ""
+        pairingAddress = deviceAddress
 
         let escapedAddress = deviceAddress.replace(/'/g, "'\\''")
         devicePairProcess.deviceAddress = deviceAddress
@@ -475,8 +477,6 @@ QtObject {
         }
 
         onExited: (code, status) => {
-            bluetoothManager.isConnecting = false
-
             if (code === 0) {
                 bluetoothManager.connectionError = ""
                 bluetoothManager.refreshPairedDevices()
@@ -495,6 +495,7 @@ QtObject {
                 }
             }
 
+            bluetoothManager.isConnecting = false
             deviceConnectProcess.outputData = ""
             deviceConnectProcess.errorData = ""
         }
@@ -521,8 +522,6 @@ QtObject {
         }
 
         onExited: (code, status) => {
-            bluetoothManager.isPairing = false
-
             if (code === 0) {
                 bluetoothManager.pairingError = ""
                 bluetoothManager.refreshPairedDevices()
@@ -541,6 +540,7 @@ QtObject {
                 }
             }
 
+            bluetoothManager.isPairing = false
             devicePairProcess.outputData = ""
             devicePairProcess.errorData = ""
         }

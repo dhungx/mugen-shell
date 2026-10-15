@@ -17,6 +17,8 @@ Rectangle {
 
     signal pairRequested()
 
+    readonly property bool showsPairingError: deviceItem.bluetoothManager.pairingError !== "" && deviceItem.bluetoothManager.pairingAddress === deviceItem.modelData.address
+
     readonly property bool isHighlighted: deviceMouseArea.containsMouse || deviceItem.ListView.isCurrentItem
 
     height: 60
@@ -77,11 +79,13 @@ Rectangle {
             Text {
                 // Unnamed devices are all MAC, so the signal is the only way to tell them apart.
                 text: {
+                    if (deviceItem.showsPairingError) return deviceItem.bluetoothManager.pairingError
                     const base = deviceItem.modelData.paired ? "Saved" : "New device"
                     const rssi = deviceItem.modelData.rssi
                     return rssi < 0 ? base + " · " + rssi + " dBm" : base
                 }
-                color: deviceItem.modelData.paired
+                color: deviceItem.showsPairingError ? Qt.rgba(0.90, 0.45, 0.55, 1.0)
+                    : deviceItem.modelData.paired
                     ? (deviceItem.theme ? deviceItem.theme.textSecondary : Qt.rgba(0.72, 0.72, 0.82, 0.70))
                     : (deviceItem.theme ? deviceItem.theme.accent : Qt.rgba(0.65, 0.55, 0.85, 0.9))
                 font.pixelSize: 11
