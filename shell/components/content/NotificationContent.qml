@@ -169,7 +169,7 @@ Item {
     property double clearAllStartedAt: 0
     
     function clearAllNotifications() {
-        if (notificationListModel.count === 0) return
+        if (isClearingAll || notificationListModel.count === 0) return
         
         clearAllStartedAt = Date.now()
         isClearingAll = true
