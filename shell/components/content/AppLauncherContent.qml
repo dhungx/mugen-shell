@@ -277,11 +277,8 @@ FocusScope {
 
     function saveState() {
         let json = JSON.stringify({ favorites: Object.keys(favoritesSet), groups: groups })
-        let escaped = json.replace(/'/g, "'\\''")
-        saveFavoritesProcess.command = [
-            "sh", "-c",
-            "d=\"${XDG_STATE_HOME:-$HOME/.local/state}/mugen-shell\"; mkdir -p \"$d\" && printf '%s' '" + escaped + "' > \"$d/launcher.json\""
-        ]
+        saveFavoritesProcess.command = Theme.JsonStore.atomicWriteArgv(
+            Theme.Paths.stateDir, Theme.Paths.stateDir + "/launcher.json", json)
         saveFavoritesProcess.running = true
     }
 
