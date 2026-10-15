@@ -15,6 +15,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 const sseDrainWait = 500 * time.Millisecond
@@ -142,8 +143,9 @@ func (t *httpTransport) post(callCtx context.Context, data []byte) {
 	case resp.StatusCode == http.StatusAccepted:
 		return // notification/response accepted, nothing comes back
 	case resp.StatusCode >= 400:
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		text := fmt.Sprintf("http transport: server returned status %d: %s", resp.StatusCode, t.redactURL(strings.TrimSpace(string(body))))
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, errorBodyWindow))
+		redacted := t.redactURL(strings.TrimSpace(string(body)))
+		text := fmt.Sprintf("http transport: server returned status %d: %s", resp.StatusCode, truncateRunes(redacted, errorBodyMax))
 		// A rejected session cannot be re-initialized in place, so hand the whole transport back to re-dial.
 		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusUnauthorized {
 			t.fail(errors.New(text))
@@ -173,6 +175,23 @@ func (t *httpTransport) post(callCtx context.Context, data []byte) {
 	if b := bytes.TrimSpace(body); len(b) > 0 {
 		t.deliver(b)
 	}
+}
+
+// Redaction runs over the larger window so a secret straddling the final cut is still matched whole.
+const (
+	errorBodyWindow = 16 << 10
+	errorBodyMax    = 4096
+)
+
+func truncateRunes(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	cut := max
+	for cut > 0 && !utf8.RuneStart(s[cut]) {
+		cut--
+	}
+	return s[:cut]
 }
 
 // net/http's *url.Error prints the full URL, and a hosted server's secret often rides in its path or query.

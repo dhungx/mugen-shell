@@ -598,3 +598,25 @@ func TestHTTPTransportCapsAJSONResponse(t *testing.T) {
 		t.Errorf("expected a synthesized cap error for id 9, got: %.200s", got)
 	}
 }
+
+func TestHTTPTransportRedactsASecretAcrossTheErrorBodyCut(t *testing.T) {
+	const seg = "ZQXJWKVB-token"
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		io.WriteString(w, strings.Repeat("x", errorBodyMax-6)+"/s/"+seg+"/mcp")
+	}))
+	defer ts.Close()
+
+	tr, err := newHTTPTransport("test", ts.URL+"/s/"+seg+"/mcp")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tr.close()
+	if err := tr.send(context.Background(), []byte(`{"jsonrpc":"2.0","id":3,"method":"tools/call"}`)); err != nil {
+		t.Fatal(err)
+	}
+	got := string(recvWithTimeout(t, tr))
+	if !strings.Contains(got, `"id":3`) || strings.Contains(got, "ZQX") || strings.Contains(got, "-token") {
+		t.Errorf("secret fragment survived the cut: %.100s", got)
+	}
+}
