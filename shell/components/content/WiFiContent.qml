@@ -29,7 +29,12 @@ Item {
         target: wifiManager
 
         function onIsConnectingChanged() {
-            if (!wifiManager.isConnecting && wifiManager.connectionError === "") {
+            if (wifiManager.isConnecting)
+                return
+            if (wifiManager.connectionError !== "") {
+                if (root.connectingNetworkIndex >= 0)
+                    networkList.expandedIndex = root.connectingNetworkIndex
+            } else {
                 root.connectingNetworkIndex = -1
                 networkList.expandedIndex = -1
                 modeManager.closeAllModes()
@@ -160,6 +165,7 @@ Item {
                     return
                 }
                 if (!net.secured) {
+                    if (root.wifiManager.isConnecting) return
                     root.connectingNetworkIndex = idx
                     wifiManager.connectToNetwork(net.ssid, "")
                 } else {

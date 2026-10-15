@@ -29,6 +29,14 @@ Rectangle {
     implicitHeight: targetHeight
     height: targetHeight
 
+    readonly property bool showsError: root.wifiManager.connectionError !== "" && root.connectingNetworkIndex === root.index
+    readonly property real errorExtra: root.showsError ? errorText.implicitHeight + 4 : 0
+    readonly property real expandedHeight: 140 + root.errorExtra
+
+    onExpandedHeightChanged: {
+        if (root.isExpanded) targetHeight = root.expandedHeight
+    }
+
     readonly property bool isHighlighted: (rowHover.hovered || root.isCurrentItem) && !root.isExpanded
 
     color: (rowHover.hovered || root.isCurrentItem)
@@ -62,7 +70,7 @@ Rectangle {
 
     onIsExpandedChanged: {
         if (root.isExpanded) {
-            targetHeight = 140
+            targetHeight = root.expandedHeight
             if (root.modelData && root.modelData.secured) {
                 Qt.callLater(() => {
                     if (passwordInput) passwordInput.forceActiveFocus()
@@ -76,7 +84,7 @@ Rectangle {
 
     Component.onCompleted: {
         if (root.isExpanded) {
-            targetHeight = 140
+            targetHeight = root.expandedHeight
         } else {
             targetHeight = 50
         }
@@ -182,7 +190,7 @@ Rectangle {
 
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: 80
+            Layout.preferredHeight: 80 + root.errorExtra
             visible: root.isExpanded
             opacity: root.isExpanded ? 1.0 : 0.0
 
@@ -286,8 +294,10 @@ Rectangle {
                     signal clicked()
 
                     onClicked: {
-                        if (root.wifiManager.isConnecting) return
-                        if (root.modelData && passwordInput.text.length > 0) {
+                        if (root.wifiManager.isConnecting || !root.modelData) return
+                        if (!root.modelData.secured) {
+                            root.connectToNetwork(root.modelData.ssid, "")
+                        } else if (passwordInput.text.length > 0) {
                             root.connectToNetwork(root.modelData.ssid, passwordInput.text)
                             passwordInput.text = ""
                         }
@@ -317,6 +327,7 @@ Rectangle {
                 }
 
                 Text {
+                    id: errorText
                     Layout.fillWidth: true
                     Layout.topMargin: -4
                     text: root.wifiManager.connectionError
@@ -325,7 +336,7 @@ Rectangle {
                     font.family: "M PLUS 2"
                     horizontalAlignment: Text.AlignLeft
                     wrapMode: Text.WordWrap
-                    visible: root.wifiManager.connectionError !== "" && root.connectingNetworkIndex === root.index
+                    visible: root.showsError
                 }
             }
         }
@@ -334,7 +345,7 @@ Rectangle {
     MouseArea {
         id: networkMouseArea
         anchors.fill: parent
-        anchors.bottomMargin: root.isExpanded ? 88 : 0
+        anchors.bottomMargin: root.isExpanded ? 88 + root.errorExtra : 0
 
         // hoverEnabled here would take the chevron's hover with it.
         HoverHandler {
@@ -360,7 +371,7 @@ Rectangle {
             }
 
             if (!root.modelData.secured) {
-                root.connectToNetwork(root.modelData.ssid, "")
+                if (!root.wifiManager.isConnecting) root.connectToNetwork(root.modelData.ssid, "")
             } else {
                 root.toggleExpanded()
             }

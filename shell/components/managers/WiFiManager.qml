@@ -189,8 +189,6 @@ QtObject {
         }
 
         onExited: (code, status) => {
-            wifiManager.isConnecting = false
-
             if (code === 0) {
                 wifiManager.connectionError = ""
                 wifiManager.refreshWifiStatus()
@@ -208,6 +206,7 @@ QtObject {
                 }
             }
 
+            wifiManager.isConnecting = false
             connectToNetworkProcess.outputData = ""
             connectToNetworkProcess.errorData = ""
         }
