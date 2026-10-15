@@ -574,3 +574,27 @@ func TestHTTPTransportRedactURL(t *testing.T) {
 		})
 	}
 }
+
+func TestHTTPTransportCapsAJSONResponse(t *testing.T) {
+	old := recvCap
+	recvCap = 200
+	defer func() { recvCap = old }()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, `{"jsonrpc":"2.0","id":9,"result":"`+strings.Repeat("x", 500)+`"}`)
+	}))
+	defer ts.Close()
+
+	tr, err := newHTTPTransport("test", ts.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tr.close()
+	if err := tr.send(context.Background(), []byte(`{"jsonrpc":"2.0","id":9,"method":"tools/call"}`)); err != nil {
+		t.Fatal(err)
+	}
+	got := recvWithTimeout(t, tr)
+	if !strings.Contains(string(got), `"error"`) || !strings.Contains(string(got), `"id":9`) || !strings.Contains(string(got), "exceeds") {
+		t.Errorf("expected a synthesized cap error for id 9, got: %.200s", got)
+	}
+}

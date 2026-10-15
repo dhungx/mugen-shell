@@ -161,9 +161,13 @@ func (t *httpTransport) post(callCtx context.Context, data []byte) {
 		drain.Stop()
 		return
 	}
-	body, err := io.ReadAll(io.LimitReader(resp.Body, maxMessageBytes))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, recvCap+1))
 	if err != nil {
 		t.deliverError(probe.ID, hasID, fmt.Sprintf("http transport: reading response: %v", err))
+		return
+	}
+	if int64(len(body)) > recvCap {
+		t.deliverError(probe.ID, hasID, fmt.Sprintf("http transport: response exceeds %d bytes", recvCap))
 		return
 	}
 	if b := bytes.TrimSpace(body); len(b) > 0 {
