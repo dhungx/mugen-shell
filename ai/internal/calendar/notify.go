@@ -48,7 +48,7 @@ func Notify(now time.Time) error {
 	}
 	defer store.Close()
 
-	events, err := store.ListToday()
+	events, err := store.ListDay(now)
 	if err != nil {
 		return nil
 	}

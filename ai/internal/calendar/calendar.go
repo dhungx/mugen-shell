@@ -237,8 +237,11 @@ func (s *Store) ListRange(start, end string) ([]Event, error) {
 }
 
 func (s *Store) ListToday() ([]Event, error) {
-	today := time.Now().Format("2006-01-02")
-	return s.query("SELECT id, date, time, title FROM events WHERE date = ? "+orderClause, today)
+	return s.ListDay(time.Now())
+}
+
+func (s *Store) ListDay(day time.Time) ([]Event, error) {
+	return s.query("SELECT id, date, time, title FROM events WHERE date = ? "+orderClause, day.Format("2006-01-02"))
 }
 
 func (s *Store) query(q string, args ...any) ([]Event, error) {

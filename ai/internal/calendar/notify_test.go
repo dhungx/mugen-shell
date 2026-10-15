@@ -74,3 +74,33 @@ func TestNotifyFiresAtPaddedTime(t *testing.T) {
 		t.Fatalf("notified again after already firing: %q", got2)
 	}
 }
+
+func TestNotifyUsesTheDayItWasGiven(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	t.Setenv("XDG_STATE_HOME", t.TempDir())
+	log := fakeNotifySend(t)
+
+	st, err := Open("")
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	today := time.Date(2030, 6, 15, 0, 0, 0, 0, time.Local)
+	if _, err := st.Add(today.Format("2006-01-02"), "", "all day"); err != nil {
+		t.Fatalf("add: %v", err)
+	}
+	st.Close()
+
+	if err := Notify(today.Add(-time.Second)); err != nil {
+		t.Fatalf("notify on the previous day: %v", err)
+	}
+	if got := readLog(t, log); got != "" {
+		t.Fatalf("fired on the day before: %q", got)
+	}
+
+	if err := Notify(today.Add(8 * time.Hour)); err != nil {
+		t.Fatalf("notify at 08:00: %v", err)
+	}
+	if got := strings.Count(readLog(t, log), "all day"); got != 1 {
+		t.Fatalf("fired %d times, want 1", got)
+	}
+}
