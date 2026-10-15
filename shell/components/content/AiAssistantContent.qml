@@ -597,7 +597,11 @@ FocusScope {
             onRead: data => {
                 if (!data) return
                 let line = data.trim()
-                if (!line.startsWith("data:")) return
+                // /chat streams only data: lines, so anything else is the body of a rejected request.
+                if (!line.startsWith("data:")) {
+                    if (line !== "") root.responseDisplay = "[error: " + line + "]"
+                    return
+                }
                 let jsonStr = line.substring(5).trim()
                 if (!jsonStr) return
                 try {
