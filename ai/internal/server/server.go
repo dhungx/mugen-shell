@@ -560,7 +560,9 @@ func (s *Server) handleSwitchModel(w http.ResponseWriter, r *http.Request) {
 
 	// Only the default for the next new conversation; existing rows keep their bound model.
 	s.registry.SetModel(req.Model)
-	_ = state.SaveModel(req.Model)
+	if err := state.SaveModel(req.Model); err != nil {
+		fmt.Fprintf(os.Stderr, "save model: %v\n", err)
+	}
 
 	writeJSON(w, map[string]string{"model": req.Model})
 }
