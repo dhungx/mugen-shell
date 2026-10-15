@@ -476,6 +476,7 @@ FocusScope {
     function deleteConversation(convId) {
         // The stream would keep writing into whichever conversation becomes current.
         if (streaming && convId === currentConvId) stopStreaming()
+        if (truncateProcess.running && convId === currentConvId) truncateProcess.abandoned = true
         deleteConvProcess.payload = String(convId)
         deleteConvProcess.running = true
     }
@@ -1969,8 +1970,10 @@ FocusScope {
                     if (obj.conversation_id !== undefined) {
                         root.turnOpened = true
                         root.turnConvId = obj.conversation_id
-                        root.currentConvId = obj.conversation_id
-                        if (obj.model) root.currentModel = obj.model
+                        if (root.streaming) {
+                            root.currentConvId = obj.conversation_id
+                            if (obj.model) root.currentModel = obj.model
+                        }
                         return
                     }
                     if (obj.error) {
@@ -1988,6 +1991,7 @@ FocusScope {
                         return
                     }
                     if (obj.tool_confirm) {
+                        if (!root.streaming) return
                         root.pendingConfirm = obj.tool_confirm
                         root.userScrolled = false
                         Qt.callLater(() => chatList.positionViewAtEnd())
