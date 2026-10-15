@@ -112,20 +112,34 @@ type ollamaToolCall struct {
 func (o *Ollama) Chat(ctx context.Context, model string, messages []Message, opts ChatOptions, fn func(ChatChunk) error) error {
 	// Unlike OpenAI, ollama wants tool results as plain {role:"tool", content} with no id.
 	msgs := make([]map[string]any, 0, len(messages))
-	for _, m := range messages {
+	lastUser := -1
+	for i, m := range messages {
+		if m.Role == "user" {
+			lastUser = i
+		}
+	}
+	for i, m := range messages {
 		msg := map[string]any{
 			"role":    m.Role,
 			"content": m.Content,
 		}
 		if len(m.Images) > 0 {
-			if !o.supportsVision(ctx, model) {
+			switch {
+			case o.supportsVision(ctx, model):
+				data := make([]string, len(m.Images))
+				for j, img := range m.Images {
+					data[j] = img.Data
+				}
+				msg["images"] = data
+			case i == lastUser:
 				return fmt.Errorf("%s cannot read images — switch to a vision model", model)
+			default:
+				placeholder := fmt.Sprintf("[image omitted: %s cannot see images]", model)
+				if m.Content != "" {
+					placeholder = m.Content + "\n" + placeholder
+				}
+				msg["content"] = placeholder
 			}
-			data := make([]string, len(m.Images))
-			for i, img := range m.Images {
-				data[i] = img.Data
-			}
-			msg["images"] = data
 		}
 		if len(m.ToolCalls) > 0 {
 			calls := make([]map[string]any, 0, len(m.ToolCalls))
