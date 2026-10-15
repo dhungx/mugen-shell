@@ -540,3 +540,36 @@ func TestRejectedAttachmentLeavesModelAndThinking(t *testing.T) {
 		t.Errorf("conversation = model %q thinking %v, want test-model and false", conv.Model, conv.Thinking)
 	}
 }
+
+func TestDeletingAMissingConversationDoesNotBroadcast(t *testing.T) {
+	s, _ := newChatServer(t, &scriptedProvider{})
+	postChat(t, s, chatJSON(t, "first", 0))
+	id := s.history.ConvID()
+
+	ch := s.events.subscribe()
+	defer s.events.unsubscribe(ch)
+
+	del := func(id int64) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodDelete, "/conversations/"+strconv.FormatInt(id, 10), nil)
+		req.SetPathValue("id", strconv.FormatInt(id, 10))
+		rec := httptest.NewRecorder()
+		s.handleDeleteConversation(rec, req)
+		return rec
+	}
+
+	if rec := del(id + 1000); rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	select {
+	case msg := <-ch:
+		t.Fatalf("broadcast for a missing id: %s", msg)
+	default:
+	}
+
+	del(id)
+	select {
+	case <-ch:
+	default:
+		t.Fatal("deleting a real conversation should broadcast")
+	}
+}

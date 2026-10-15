@@ -692,14 +692,18 @@ func (s *Server) handleDeleteConversation(w http.ResponseWriter, r *http.Request
 		return
 	}
 	s.chatSetupMu.Lock()
-	err := s.history.DeleteConversation(id)
+	before := s.history.ConvID()
+	deleted, err := s.history.DeleteConversation(id)
+	after := s.history.ConvID()
 	s.chatSetupMu.Unlock()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	s.events.broadcast("conversations", nil)
-	writeJSON(w, map[string]any{"current_id": s.history.ConvID()})
+	if deleted || after != before {
+		s.events.broadcast("conversations", nil)
+	}
+	writeJSON(w, map[string]any{"current_id": after})
 }
 
 // Retry and edit are the same operation here: truncate, then POST /chat as usual.

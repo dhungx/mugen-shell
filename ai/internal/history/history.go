@@ -364,32 +364,33 @@ func (h *History) NewConversation(model string, thinking bool) (int64, error) {
 	return id, nil
 }
 
-// DeleteConversation removes a conversation; if it was current, falls back
-// to the most recent remaining one (or no current at all).
-func (h *History) DeleteConversation(id int64) error {
+// DeleteConversation removes a conversation and reports whether it existed; if it
+// was current, falls back to the most recent remaining one (or no current at all).
+func (h *History) DeleteConversation(id int64) (bool, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	if err := h.store.DeleteConversation(id); err != nil {
-		return err
+	deleted, err := h.store.DeleteConversation(id)
+	if err != nil {
+		return false, err
 	}
 	if h.convID != id {
-		return nil
+		return deleted, nil
 	}
 	convs, err := h.store.ListConversations()
 	if err != nil {
-		return err
+		return deleted, err
 	}
 	var newID int64
 	if len(convs) > 0 {
 		newID = convs[0].ID
 	}
 	if err := h.switchLocked(newID); err != nil {
-		return err
+		return deleted, err
 	}
 	if newID == 0 {
-		return h.store.ClearCurrentConversationID()
+		return deleted, h.store.ClearCurrentConversationID()
 	}
-	return h.store.SetCurrentConversationID(newID)
+	return deleted, h.store.SetCurrentConversationID(newID)
 }
 
 // DeleteAll removes every conversation and resets the current pointer, so the

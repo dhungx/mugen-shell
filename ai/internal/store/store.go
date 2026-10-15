@@ -286,9 +286,14 @@ func (s *Store) TouchConversation(id int64) error {
 	return err
 }
 
-func (s *Store) DeleteConversation(id int64) error {
-	_, err := s.db.Exec(`DELETE FROM conversations WHERE id = ?`, id)
-	return err
+// DeleteConversation reports whether a row existed to delete.
+func (s *Store) DeleteConversation(id int64) (bool, error) {
+	res, err := s.db.Exec(`DELETE FROM conversations WHERE id = ?`, id)
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
 }
 
 // ConversationCount returns how many conversations are stored.
