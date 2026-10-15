@@ -14,7 +14,7 @@ Common.IconButton {
 
     Layout.alignment: Qt.AlignVCenter
     Layout.leftMargin: spacing
-    opacityDuration: 150
+    opacityDuration: Theme.Motion.micro
 
     readonly property bool isInhibited: idleInhibitorManager ? idleInhibitorManager.isInhibited : false
     property bool isBlinking: false
@@ -119,7 +119,7 @@ Common.IconButton {
             property: "isBlinking"
             value: false
         }
-        PauseAnimation { duration: 100 }
+        PauseAnimation { duration: Theme.Motion.dur(100) }
         PropertyAction {
             target: idleToggleButton
             property: "isBlinking"

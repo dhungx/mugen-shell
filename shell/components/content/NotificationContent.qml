@@ -80,8 +80,8 @@ Item {
         }
     }
 
-    readonly property int dismissAnimationMs: 500
-    readonly property int dismissFlagClearMs: 950
+    readonly property int dismissAnimationMs: Theme.Motion.dur(500)
+    readonly property int dismissFlagClearMs: Theme.Motion.dur(950)
 
     // The swiped card is already hidden, so dropping it at once lets displaced close the whole gap.
     function removeNotificationImmediate(key) {
@@ -199,7 +199,7 @@ Item {
     // Wait for removal animations to finish before actually deleting
     Timer {
         id: clearAllFinalTimer
-        interval: 500
+        interval: Theme.Motion.dur(500)
         onTriggered: {
             notificationListModel.clear()
             removingNotifications = {}

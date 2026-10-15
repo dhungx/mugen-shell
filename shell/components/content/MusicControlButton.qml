@@ -35,7 +35,7 @@ Item {
         opacity: mouseArea.containsMouse ? 1.0 : 0.85
 
         Behavior on opacity {
-            NumberAnimation { duration: 450; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Theme.Motion.gentle; easing.type: Easing.OutCubic }
         }
 
         property real heartbeat: 1.0
@@ -106,7 +106,7 @@ Item {
         scale: mouseArea.containsMouse ? button.hoverScale : 1.0
 
         Behavior on scale { NumberAnimation { duration: Theme.Motion.slow; easing.type: Easing.OutCubic } }
-        Behavior on color { ColorAnimation { duration: 350; easing.type: Easing.OutCubic } }
+        Behavior on color { ColorAnimation { duration: Theme.Motion.standard; easing.type: Easing.OutCubic } }
     }
 
     Text {
@@ -118,7 +118,7 @@ Item {
         scale: mouseArea.containsMouse ? button.hoverScale : 1.0
 
         Behavior on scale { NumberAnimation { duration: Theme.Motion.slow; easing.type: Easing.OutCubic } }
-        Behavior on color { ColorAnimation { duration: 350; easing.type: Easing.OutCubic } }
+        Behavior on color { ColorAnimation { duration: Theme.Motion.standard; easing.type: Easing.OutCubic } }
     }
 
     MouseArea {

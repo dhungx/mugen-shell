@@ -323,7 +323,7 @@ FocusScope {
                                 scale: parent.clickScale
                                 Behavior on scale {
                                     NumberAnimation {
-                                        duration: 120
+                                        duration: Theme.Motion.micro
                                         easing.type: Easing.OutCubic
                                     }
                                 }
@@ -346,7 +346,7 @@ FocusScope {
                             }
                             Timer {
                                 id: copyClickReset
-                                interval: 160
+                                interval: Theme.Motion.dur(160)
                                 repeat: false
                                 onTriggered: parent.clickScale = 1.0
                             }

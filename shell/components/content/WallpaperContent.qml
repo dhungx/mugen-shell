@@ -345,7 +345,7 @@ FocusScope {
                     clip: true
 
                     highlightFollowsCurrentItem: true
-                    highlightMoveDuration: 300
+                    highlightMoveDuration: Theme.Motion.standard
                     highlightRangeMode: ListView.StrictlyEnforceRange
                     preferredHighlightBegin: width / 2 - modeManager.scale(120)
                     preferredHighlightEnd: width / 2 + modeManager.scale(120)

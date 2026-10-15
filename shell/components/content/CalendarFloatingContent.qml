@@ -131,10 +131,10 @@ Item {
 
     SequentialAnimation {
         id: selectedFlip
-        NumberAnimation { target: root; property: "selectedHeaderOpacity"; to: 0.0; duration: 120; easing.type: Easing.OutCubic }
+        NumberAnimation { target: root; property: "selectedHeaderOpacity"; to: 0.0; duration: Theme.Motion.micro; easing.type: Easing.OutCubic }
         ParallelAnimation {
-            NumberAnimation { target: root; property: "selectedHeaderShift"; from: -6; to: 0; duration: 260; easing.type: Easing.OutCubic }
-            NumberAnimation { target: root; property: "selectedHeaderOpacity"; to: 1.0; duration: 260; easing.type: Easing.OutCubic }
+            NumberAnimation { target: root; property: "selectedHeaderShift"; from: -6; to: 0; duration: Theme.Motion.standard; easing.type: Easing.OutCubic }
+            NumberAnimation { target: root; property: "selectedHeaderOpacity"; to: 1.0; duration: Theme.Motion.standard; easing.type: Easing.OutCubic }
         }
     }
 
@@ -148,8 +148,8 @@ Item {
         property real shiftDir: 0
 
         ParallelAnimation {
-            NumberAnimation { target: root; property: "gridOpacity"; to: 0.0; duration: 160; easing.type: Easing.OutCubic }
-            NumberAnimation { target: root; property: "gridShift"; to: monthFlip.shiftDir * -18; duration: 160; easing.type: Easing.OutCubic }
+            NumberAnimation { target: root; property: "gridOpacity"; to: 0.0; duration: Theme.Motion.micro; easing.type: Easing.OutCubic }
+            NumberAnimation { target: root; property: "gridShift"; to: monthFlip.shiftDir * -18; duration: Theme.Motion.micro; easing.type: Easing.OutCubic }
         }
         ScriptAction {
             script: {

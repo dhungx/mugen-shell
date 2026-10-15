@@ -71,7 +71,7 @@ Rectangle {
     // Delayed so the fade-out is visible before the height collapse eats it
     Timer {
         id: collapseHeightTimer
-        interval: 150
+        interval: Theme.Motion.dur(150)
         running: notificationItem.isRemoving
         onTriggered: {
             notificationItem.shouldCollapseHeight = true
@@ -81,7 +81,7 @@ Rectangle {
 
     Behavior on height {
         NumberAnimation {
-            duration: shouldCollapseHeight ? 350 : 300
+            duration: shouldCollapseHeight ? Theme.Motion.dur(350) : Theme.Motion.dur(300)
             easing.type: shouldCollapseHeight ? Easing.InOutCubic : Easing.OutCubic
         }
     }

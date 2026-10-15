@@ -110,7 +110,7 @@ Item {
                 to: "visible"
                 SequentialAnimation {
                     PauseAnimation { duration: Theme.Motion.fast }
-                    NumberAnimation { property: "opacity"; duration: 350; easing.type: Easing.InOutCubic }
+                    NumberAnimation { property: "opacity"; duration: Theme.Motion.standard; easing.type: Easing.InOutCubic }
                 }
             }
         ]

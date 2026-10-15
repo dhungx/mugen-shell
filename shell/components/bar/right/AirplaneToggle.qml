@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import "../../common" as Common
+import "../../../lib" as Theme
 
 Common.IconButton {
     id: airplaneToggleButton
@@ -11,7 +12,7 @@ Common.IconButton {
     required modeManager
 
     Layout.alignment: Qt.AlignVCenter
-    opacityDuration: 150
+    opacityDuration: Theme.Motion.micro
 
     rig: Common.ShakeRig { source: airplaneToggleButton.icons ? airplaneToggleButton.icons.airplaneSvg : "" }
 
