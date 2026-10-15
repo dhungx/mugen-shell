@@ -282,7 +282,7 @@ ShellRoot {
             onApplyTimerSound: name => root.applyTimerSound(name)
             onOpenYuraSettings: {
                 openYuraSettingsProcess.command =
-                    ["bash", Quickshell.shellDir + "/scripts/toggle-yura-settings.sh"]
+                    ["bash", Quickshell.shellDir + "/scripts/toggle-yura-settings.sh", "--open"]
                 openYuraSettingsProcess.running = true
             }
             onOpenUrl: url => {
