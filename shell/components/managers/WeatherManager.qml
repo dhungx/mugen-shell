@@ -24,6 +24,7 @@ QtObject {
     property string errorText: ""
 
     property var hourly: []
+    property var utcOffsetSeconds: null
     property var daily: []
 
     onEnabledChanged: {
@@ -69,6 +70,7 @@ QtObject {
             "weatherCode": weatherCode,
             "isDay": isDay,
             "hourly": hourly,
+            "utcOffsetSeconds": utcOffsetSeconds,
             "daily": daily
         })
         saveCacheProcess.command = Theme.JsonStore.atomicWriteArgv(
@@ -90,6 +92,7 @@ QtObject {
             isDay = c.isDay
             if (c.locationName) locationName = c.locationName
             if (c.hourly) hourly = c.hourly
+            if (typeof c.utcOffsetSeconds === "number") utcOffsetSeconds = c.utcOffsetSeconds
             if (c.daily) daily = c.daily
             ready = true
             if (typeof c.latitude === "number" && typeof c.longitude === "number") {
@@ -279,6 +282,7 @@ QtObject {
                     weatherManager.wind = cur.wind_speed_10m
                     weatherManager.weatherCode = cur.weather_code
                     weatherManager.isDay = cur.is_day === 1
+                    if (typeof j.utc_offset_seconds === "number") weatherManager.utcOffsetSeconds = j.utc_offset_seconds
                     let h = j.hourly
                     if (h && h.time) {
                         let rows = []

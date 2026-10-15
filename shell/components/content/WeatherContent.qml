@@ -82,9 +82,11 @@ Item {
     function hourlyStart() {
         let h = weatherManager ? weatherManager.hourly : []
         if (!h || h.length === 0) return 0
-        let now = new Date()
+        let off = weatherManager.utcOffsetSeconds
+        if (typeof off !== "number") off = -new Date().getTimezoneOffset() * 60
+        let nowHour = new Date(Date.now() + off * 1000).toISOString().substring(0, 13)
         for (let i = 0; i < h.length; i++) {
-            if (new Date(h[i].time) >= now) return Math.max(0, i - 1)
+            if (h[i].time.substring(0, 13) >= nowHour) return i
         }
         return 0
     }
