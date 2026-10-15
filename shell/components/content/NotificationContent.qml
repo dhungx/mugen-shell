@@ -249,8 +249,8 @@ Item {
         // Hyprland's focus_on_activate is off, so the app's own activation only marks it urgent.
         if (notif.desktopEntry && notif.desktopEntry.length > 0) {
             launchAppProcess.command = invoked
-                ? ["mugen-ai", "hypr", "focus-or-launch", "--no-launch", notif.desktopEntry]
-                : ["mugen-ai", "hypr", "focus-or-launch", notif.desktopEntry]
+                ? ["mugen-ai", "hypr", "focus-or-launch", "--no-launch", "--", notif.desktopEntry]
+                : ["mugen-ai", "hypr", "focus-or-launch", "--", notif.desktopEntry]
             launchAppProcess.running = true
         }
         if (!keep) removeNotification(notif.key)
