@@ -251,7 +251,7 @@ ShellRoot {
 
         const nums = [r.x, r.y, r.w, r.h, r.radius, r.opacity,
                       r.exitX, r.exitY, r.exitW, r.exitH, r.exitRadius]
-        if (typeof r.screen !== "string" || nums.some(n => !isFinite(n))
+        if (typeof r.screen !== "string" || nums.some(n => !Number.isFinite(n))
             || r.w <= 0 || r.h <= 0 || r.exitW <= 0 || r.exitH <= 0) {
             maybeSendHide()
             return
