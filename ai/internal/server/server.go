@@ -184,6 +184,11 @@ func (s *Server) beginChatTurn(req chatRequest) (convID int64, model string, thi
 		return 0, "", false, nil, http.StatusBadRequest, err
 	}
 
+	att, err := attach.Load(req.Attachments)
+	if err != nil {
+		return 0, "", false, nil, http.StatusBadRequest, err
+	}
+
 	model = s.history.ConvModel()
 	if req.Model != "" && req.Model != model {
 		model = req.Model
@@ -207,11 +212,6 @@ func (s *Server) beginChatTurn(req chatRequest) (convID int64, model string, thi
 			}
 		}
 	}
-
-	att, err := attach.Load(req.Attachments)
-	if err != nil {
-		return 0, "", false, nil, http.StatusBadRequest, err
-	}
 	if err = s.history.AddWithAttachments("user", req.Message, model, thinking, req.Attachments, att); err != nil {
 		return 0, "", false, nil, http.StatusInternalServerError, err
 	}
@@ -226,6 +226,12 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil ||
 		(req.Message == "" && len(req.Attachments) == 0) {
 		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+
+	// Outside chatSetupMu: an uncached probe can take seconds and would serialize turns.
+	if req.Model != "" && s.registry.ProviderNameFor(r.Context(), req.Model) == "" {
+		http.Error(w, fmt.Sprintf("no provider is serving %q right now", req.Model), http.StatusBadRequest)
 		return
 	}
 

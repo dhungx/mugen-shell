@@ -493,3 +493,50 @@ func TestChatWithholdsALocalModelsToolResultFromACloudModel(t *testing.T) {
 		t.Errorf("stored tool_calls = %s, want the provider that ran them", rows[1].ToolCalls)
 	}
 }
+
+type twoModelProvider struct{ scriptedProvider }
+
+func (p *twoModelProvider) Models(context.Context) ([]string, error) {
+	return []string{"test-model", "other-model"}, nil
+}
+
+func TestUnknownModelLeavesTheBinding(t *testing.T) {
+	s, st := newChatServer(t, &twoModelProvider{})
+	postChat(t, s, chatJSON(t, "first", 0))
+	id := s.history.ConvID()
+
+	body, _ := json.Marshal(map[string]any{"message": "again", "conversation_id": id, "model": "no-such-model"})
+	rec := postChat(t, s, string(body))
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", rec.Code)
+	}
+	conv, err := st.GetConversation(id)
+	if err != nil || conv == nil {
+		t.Fatalf("get conversation: %v", err)
+	}
+	if conv.Model != "test-model" {
+		t.Errorf("bound model = %q, want it unchanged", conv.Model)
+	}
+}
+
+func TestRejectedAttachmentLeavesModelAndThinking(t *testing.T) {
+	s, st := newChatServer(t, &twoModelProvider{})
+	postChat(t, s, chatJSON(t, "first", 0))
+	id := s.history.ConvID()
+
+	body, _ := json.Marshal(map[string]any{
+		"message": "again", "conversation_id": id, "model": "other-model",
+		"thinking": true, "attachments": []string{"relative/path.png"},
+	})
+	rec := postChat(t, s, string(body))
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", rec.Code)
+	}
+	conv, err := st.GetConversation(id)
+	if err != nil || conv == nil {
+		t.Fatalf("get conversation: %v", err)
+	}
+	if conv.Model != "test-model" || conv.Thinking {
+		t.Errorf("conversation = model %q thinking %v, want test-model and false", conv.Model, conv.Thinking)
+	}
+}
