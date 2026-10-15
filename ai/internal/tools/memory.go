@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/tmy7533018/mugen-ai/internal/store"
 )
@@ -133,6 +134,17 @@ func (r *Registry) MemoryBlock() string {
 
 // Entries are rendered into prompts, so a line break in one could open a new section there.
 func oneLine(s string) string {
+	s = strings.Map(func(r rune) rune {
+		switch {
+		case unicode.IsSpace(r):
+			return ' '
+		case r == '\u200c' || r == '\u200d':
+			return r
+		case unicode.In(r, unicode.Cc, unicode.Cf):
+			return -1
+		}
+		return r
+	}, s)
 	return strings.Join(strings.Fields(s), " ")
 }
 
