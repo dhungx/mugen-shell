@@ -72,7 +72,7 @@ func expandRow(rowID int64, role, content string, toolCalls []byte, att attach.A
 	}
 	legacy := true
 	for _, r := range recs {
-		if r.Result != "" || r.Error != "" {
+		if r.Result != "" || r.Error != "" || r.Provider != "" {
 			legacy = false
 			break
 		}
