@@ -445,7 +445,10 @@ Item {
 
                 Behavior on color { ColorAnimation { duration: Theme.Motion.standard } }
 
-                SequentialAnimation on scale {
+                property real pulseScale: 1.0
+                scale: Theme.Motion.reduced ? 1.0 : pulseScale
+
+                SequentialAnimation on pulseScale {
                     id: urgentPulse
                     loops: Animation.Infinite
                     running: root.isUrgent
@@ -548,7 +551,10 @@ Item {
                 font.family: "M PLUS 2"
                 font.letterSpacing: 1
 
-                SequentialAnimation on scale {
+                property real pulseScale: 1.0
+                scale: Theme.Motion.reduced ? 1.0 : pulseScale
+
+                SequentialAnimation on pulseScale {
                     id: alertingPulse
                     loops: Animation.Infinite
                     running: alertingLayout.visible

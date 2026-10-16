@@ -62,7 +62,7 @@ Item {
             animationSpeed: 0.05
             pointCount: 16
             running: true
-            scale: glowLayer.heartbeat
+            scale: Theme.Motion.reduced ? 1.0 : glowLayer.heartbeat
         }
     }
 
@@ -98,7 +98,10 @@ Item {
         NumberAnimation { to: 0; duration: button.animDuration; easing.type: Easing.InOutSine }
     }
 
-    transform: Translate { x: button.floatX; y: button.floatY }
+    transform: Translate {
+        x: Theme.Motion.reduced ? 0 : button.floatX
+        y: Theme.Motion.reduced ? 0 : button.floatY
+    }
 
     UI.SvgIcon {
         id: iconSvg

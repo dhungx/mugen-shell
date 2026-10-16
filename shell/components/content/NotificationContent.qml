@@ -729,9 +729,10 @@ Item {
                             height: 24
                             source: arrowSvg
                             color: theme ? theme.glowPrimary : Qt.rgba(0.65, 0.55, 0.85, 1.0)
-                            opacity: 0.6
+                            property real pulseOpacity: 0.6
+                            opacity: Theme.Motion.reduced ? 0.6 : pulseOpacity
                             
-                            SequentialAnimation on opacity {
+                            SequentialAnimation on pulseOpacity {
                                 id: scrollArrowPulse
                                 loops: Animation.Infinite
                                 running: notificationList.hasMoreBelow
