@@ -11,7 +11,7 @@ Column {
     required property var theme
     required property var icons
     property var toolCalls: []
-    // Held by the caller: every streamed chunk rebuilds this component and would reset a local flag.
+    // Held by the caller: an append or a tool result rebuilds this component and would reset a local flag.
     property var openKeys: ({})
     property string keyPrefix: ""
     readonly property int collapsedMaxChars: 200

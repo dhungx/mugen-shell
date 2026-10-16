@@ -116,7 +116,7 @@ FocusScope {
         root.pendingAttachments = next
     }
 
-    // Reveal state lives here, not in the delegate: each chunk reassigns messages and rebuilds them.
+    // Reveal state lives here, not in the delegate: every append rebuilds the delegates.
     readonly property string typingSpeed: settingsManager ? settingsManager.yuraTypingSpeed : "instant"
     readonly property int revealStep: typingSpeed === "slow" ? 2 : typingSpeed === "normal" ? 6 : 16
     property int streamRevealed: 0
@@ -138,7 +138,7 @@ FocusScope {
     // An index only means something against the conversation it came from.
     onCurrentConvIdChanged: { editingIndex = -1; openDetails = ({}) }
 
-    // By message index (":<chip index>" added for a tool chip): each chunk rebuilds the delegates, and call ids may differ on reload.
+    // By message index (":<chip index>" added for a tool chip): every append rebuilds the delegates, and call ids may differ on reload.
     property var openDetails: ({})
     function toggleDetail(key) {
         let next = Object.assign({}, openDetails)
@@ -212,12 +212,13 @@ FocusScope {
 
     // Reasoning stops the moment the answer starts, so the elapsed time is frozen there.
     function freezeThinking() {
-        if (thinkingStartedAt === 0 || messages.length === 0) return
+        if (thinkingStartedAt === 0) return
         let elapsed = Date.now() - thinkingStartedAt
         thinkingStartedAt = 0
+        if (messages.length === 0) return
         let copy = messages.slice()
         let last = copy[copy.length - 1]
-        copy[copy.length - 1] = Object.assign({}, last, { thinkingMs: elapsed })
+        copy[copy.length - 1] = Object.assign({}, last, { thinkingMs: (last.thinkingMs || 0) + Math.max(1, elapsed) })
         messages = copy
     }
 
@@ -963,7 +964,7 @@ FocusScope {
             anchors.fill: parent
             spacing: modeManager.scale(14)
             clip: true
-            model: root.messages
+            model: root.messages.length
             interactive: true
 
             onContentHeightChanged: {
@@ -983,24 +984,26 @@ FocusScope {
                 width: chatList.width
                 implicitHeight: msgCol.implicitHeight + modeManager.scale(8)
 
-                readonly property bool isAssistant: modelData.role === "assistant"
-                readonly property bool hasServerId: !!modelData.id
+                readonly property var message: root.messages[index] || ({ content: "" })
+
+                readonly property bool isAssistant: delegateRoot.message.role === "assistant"
+                readonly property bool hasServerId: !!delegateRoot.message.id
                 readonly property bool isEditing: root.editingIndex === index
                 readonly property bool isLatest: index === root.messages.length - 1
                 readonly property bool isThinking: root.streaming
                     && isLatest
                     && isAssistant
-                    && modelData.content === ""
+                    && delegateRoot.message.content === ""
                 readonly property bool showInlineOrb: isAssistant && isLatest
-                readonly property int createdAt: modelData.createdAt || 0
+                readonly property int createdAt: delegateRoot.message.createdAt || 0
                 readonly property string stamp: {
                     if (delegateRoot.createdAt <= 0) return ""
                     let d = new Date(delegateRoot.createdAt * 1000)
                     let sameDay = d.toDateString() === new Date().toDateString()
                     return Qt.formatDateTime(d, sameDay ? "HH:mm" : "MMM d HH:mm")
                 }
-                readonly property string reasoning: modelData.thinking || ""
-                readonly property real reasoningMs: modelData.thinkingMs || 0
+                readonly property string reasoning: delegateRoot.message.thinking || ""
+                readonly property real reasoningMs: delegateRoot.message.thinkingMs || 0
                 readonly property var openDetails: root.openDetails
                 readonly property string detailKey: String(index)
                 readonly property bool reasoningOpen: !!openDetails[detailKey]
@@ -1009,11 +1012,11 @@ FocusScope {
                     : "Thinking\u2026"
                 readonly property bool startsContext: root.contextDropped > 0
                     && index === root.contextDropped
-                readonly property var toolCalls: modelData.toolCalls || []
-                readonly property var attachments: modelData.attachments || []
+                readonly property var toolCalls: delegateRoot.message.toolCalls || []
+                readonly property var attachments: delegateRoot.message.attachments || []
                 readonly property string displayContent: (isAssistant && isLatest && root.revealActive)
-                    ? modelData.content.substring(0, root.streamRevealed)
-                    : modelData.content
+                    ? delegateRoot.message.content.substring(0, root.streamRevealed)
+                    : delegateRoot.message.content
                 readonly property var assistantBlocks: isAssistant && !isThinking
                     ? root.parseBlocks(displayContent)
                     : []
@@ -1076,7 +1079,7 @@ FocusScope {
                     }
 
                     Item {
-                        visible: !delegateRoot.isAssistant && modelData.content !== ""
+                        visible: !delegateRoot.isAssistant && delegateRoot.message.content !== ""
                         width: parent.width
                         height: visible ? userBubble.height : 0
 
@@ -1113,7 +1116,7 @@ FocusScope {
                                 anchors.topMargin: userBubble.vPad
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: userBubble.width - userBubble.hPad * 2
-                                text: modelData.content
+                                text: delegateRoot.message.content
                                 wrapMode: Text.WordWrap
                                 color: root.theme ? root.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.90)
                                 font.pixelSize: modeManager.scale(14)
@@ -1141,7 +1144,7 @@ FocusScope {
 
                                 onVisibleChanged: {
                                     if (!visible) return
-                                    userEdit.text = modelData.content
+                                    userEdit.text = delegateRoot.message.content
                                     userEdit.cursorPosition = userEdit.text.length
                                     userEdit.forceActiveFocus()
                                 }
@@ -1175,23 +1178,28 @@ FocusScope {
                             width: parent.width
                             spacing: modeManager.scale(4)
 
-                            Row {
-                                id: reasoningHeader
-                                spacing: modeManager.scale(6)
+                            Item {
+                                width: reasoningHeader.implicitWidth
+                                height: reasoningHeader.implicitHeight
 
-                                Text {
-                                    text: delegateRoot.reasoningOpen ? "\u25be" : "\u25b8"
-                                    color: root.theme ? root.theme.textFaint : Qt.rgba(0.62, 0.62, 0.72, 0.6)
-                                    font.pixelSize: modeManager.scale(10)
-                                }
+                                Row {
+                                    id: reasoningHeader
+                                    spacing: modeManager.scale(6)
 
-                                Text {
-                                    text: delegateRoot.reasoningLabel
-                                    color: root.theme ? root.theme.textFaint : Qt.rgba(0.62, 0.62, 0.72, 0.6)
-                                    font.pixelSize: modeManager.scale(10)
-                                    font.family: "M PLUS 2"
-                                    font.italic: true
-                                    font.letterSpacing: 0.4
+                                    Text {
+                                        text: delegateRoot.reasoningOpen ? "\u25be" : "\u25b8"
+                                        color: root.theme ? root.theme.textFaint : Qt.rgba(0.62, 0.62, 0.72, 0.6)
+                                        font.pixelSize: modeManager.scale(10)
+                                    }
+
+                                    Text {
+                                        text: delegateRoot.reasoningLabel
+                                        color: root.theme ? root.theme.textFaint : Qt.rgba(0.62, 0.62, 0.72, 0.6)
+                                        font.pixelSize: modeManager.scale(10)
+                                        font.family: "M PLUS 2"
+                                        font.italic: true
+                                        font.letterSpacing: 0.4
+                                    }
                                 }
 
                                 MouseArea {
@@ -1227,18 +1235,20 @@ FocusScope {
                     }
 
                     Repeater {
-                        model: delegateRoot.assistantBlocks
+                        model: delegateRoot.assistantBlocks.length
 
                         delegate: Item {
+                            id: blockItem
                             width: msgCol.width
+                            readonly property var block: delegateRoot.assistantBlocks[index] || ({ type: "", lang: "", content: "" })
                             implicitHeight: blockText.visible ? blockText.implicitHeight : codeBlock.implicitHeight
 
                             Text {
                                 id: blockText
-                                visible: modelData.type === "text"
+                                visible: blockItem.block.type === "text"
                                 anchors.left: parent.left
                                 anchors.right: parent.right
-                                text: visible ? modelData.content : ""
+                                text: visible ? blockItem.block.content : ""
                                 textFormat: Text.MarkdownText
                                 wrapMode: Text.WordWrap
                                 color: root.theme ? root.theme.textPrimary : Qt.rgba(0.95, 0.93, 0.98, 0.95)
@@ -1252,14 +1262,14 @@ FocusScope {
 
                             Ai.CodeBlock {
                                 id: codeBlock
-                                visible: modelData.type === "code"
+                                visible: blockItem.block.type === "code"
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 modeManager: root.modeManager
                                 theme: root.theme
                                 icons: root.icons
-                                lang: visible ? modelData.lang : ""
-                                code: visible ? modelData.content : ""
+                                lang: visible ? blockItem.block.lang : ""
+                                code: visible ? blockItem.block.content : ""
                                 onCopyRequested: text => {
                                     copyProcess.text = text
                                     copyProcess.running = true
@@ -1271,12 +1281,11 @@ FocusScope {
                     Item {
                         width: parent.width
                         height: msgActions.height
-                        visible: modelData.content !== ""
+                        visible: delegateRoot.message.content !== ""
 
                         Ai.MessageActions {
                             id: msgActions
-                            anchors.left: delegateRoot.isAssistant ? parent.left : undefined
-                            anchors.right: delegateRoot.isAssistant ? undefined : parent.right
+                            x: delegateRoot.isAssistant ? 0 : parent.width - width
                             modeManager: root.modeManager
                             theme: root.theme
                             icons: root.icons
@@ -1290,7 +1299,7 @@ FocusScope {
                             Behavior on opacity { NumberAnimation { duration: Theme.Motion.fast; easing.type: Easing.OutCubic } }
 
                             onCopyRequested: {
-                                copyProcess.text = modelData.content
+                                copyProcess.text = delegateRoot.message.content
                                 copyProcess.running = true
                             }
                             onRetryRequested: root.retryFrom(index)
@@ -2109,14 +2118,23 @@ FocusScope {
                 if (!sameConv) root.revealActive = false
                 root.currentConvId = obj.id || 0
                 let msgs = obj.messages || []
-                root.messages = msgs.map(m => ({
-                    id: m.id,
-                    role: m.role,
-                    content: m.content,
-                    attachments: m.attachments || [],
-                    toolCalls: m.tool_calls || [],
-                    createdAt: m.created_at || 0
-                }))
+                let prev = sameConv ? root.messages : []
+                const aligned = msgs.length === prev.length && prev.every((o, j) => !o.id || o.id === msgs[j].id)
+                root.messages = msgs.map((m, i) => {
+                    let msg = {
+                        id: m.id,
+                        role: m.role,
+                        content: m.content,
+                        attachments: m.attachments || [],
+                        toolCalls: m.tool_calls || [],
+                        createdAt: m.created_at || 0
+                    }
+                    // The backend never stores thinking, so this view's copy is the only one a read-back can keep.
+                    let old = prev[i]
+                    if (old && old.thinking && old.role === m.role && (old.id ? old.id === m.id : aligned))
+                        Object.assign(msg, { thinking: old.thinking, thinkingMs: old.thinkingMs })
+                    return msg
+                })
                 root.contextDropped = obj.context_dropped || 0
                 if (root.currentConvId !== 0 && obj.model) {
                     root.currentModel = obj.model
