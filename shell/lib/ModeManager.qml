@@ -16,6 +16,13 @@ QtObject {
         return Math.round(value * scaleFactor)
     }
 
+    readonly property int designBarHeight: 60
+    readonly property real barScaleFactor: scaleFactor * (settingsManager ? settingsManager.barHeight : designBarHeight) / designBarHeight
+
+    function barScale(value) {
+        return Math.round(value * barScaleFactor)
+    }
+
     readonly property var normalBarSize: ({
         "height": scale(settingsManager ? settingsManager.barHeight : 60),
         "leftMargin": scale(settingsManager ? settingsManager.barMarginH : 10),

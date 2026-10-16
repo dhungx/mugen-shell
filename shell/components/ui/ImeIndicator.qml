@@ -11,7 +11,7 @@ Item {
     property var modeManager
 
     function scaled(val) {
-        if (modeManager) return modeManager.scale(val)
+        if (modeManager) return modeManager.barScale(val)
         return val
     }
 

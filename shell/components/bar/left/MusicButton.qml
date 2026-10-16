@@ -13,7 +13,7 @@ Item {
     required property var musicPlayerManager
     required property var cavaManager
 
-    function scaled(v) { return modeManager ? modeManager.scale(v) : v }
+    function scaled(v) { return modeManager ? modeManager.barScale(v) : v }
 
     function blendColors(baseColor, accentColor, factor) {
         const safeFactor = Math.max(0, Math.min(1, factor || 0))

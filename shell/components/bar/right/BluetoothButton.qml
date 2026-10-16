@@ -11,7 +11,7 @@ Item {
     required property var modeManager
     required property var bluetoothManager
 
-    function scaled(v) { return modeManager ? modeManager.scale(v) : v }
+    function scaled(v) { return modeManager ? modeManager.barScale(v) : v }
 
     implicitWidth: scaled(24)
     implicitHeight: scaled(24)

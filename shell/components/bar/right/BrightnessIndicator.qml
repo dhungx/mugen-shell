@@ -10,7 +10,7 @@ Item {
     required property var modeManager
     required property var brightnessManager
 
-    function scaled(v) { return modeManager ? modeManager.scale(v) : v }
+    function scaled(v) { return modeManager ? modeManager.barScale(v) : v }
 
     visible: brightnessManager && brightnessManager.isAvailable
     implicitWidth: visible ? scaled(24) : 0

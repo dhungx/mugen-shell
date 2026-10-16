@@ -21,7 +21,7 @@ Text {
     color: theme ? theme.textPrimaryBright : Qt.rgba(0.96, 0.96, 1.0, 0.90)
     
     font.family: typo ? typo.clockStyle.family : "JetBrainsMono Nerd Font"
-    font.pixelSize: modeManager ? modeManager.scale(typo ? typo.clockStyle.size : 14) : (typo ? typo.clockStyle.size : 14)
+    font.pixelSize: modeManager ? modeManager.barScale(typo ? typo.clockStyle.size : 14) : (typo ? typo.clockStyle.size : 14)
     font.weight: typo ? (typo.clockStyle.weight > Font.Normal ? typo.clockStyle.weight : Font.Bold) : Font.Bold
     font.letterSpacing: typo ? typo.clockStyle.letterSpacing : 0
     font.hintingPreference: typo ? typo.clockStyle.hinting : Font.PreferDefaultHinting

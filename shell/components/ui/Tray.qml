@@ -28,7 +28,7 @@ RowLayout {
         return false
     }
 
-    function scaled(v) { return modeManager ? modeManager.scale(v) : v }
+    function scaled(v) { return modeManager ? modeManager.barScale(v) : v }
 
     // Skips blocked entries so the reveal stagger has no dead beat.
     function visiblePosition(modelIndex) {

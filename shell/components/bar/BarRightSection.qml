@@ -10,7 +10,7 @@ RowLayout {
     id: root
     
     function scaled(val) {
-        if (modeManager) return modeManager.scale(val)
+        if (modeManager) return modeManager.barScale(val)
         return val
     }
     

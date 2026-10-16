@@ -23,7 +23,7 @@ Text {
     font.pixelSize: {
         const base = typo ? typo.clockStyle.size : 14
         const scaled = base * fontScale
-        return modeManager ? modeManager.scale(scaled) : scaled
+        return modeManager ? modeManager.barScale(scaled) : scaled
     }
     font.weight: typo ? (typo.clockStyle.weight > Font.Normal ? typo.clockStyle.weight : Font.Medium) : Font.Medium
     font.letterSpacing: typo ? typo.clockStyle.letterSpacing : 0
