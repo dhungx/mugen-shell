@@ -39,7 +39,7 @@ same_content() { [[ "$(cksum < "$1")" == "$(cksum < "$2")" ]]; }
 install_product_tree() {
   local src="$1" dst="$2"; shift 2
   local f rel mode skip dstReal
-  # dev/link-configs.sh points this at the checkout, where a refresh would revert tracked files.
+  # A linked tree belongs to a checkout or dotfiles repo, where a refresh would revert tracked files.
   if [[ -L "$dst" ]]; then
     echo "mugen-shell: $dst is a symlink, skipping product refresh" >&2
     return 0
@@ -53,8 +53,9 @@ install_product_tree() {
         continue 2
       fi
     done
-    # link-configs.sh links hypr entry by entry, so a write can leave $dst through a subtree symlink.
+    # Writing through a link would rewrite the checkout or dotfiles repo it points into.
     if [[ "$(realpath -m "$dst/$rel")" != "$dstReal"/* ]]; then
+      echo "mugen-shell: $dst/$rel links outside $dst, leaving it alone" >&2
       continue
     fi
     if (( first_sync )) && [[ -f "$dst/$rel" && ! -e "$dst/$rel.pre-mugen-shell" ]] \
@@ -110,7 +111,7 @@ rewrite_cache_home() {
   local f
   for f in "$@"; do
     [[ -f "$f" ]] || continue
-    # dev/link-configs.sh points matugen at the checkout, where this would rewrite a tracked file.
+    # A linked matugen dir belongs to a checkout or dotfiles repo, where this would rewrite a tracked file.
     [[ "$(realpath -m "$f")" == "$(realpath -m "$CONFIG")"/* ]] || continue
     "${RUN[@]}" sed -i "s|~/\.cache/|$CACHE/|g" "$f"
   done
