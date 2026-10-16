@@ -573,3 +573,107 @@ func TestDeletingAMissingConversationDoesNotBroadcast(t *testing.T) {
 		t.Fatal("deleting a real conversation should broadcast")
 	}
 }
+
+type lateModelProvider struct {
+	scriptedProvider
+	mu     sync.Mutex
+	models []string
+	lists  int
+}
+
+func (p *lateModelProvider) Models(context.Context) ([]string, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.lists++
+	return p.models, nil
+}
+
+func (p *lateModelProvider) setModels(m ...string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.models = m
+}
+
+func newLateModelServer(t *testing.T, p *lateModelProvider) *Server {
+	t.Helper()
+	st, err := store.Open(filepath.Join(t.TempDir(), "chat.db"))
+	if err != nil {
+		t.Fatalf("store: %v", err)
+	}
+	t.Cleanup(func() { st.Close() })
+	hist, err := history.New(st, "test system prompt", 0)
+	if err != nil {
+		t.Fatalf("history: %v", err)
+	}
+	return New(provider.NewRegistry("", p), hist, st, tools.New("", nil, nil, nil), nil, config.Context{})
+}
+
+func healthOf(t *testing.T, s *Server) map[string]any {
+	t.Helper()
+	rec := httptest.NewRecorder()
+	s.handleHealth(rec, httptest.NewRequest(http.MethodGet, "/health", nil))
+	var out map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
+func TestHealthAdoptsAModelThatAppearsAfterStartup(t *testing.T) {
+	p := &lateModelProvider{}
+	s := newLateModelServer(t, p)
+	if got := healthOf(t, s); got["status"] != "no_model" {
+		t.Fatalf("before the model exists: %v", got)
+	}
+	p.setModels("m1", "m2")
+	if got := healthOf(t, s); got["status"] != "ok" || got["model"] != "m1" {
+		t.Fatalf("after the model appears: %v", got)
+	}
+	p.mu.Lock()
+	lists := p.lists
+	p.mu.Unlock()
+	healthOf(t, s)
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.lists != lists {
+		t.Fatalf("a set model must not be re-listed: lists %d -> %d", lists, p.lists)
+	}
+}
+
+func TestChatAdoptsAModelThatAppearsAfterStartup(t *testing.T) {
+	p := &lateModelProvider{scriptedProvider: scriptedProvider{chunks: []string{"hi"}}}
+	s := newLateModelServer(t, p)
+	p.setModels("m1")
+	rec := postChat(t, s, chatJSON(t, "hello", 0))
+	if rec.Code != http.StatusOK || strings.Contains(rec.Body.String(), "no model configured") {
+		t.Fatalf("code %d body %s", rec.Code, rec.Body.String())
+	}
+}
+
+type hangingModelProvider struct{ scriptedProvider }
+
+func (p *hangingModelProvider) Models(ctx context.Context) ([]string, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
+func TestHealthAnswersWithinTheClientTimeoutWhileAProviderHangs(t *testing.T) {
+	st, err := store.Open(filepath.Join(t.TempDir(), "chat.db"))
+	if err != nil {
+		t.Fatalf("store: %v", err)
+	}
+	t.Cleanup(func() { st.Close() })
+	hist, err := history.New(st, "test system prompt", 0)
+	if err != nil {
+		t.Fatalf("history: %v", err)
+	}
+	s := New(provider.NewRegistry("", &hangingModelProvider{}), hist, st, tools.New("", nil, nil, nil), nil, config.Context{})
+	start := time.Now()
+	got := healthOf(t, s)
+	if elapsed := time.Since(start); elapsed > 1500*time.Millisecond {
+		t.Fatalf("health took %v, longer than the UI's 2 s curl timeout allows", elapsed)
+	}
+	if got["status"] != "no_model" {
+		t.Fatalf("health = %v", got)
+	}
+}

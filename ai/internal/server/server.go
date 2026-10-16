@@ -27,6 +27,9 @@ import (
 
 const maxRequestBody = 64 * 1024
 
+// Yura's health poll gives up after 2 s, so a provider that hangs must not hold the answer past it.
+const healthAdoptTimeout = time.Second
+
 type Server struct {
 	registry *provider.Registry
 	history  *history.History
@@ -234,6 +237,8 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("no provider is serving %q right now", req.Model), http.StatusBadRequest)
 		return
 	}
+
+	s.registry.EnsureModel(r.Context())
 
 	convID, model, thinking, msgs, status, err := s.beginChatTurn(req)
 	if err != nil {
@@ -568,7 +573,9 @@ func (s *Server) handleSwitchModel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
-	model := s.registry.Model()
+	ctx, cancel := context.WithTimeout(r.Context(), healthAdoptTimeout)
+	model := s.registry.EnsureModel(ctx)
+	cancel()
 	status := "ok"
 	if model == "" {
 		status = "no_model"

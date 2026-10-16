@@ -34,6 +34,24 @@ func (r *Registry) Model() string {
 	return r.model
 }
 
+// EnsureModel returns the current model, adopting the first listed one when
+// none is set. It only lists models while the registry has none.
+func (r *Registry) EnsureModel(ctx context.Context) string {
+	if m := r.Model(); m != "" {
+		return m
+	}
+	models, _ := r.Models(ctx)
+	if len(models) == 0 {
+		return ""
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.model == "" {
+		r.model = models[0]
+	}
+	return r.model
+}
+
 func (r *Registry) Chat(ctx context.Context, messages []Message, opts ChatOptions, fn func(ChatChunk) error) error {
 	return r.ChatWith(ctx, r.Model(), messages, opts, fn)
 }
