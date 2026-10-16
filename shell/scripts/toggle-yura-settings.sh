@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Toggle the Yura settings window; --open never closes it.
+# Toggle the Yura settings window; --open raises an open one instead of closing it.
 
 set -uo pipefail
 
@@ -11,7 +11,11 @@ if [[ "${1:-}" == "--open" ]]; then
 fi
 
 if pgrep -f "yura-settings-shell\.qml" >/dev/null 2>&1; then
-    [[ $open_only -eq 0 ]] && pkill -f "yura-settings-shell\.qml"
+    if [[ $open_only -eq 1 ]]; then
+        "$(dirname "$0")/raise-window.sh" "Yura Settings"
+    else
+        pkill -f "yura-settings-shell\.qml"
+    fi
     exit 0
 fi
 

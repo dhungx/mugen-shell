@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Toggle the floating settings window; a category switches an open one over ipc, and --open never closes it.
+# Toggle the floating settings window; a category switches an open one over ipc, and --open raises an open one instead of closing it.
 
 set -uo pipefail
 
@@ -15,7 +15,10 @@ category="${1:-}"
 if pgrep -f "/settings-shell\.qml" >/dev/null 2>&1; then
     if [[ -n "$category" ]]; then
         qs -p "$SHELL_PATH" ipc call settings openCategory "$category"
-    elif [[ $open_only -eq 0 ]]; then
+        "$(dirname "$0")/raise-window.sh" "Mugen Settings"
+    elif [[ $open_only -eq 1 ]]; then
+        "$(dirname "$0")/raise-window.sh" "Mugen Settings"
+    else
         pkill -f "/settings-shell\.qml"
     fi
     exit 0
