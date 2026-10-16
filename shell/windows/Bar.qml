@@ -44,11 +44,20 @@ PanelWindow {
     property real lockOpacity: 1.0
     property int lockClientPid: 0
 
-    readonly property bool barHidden: fullscreenHidden || lockHidden
+    readonly property bool barHidden: fullscreenHidden || lockHidden || autoHide.hidden
+
+    BarComponents.AutoHide {
+        id: autoHide
+        enabled: settingsManager.barAutoHide
+        held: !modeManager.isMode("normal") || rightSection.trayMenuOpen
+        stripHovered: revealStripHover.hovered
+        barHovered: barBodyHover.hovered
+        suspended: barWindow.fullscreenHidden || barWindow.lockHidden
+    }
 
     implicitHeight: modeManager.normalBarSize.height
     // Not lock-aware: dropping the zone reflows tiled windows, which session_lock_xray makes visible.
-    exclusiveZone: fullscreenHidden ? 0 : modeManager.normalBarSize.height
+    exclusiveZone: (fullscreenHidden || settingsManager.barAutoHide) ? 0 : modeManager.normalBarSize.height
     // The lock path fades to zero instead of unmapping: an unmapped layer has no exclusive zone.
     visible: !fullscreenHidden
     // Release keyboard focus in normal mode so launched apps can receive it.
@@ -163,7 +172,22 @@ PanelWindow {
 
     // Input follows the animated body, not the stepped window, so the gap left while shrinking
     // stays click-through instead of swallowing presses meant for the app underneath.
-    mask: Region { item: barBody }
+    mask: Region {
+        item: autoHide.hidden ? revealStrip : barBody
+        // A still pointer on the strip would get a Leave while the body slides in under it, and the bar would hide again.
+        Region { item: autoHide.enabled ? revealStrip : null }
+    }
+
+    Item {
+        id: revealStrip
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: autoHide.stripHeight
+        visible: autoHide.enabled
+
+        HoverHandler { id: revealStripHover }
+    }
 
     // The layer only ever grows: every resize shifts the bar content for two frames, and a shrink would do that on each close.
     readonly property int targetHeight: modeManager.currentBarSize.height
@@ -363,8 +387,12 @@ PanelWindow {
         target: "bar"
 
         function rect(): string {
-            if (barWindow.barHidden || !barWindow.screen)
+            if (!barWindow.screen)
                 return JSON.stringify({ hidden: true })
+            const screenName = barWindow.screen.name
+            // An auto-hiding bar may be gone by unlock, so the lock fades on this monitor rather than morphing out of the bar.
+            if (barWindow.barHidden || autoHide.enabled)
+                return JSON.stringify({ hidden: true, screen: screenName })
 
             const w = Math.round(surface.width)
             const h = Math.round(surface.height)
@@ -379,9 +407,9 @@ PanelWindow {
             const nEffective = Math.min(settingsManager.barRadius,
                                         Math.min(nw, nh) / 2)
 
-            // Only exclusive top layer, so window-local == monitor-local.
+            // A top-anchored layer with no margins, so window-local == monitor-local.
             return JSON.stringify({
-                screen: barWindow.screen.name,
+                screen: screenName,
                 x: Math.round(surface.x), y: Math.round(surface.y),
                 w: w, h: h,
                 radius: Math.round(effective),
@@ -504,7 +532,7 @@ PanelWindow {
         id: barBody
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: parent.top
+        y: autoHide.hidden ? -modeManager.normalBarSize.height : 0
         height: modeManager.currentBarSize.height
 
         Behavior on height {
@@ -513,6 +541,15 @@ PanelWindow {
                 easing.type: Easing.OutExpo
             }
         }
+
+        Behavior on y {
+            NumberAnimation {
+                duration: Theme.Motion.standard
+                easing.type: Theme.Motion.easeOut
+            }
+        }
+
+        HoverHandler { id: barBodyHover }
 
         UI.MugenSurface {
             id: surface

@@ -15,6 +15,7 @@ RowLayout {
     property var blockedKeywords: ["nm-applet", "networkmanager", "blueman", "bluetooth", "fcitx"]
 
     property bool expanded: false
+    readonly property bool menuOpen: trayMenuAnchor.visible
 
     function isBlocked(item) {
         if (!item) return false

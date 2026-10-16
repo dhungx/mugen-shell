@@ -46,6 +46,7 @@ QtObject {
     property int barRadius: 50
     property int barMarginH: 10
     property int barMarginV: 6
+    property bool barAutoHide: false
 
     // Defaults are the exact HSL of MugenSurface's dark base, so enabling custom changes nothing.
     property bool barSurfaceCustom: false
@@ -213,6 +214,7 @@ QtObject {
                 "radius": barRadius,
                 "marginH": barMarginH,
                 "marginV": barMarginV,
+                "autoHide": barAutoHide,
                 "surface": {
                     "custom": barSurfaceCustom,
                     "hue": barSurfaceHue,
@@ -499,6 +501,9 @@ QtObject {
                     }
                     if (settings.bar.marginV !== undefined) {
                         barMarginV = settings.bar.marginV
+                    }
+                    if (settings.bar.autoHide !== undefined) {
+                        barAutoHide = !!settings.bar.autoHide
                     }
                     if (settings.bar.surface) {
                         const sf = settings.bar.surface

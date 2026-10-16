@@ -33,6 +33,35 @@ Rectangle {
         anchors.margins: 12
         spacing: 10
 
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 24
+            spacing: 12
+
+            Text {
+                Layout.fillWidth: true
+                text: "Auto-hide bar"
+                color: section.theme ? section.theme.textSecondary : Qt.rgba(0.72, 0.72, 0.82, 0.90)
+                font.pixelSize: 12
+                font.family: "M PLUS 2"
+                font.weight: Font.Normal
+                font.letterSpacing: 0.5
+            }
+
+            Common.Switch {
+                checked: section.settingsManager ? section.settingsManager.barAutoHide : false
+                theme: section.theme
+
+                onToggled: value => {
+                    if (section.settingsManager) {
+                        section.settingsManager.barAutoHide = value
+                        section.settingsManager.saveSettings()
+                        section.bump()
+                    }
+                }
+            }
+        }
+
         Repeater {
             model: section.rows
 

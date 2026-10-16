@@ -42,7 +42,10 @@ RowLayout {
     property var brightnessManager
     property var settingsManager
 
+    readonly property bool trayMenuOpen: tray.menuOpen
+
     UI.Tray {
+        id: tray
         modeManager: root.modeManager
         theme: root.theme
     }

@@ -73,6 +73,7 @@
     "radius": 50,
     "marginH": 10,
     "marginV": 6,
+    "autoHide": false,
     "surface": {
       "custom": false,
       "hue": 0.611111,
