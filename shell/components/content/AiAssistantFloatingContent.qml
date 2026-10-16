@@ -2180,7 +2180,7 @@ FocusScope {
     Process {
         id: yuraSettingsProcess
         running: false
-        command: ["bash", Quickshell.shellDir + "/scripts/toggle-yura-settings.sh"]
+        command: ["bash", Quickshell.shellDir + "/scripts/toggle-yura-settings.sh", "--open"]
     }
 
     Process {
