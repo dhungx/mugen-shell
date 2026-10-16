@@ -131,3 +131,21 @@ jobs:
           }
           executable 'mugen-shell-*.pkg.tar.zst' '^usr/share/mugen-shell/(qml|hypr)/scripts/'
 
+      # makepkg -s resolves only global depends, so a split package's misspelt or dropped name only fails at pacman -U.
+      - name: Resolve runtime depends
+        shell: bash
+        run: |
+          cd arch/mugen-shell
+          read -ra aur <<< "$(sed -n 's/^aur_deps=(\(.*\))$/\1/p' ../../install.sh)"
+          built=()
+          for p in *.pkg.tar.zst; do built+=("$(bsdtar -xOf "$p" .PKGINFO | sed -n 's/^pkgname = //p')"); done
+          missing=0
+          for p in *.pkg.tar.zst; do
+            while read -r d; do
+              name=${d%%[<>=]*}
+              [[ " ${built[*]} ${aur[*]} " == *" $name "* ]] && continue
+              pacman -Sp --print-format %n "$d" > /dev/null 2>&1 || { echo "$p: $d is in no repo and not in install.sh's aur_deps" >&2; missing=1; }
+            done < <(bsdtar -xOf "$p" .PKGINFO | sed -n 's/^depend = //p')
+          done
+          exit $missing
+
