@@ -258,7 +258,7 @@ main() {
   if (( want_dm ));    then setup_dm; fi
 
   say "Done"
-  printf '  Log out and pick \033[1mmugen-shell\033[0m from your display manager.\n'
+  printf '  Reboot and pick \033[1mmugen-shell\033[0m from your display manager.\n'
   printf '  Personal Hyprland tweaks go in ~/.config/hypr/configs/user-overrides.lua\n\n'
 }
 
