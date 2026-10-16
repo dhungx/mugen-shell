@@ -60,7 +60,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: modeManager.scale(22)
                     height: modeManager.scale(22)
-                    opacity: hoverArea.containsMouse || copyMouse.containsMouse || container.justCopied ? 1.0 : 0.55
+                    opacity: hoverArea.hovered || copyMouse.containsMouse || container.justCopied ? 1.0 : 0.55
 
                     Behavior on opacity { NumberAnimation { duration: Theme.Motion.fast; easing.type: Easing.OutCubic } }
 
@@ -124,13 +124,7 @@ Item {
             }
         }
 
-        MouseArea {
-            id: hoverArea
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.NoButton
-            propagateComposedEvents: true
-        }
+        HoverHandler { id: hoverArea }
 
         Timer {
             id: resetTimer
