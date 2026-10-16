@@ -31,7 +31,9 @@ Rectangle {
 
     readonly property bool showsError: root.wifiManager.connectionError !== "" && root.connectingNetworkIndex === root.index
     readonly property real errorExtra: root.showsError ? errorText.implicitHeight + 4 : 0
-    readonly property real expandedHeight: 140 + root.errorExtra
+    readonly property bool needsPassword: !!(root.modelData && root.modelData.secured)
+    readonly property real passwordRowExtra: root.needsPassword ? 44 : 0
+    readonly property real expandedHeight: 96 + root.passwordRowExtra + root.errorExtra
 
     onExpandedHeightChanged: {
         if (root.isExpanded) targetHeight = root.expandedHeight
@@ -190,7 +192,7 @@ Rectangle {
 
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: 80 + root.errorExtra
+            Layout.preferredHeight: 36 + root.passwordRowExtra + root.errorExtra
             visible: root.isExpanded
             opacity: root.isExpanded ? 1.0 : 0.0
 
@@ -208,6 +210,7 @@ Rectangle {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 36
+                    visible: root.needsPassword
                     color: "transparent"
                     border.color: root.theme ? root.theme.surfaceBorder : Qt.rgba(0.70, 0.65, 0.90, 0.3)
                     border.width: 1
@@ -345,7 +348,7 @@ Rectangle {
     MouseArea {
         id: networkMouseArea
         anchors.fill: parent
-        anchors.bottomMargin: root.isExpanded ? 88 + root.errorExtra : 0
+        anchors.bottomMargin: root.isExpanded ? 44 + root.passwordRowExtra + root.errorExtra : 0
 
         // hoverEnabled here would take the chevron's hover with it.
         HoverHandler {

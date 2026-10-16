@@ -23,7 +23,22 @@ Item {
         "bottomMargin": modeManager.normalBarSize.bottomMargin
     })
     
-    property int connectingNetworkIndex: -1
+    property string connectingSsid: ""
+    property int connectingHint: -1
+    // nmcli lists one row per BSSID, so the SSID alone cannot tell which of its rows was clicked.
+    readonly property int connectingNetworkIndex: {
+        const nets = root.wifiManager.availableNetworks
+        if (root.connectingSsid === "") return -1
+        const hinted = nets[root.connectingHint]
+        return hinted && hinted.ssid === root.connectingSsid ? root.connectingHint
+            : nets.findIndex(net => net.ssid === root.connectingSsid)
+    }
+
+    function startConnecting(ssid, rowIndex, password) {
+        connectingHint = rowIndex
+        connectingSsid = ssid
+        wifiManager.connectToNetwork(ssid, password)
+    }
 
     Connections {
         target: wifiManager
@@ -35,7 +50,7 @@ Item {
                 if (root.connectingNetworkIndex >= 0)
                     networkList.expandedIndex = root.connectingNetworkIndex
             } else {
-                root.connectingNetworkIndex = -1
+                root.connectingSsid = ""
                 networkList.expandedIndex = -1
                 modeManager.closeAllModes()
             }
@@ -166,8 +181,7 @@ Item {
                 }
                 if (!net.secured) {
                     if (root.wifiManager.isConnecting) return
-                    root.connectingNetworkIndex = idx
-                    wifiManager.connectToNetwork(net.ssid, "")
+                    root.startConnecting(net.ssid, idx, "")
                 } else {
                     if (networkList.expandedIndex === idx) {
                         networkList.expandedIndex = -1
@@ -594,8 +608,7 @@ Item {
                             }
                             
                             onConnectToNetwork: (ssid, password) => {
-                                root.connectingNetworkIndex = delegateItem.itemIndex
-                                root.wifiManager.connectToNetwork(ssid, password)
+                                root.startConnecting(ssid, delegateItem.itemIndex, password)
                             }
 
                             onRequestSelect: {
