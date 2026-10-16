@@ -55,7 +55,7 @@ package_mugen-ai() {
   pkgdesc='AI backend service for mugen-shell'
   depends=('glibc')
   optdepends=('libnotify: calendar event notifications'
-              'gtk3: gtk-launch for the focus_app tool'
+              'gtk3: gtk-launch for opening apps from notifications'
               'hyprland: hyprctl for the hypr monitor and focus-or-launch commands'
               'npm: finding globally installed MCP servers')
   local repo; repo=$(_tree)
