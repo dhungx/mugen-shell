@@ -72,7 +72,6 @@ ShellRoot {
     property real barExitH: 0
     property real barExitRadius: 0
 
-    // A fullscreen window hides the bar, so a missing morph source is routine.
     function largestScreenName() {
         let best = ""
         let bestArea = -1
@@ -87,7 +86,7 @@ ShellRoot {
 
     // Re-checked against live screens, or unplugging the bar's monitor leaves every surface blank.
     readonly property string uiScreen: {
-        if (barRectValid) {
+        if (barScreen !== "") {
             for (const screen of Quickshell.screens)
                 if (screen.name === barScreen) return barScreen
         }
@@ -248,6 +247,7 @@ ShellRoot {
             return
         }
         barPresent = true
+        if (!entryStarted && typeof r.screen === "string") barScreen = r.screen
 
         const nums = [r.x, r.y, r.w, r.h, r.radius, r.opacity,
                       r.exitX, r.exitY, r.exitW, r.exitH, r.exitRadius]
@@ -258,7 +258,6 @@ ShellRoot {
         }
 
         if (!entryStarted) {
-            barScreen = r.screen
             barX = r.x
             barY = r.y
             barW = r.w
