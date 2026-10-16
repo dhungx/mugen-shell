@@ -9,13 +9,13 @@
 ### Arch Linux
 
 ```bash
-sudo pacman -Syu
+sudo pacman -Syu --needed git
 git clone https://github.com/tmy7533018/mugen-shell.git
 cd mugen-shell
 ./install.sh
 ```
 
-非対話で走らせる場合:
+メニューを出さずに既定のまま走らせる場合:
 
 ```bash
 ./install.sh --yes
@@ -23,7 +23,7 @@ cd mugen-shell
 
 オプションの一覧は `./install.sh --help` で出ます。
 
-終わったらログアウトして、ディスプレイマネージャのセッション一覧から **mugen-shell** を選んでください。
+終わったら再起動して、ディスプレイマネージャのセッション一覧から **mugen-shell** を選んでください。
 
 <details>
 <summary><b>NixOS</b></summary>
@@ -67,7 +67,7 @@ cd mugen-shell
 }
 ```
 
-`nixos-rebuild switch --flake "/etc/nixos#mybox"` を実行してください。
+`sudo nixos-rebuild switch --flake "/etc/nixos#mybox"` を実行し、**Hyprland** のセッションでログインします。
 
 **ターミナルの設定もそろえる (オプション)**: 次の 2 行を足し、`~/.zshrc` に `source ~/.config/mugen-shell/mugen-shell.zshrc` を書きます。
 
@@ -76,7 +76,7 @@ programs.mugen-shell.zsh.enable = true;                    # システム層
 home-manager.users.YOUR_USER.programs.mugen-shell.zsh.enable = true;
 ```
 
-**日本語入力**: fcitx5 はこのオプションで入れます。直接インストールすると IME がログインセッションに登録されず、入力欄で使えません。
+**日本語入力**: fcitx5 はこのオプションで入れます。直接インストールすると IME がログインセッションに登録されず、入力欄で使えません。この行は `pkgs` が見える `configuration.nix` に書きます。
 
 ```nix
 programs.mugen-shell.fcitx5Addons = with pkgs; [ fcitx5-mozc ];
@@ -86,7 +86,7 @@ programs.mugen-shell.fcitx5Addons = with pkgs; [ fcitx5-mozc ];
 
 </details>
 
-Hyprland の個人設定は `~/.config/hypr/configs/user-overrides.lua` (キーバインドは `keybind-overrides.lua`) に書きます。`~/.config/hypr` (`hypridle.conf` を除く) と `~/.config/matugen` にある同梱のファイルは編集しても元に戻ります。mugen-shell が最初に置き換えた自分のファイルは `*.pre-mugen-shell` として残ります。matugen のテンプレートを自分で足すときは `~/.config/matugen/user.toml` に書きます (先頭に `[config]` の行が要ります)。
+Hyprland の個人設定は `~/.config/hypr/configs/user-overrides.lua` (キーバインドは `keybind-overrides.lua`) に書きます。`~/.config/hypr` (`hypridle.conf` を除く) と `~/.config/matugen` にある同梱のファイルは編集しても元に戻ります。mugen-shell が最初に置き換えた自分のファイルは `*.pre-mugen-shell` として残ります。matugen のテンプレートを自分で足すときは `~/.config/matugen/user.toml` に書きます (先頭に `[config]` の行が要ります)。`~/.config/hypr` 自体や、その中の `hyprland.lua` がシンボリックリンク (dotfiles 管理など) だと mugen-shell はそこに手を付けず、バーも起動しません。実体のディレクトリとファイルにしてください。
 
 `~/.config/gtk-3.0/gtk.css` や `~/.config/gtk-4.0/gtk.css` を元から持っていた場合は、先頭に `@import url("colors.css");` を足してください。足さないと GTK アプリが壁紙の配色に追従しません。
 
@@ -94,17 +94,17 @@ Hyprland の個人設定は `~/.config/hypr/configs/user-overrides.lua` (キー�
 
 ## mugen-ai の設定
 
-設定は **Settings → Yura** から。手で編集する場合は同じ画面の **Edit toml** で `~/.config/mugen-ai/config.toml` を開きます。テンプレートは `ai/config.toml.example` で、Arch では `/usr/share/mugen-ai/config.toml.example` にあります。
+設定は **Settings → Yura** から。手で編集する場合は、同じ画面の **Edit toml** で開く `~/.config/mugen-ai/` の `config.toml` を編集します。テンプレートは `ai/config.toml.example` で、Arch では `/usr/share/mugen-ai/config.toml.example` にあります。
 
 最初にやること:
 
-1. **モデルを用意する。** `ollama pull qwen3:4b` のように Ollama でモデルを pull するか、下の API キーを置きます。
+1. **モデルを用意する。** Ollama を自分で入れて `ollama pull qwen3:4b` のようにモデルを pull するか、下の API キーを置きます。
 2. **Allowed apps でアプリを許可する。** 許可するまで Yura はアプリを起動しません。
 3. **`mugen-ai.service` が止まっていたら**、Yura のチャットパネルに出るコマンドで起動します。
 
 ### プロバイダ API キー
 
-`ai/.env.example` (Arch では `/usr/share/mugen-ai/.env.example`) を `~/.config/mugen-ai/.env` にコピーして埋めるか、直接追記します:
+`ai/.env.example` (Arch では `/usr/share/mugen-ai/.env.example`) を `~/.config/mugen-ai/.env` にコピーして埋めるか、直接追記します。使うプロバイダの行だけ残してください:
 
 ```sh
 cat >> ~/.config/mugen-ai/.env <<'EOF'
@@ -134,7 +134,7 @@ args = ["-y", "@modelcontextprotocol/server-memory"]
 # trusted = false    # true にすると、このサーバのツールでは承認プロンプトを省略
 ```
 
-- `command` はサービスの `PATH` から見える必要があります。`npx` 系なら Node.js、`uvx` 系なら [uv](https://docs.astral.sh/uv/) を別途入れてください。Nix なら `home.packages` に足します
+- `command` はサービスの `PATH` から見える必要があります。`npx` 系なら Node.js (Arch では `npm` パッケージ。`nodejs` だけでは `npx` が入りません)、`uvx` 系なら [uv](https://docs.astral.sh/uv/) を別途入れてください。Nix なら `home.packages` に足します
 - リモートサーバは `command` の代わりに `url = "https://example.com/mcp"`
 - サーバ名は英小文字で始め、英小文字・数字・`-` だけにします。ツール名が `<name>__<tool>` になるためで、数字で始まる名前や `.`・`__` を含む名前のサーバは起動時にスキップされ、設定画面にエラーが出ます。変更したら `mugen-ai.service` を再起動
 - 信用するサーバは `trusted = true` で承認プロンプトを省略できます
@@ -173,7 +173,7 @@ args = ["-y", "@modelcontextprotocol/server-memory"]
 | `$XDG_DATA_HOME/mugen-shell/{wallpapers/,sounds/,timer-sounds/}` | ユーザが置くメディア |
 | `$XDG_DATA_HOME/mugen-shell/calendar.db` | カレンダーの SQLite DB |
 | `$XDG_STATE_HOME/mugen-ai/history.db` | Yura の会話履歴 (SQLite) |
-| `$XDG_PICTURES_DIR/mugen-screenshots/` | キャプチャしたスクリーンショット |
+| ピクチャフォルダ (`~/.config/user-dirs.dirs` の `XDG_PICTURES_DIR`、無ければ `~/Pictures`) の `mugen-screenshots/` | キャプチャしたスクリーンショット |
 
 通知音とタイマー音は、上の `sounds/` と `timer-sounds/` に音声ファイルを置くと Settings のドロップダウンに並びます。
 
@@ -182,10 +182,11 @@ args = ["-y", "@modelcontextprotocol/server-memory"]
 ## クレジット
 
 - [Hyprland](https://hypr.land/): Wayland コンポジタ
-- [Quickshell](https://quickshell.outfoxxed.me/): シェルフレームワーク
+- [Quickshell](https://quickshell.org/): シェルフレームワーク
 - [Matugen](https://github.com/InioX/matugen): 壁紙からのカラー生成
 - [Cava](https://github.com/karlstav/cava): 音声ビジュアライザ
 - [Kitty](https://sw.kovidgoyal.net/kitty/): ターミナルエミュレータ
 - [playerctl](https://github.com/altdesktop/playerctl): メディアプレイヤー制御
 - [grim](https://sr.ht/~emersion/grim/) / [slurp](https://github.com/emersion/slurp): スクリーンショットツール
 - [cliphist](https://github.com/sentriz/cliphist): クリップボード履歴
+- [LRO WAC の月面モザイク](https://commons.wikimedia.org/wiki/File:Moon_nearside_LRO.jpg): ロック画面の月。NASA/GSFC/Arizona State University、パブリックドメイン (明るさを調整し、320px に縮小して同梱)

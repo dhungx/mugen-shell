@@ -9,7 +9,7 @@
 ### Arch Linux
 
 ```bash
-sudo pacman -Syu
+sudo pacman -Syu --needed git
 git clone https://github.com/tmy7533018/mugen-shell.git
 cd mugen-shell
 ./install.sh
@@ -23,7 +23,7 @@ To run it without the menu:
 
 `./install.sh --help` lists the options.
 
-When it finishes, log out and pick **mugen-shell** from your display manager's session list.
+When it finishes, reboot and pick **mugen-shell** from your display manager's session list.
 
 <details>
 <summary><b>NixOS</b></summary>
@@ -67,7 +67,7 @@ When it finishes, log out and pick **mugen-shell** from your display manager's s
 }
 ```
 
-Then run `nixos-rebuild switch --flake "/etc/nixos#mybox"`.
+Then run `sudo nixos-rebuild switch --flake "/etc/nixos#mybox"` and log in to the **Hyprland** session.
 
 **Terminal styling (optional)**: add both lines below and put `source ~/.config/mugen-shell/mugen-shell.zshrc` in your `~/.zshrc`.
 
@@ -76,7 +76,7 @@ programs.mugen-shell.zsh.enable = true;                    # system layer
 home-manager.users.YOUR_USER.programs.mugen-shell.zsh.enable = true;
 ```
 
-**Japanese input**: install fcitx5 through this option. Installed directly, the IME is not registered for the login session and the input fields cannot use it.
+**Japanese input**: install fcitx5 through this option. Installed directly, the IME is not registered for the login session and the input fields cannot use it. This line goes in `configuration.nix`, where `pkgs` is in scope.
 
 ```nix
 programs.mugen-shell.fcitx5Addons = with pkgs; [ fcitx5-mozc ];
@@ -86,7 +86,7 @@ programs.mugen-shell.fcitx5Addons = with pkgs; [ fcitx5-mozc ];
 
 </details>
 
-Personal Hyprland settings go in `~/.config/hypr/configs/user-overrides.lua` (keybindings in `keybind-overrides.lua`). Edits to the files mugen-shell ships under `~/.config/hypr` (except `hypridle.conf`) and `~/.config/matugen` get reverted; a file of your own that mugen-shell replaced the first time is kept as `*.pre-mugen-shell`. Your own matugen templates go in `~/.config/matugen/user.toml`, which must start with a `[config]` line.
+Personal Hyprland settings go in `~/.config/hypr/configs/user-overrides.lua` (keybindings in `keybind-overrides.lua`). Edits to the files mugen-shell ships under `~/.config/hypr` (except `hypridle.conf`) and `~/.config/matugen` get reverted; a file of your own that mugen-shell replaced the first time is kept as `*.pre-mugen-shell`. Your own matugen templates go in `~/.config/matugen/user.toml`, which must start with a `[config]` line. If `~/.config/hypr` itself or the `hyprland.lua` in it is a symlink (a dotfiles setup), mugen-shell leaves it alone and the bar does not start; make them a real directory and file.
 
 If you already had `~/.config/gtk-3.0/gtk.css` or `~/.config/gtk-4.0/gtk.css`, add `@import url("colors.css");` at the top of each; without it GTK apps do not follow the wallpaper colors.
 
@@ -94,17 +94,17 @@ If you already had `~/.config/gtk-3.0/gtk.css` or `~/.config/gtk-4.0/gtk.css`, a
 
 ## Configuring mugen-ai
 
-Configure it under **Settings → Yura**. To edit by hand, **Edit toml** on the same page opens `~/.config/mugen-ai/config.toml`. The template is `ai/config.toml.example`, or `/usr/share/mugen-ai/config.toml.example` on Arch.
+Configure it under **Settings → Yura**. To edit by hand, **Edit toml** on the same page opens `~/.config/mugen-ai/`; edit `config.toml` there. The template is `ai/config.toml.example`, or `/usr/share/mugen-ai/config.toml.example` on Arch.
 
 First steps:
 
-1. **Get a model.** Pull one with Ollama, such as `ollama pull qwen3:4b`, or add an API key below.
+1. **Get a model.** Install Ollama yourself and pull a model, such as `ollama pull qwen3:4b`, or add an API key below.
 2. **Allow apps under Allowed apps.** Yura launches nothing until you do.
 3. **If `mugen-ai.service` is not running**, start it with the command Yura's chat panel shows.
 
 ### Provider API keys
 
-Copy `ai/.env.example` (Arch: `/usr/share/mugen-ai/.env.example`) to `~/.config/mugen-ai/.env` and fill it in, or append directly:
+Copy `ai/.env.example` (Arch: `/usr/share/mugen-ai/.env.example`) to `~/.config/mugen-ai/.env` and fill it in, or append directly, keeping only the lines for the providers you use:
 
 ```sh
 cat >> ~/.config/mugen-ai/.env <<'EOF'
@@ -134,7 +134,7 @@ args = ["-y", "@modelcontextprotocol/server-memory"]
 # trusted = false    # true = skip the approval prompt for this server's tools
 ```
 
-- `command` has to be on the service's `PATH`. Install Node.js for `npx` servers or [uv](https://docs.astral.sh/uv/) for `uvx` ones yourself. On Nix, add them to `home.packages`
+- `command` has to be on the service's `PATH`. Install Node.js for `npx` servers (on Arch, the `npm` package: `nodejs` alone has no `npx`) or [uv](https://docs.astral.sh/uv/) for `uvx` ones yourself. On Nix, add them to `home.packages`
 - For a remote server, use `url = "https://example.com/mcp"` instead of `command`
 - Start server names with a lowercase letter and use only lowercase letters, digits and `-`, because tools are named `<name>__<tool>`; a name that starts with a digit or contains `.` or `__` is skipped at startup and shows an error in Settings. Restart `mugen-ai.service` after changes
 - `trusted = true` skips the approval prompt for a server you trust
@@ -173,7 +173,7 @@ Everything lives outside the repo, under XDG dirs:
 | `$XDG_DATA_HOME/mugen-shell/{wallpapers/,sounds/,timer-sounds/}` | User-supplied media |
 | `$XDG_DATA_HOME/mugen-shell/calendar.db` | Calendar SQLite database |
 | `$XDG_STATE_HOME/mugen-ai/history.db` | Yura conversation history (SQLite) |
-| `$XDG_PICTURES_DIR/mugen-screenshots/` | Captured screenshots |
+| `mugen-screenshots/` in your Pictures folder (`XDG_PICTURES_DIR` from `~/.config/user-dirs.dirs`, else `~/Pictures`) | Captured screenshots |
 
 Audio files dropped into `sounds/` and `timer-sounds/` above show up in the Settings dropdowns for notification and timer sounds.
 
@@ -182,12 +182,11 @@ Audio files dropped into `sounds/` and `timer-sounds/` above show up in the Sett
 ## Credits
 
 - [Hyprland](https://hypr.land/): Wayland compositor
-- [Quickshell](https://quickshell.outfoxxed.me/): Shell framework
+- [Quickshell](https://quickshell.org/): Shell framework
 - [Matugen](https://github.com/InioX/matugen): Wallpaper-based color generation
 - [Cava](https://github.com/karlstav/cava): Audio visualizer
 - [Kitty](https://sw.kovidgoyal.net/kitty/): Terminal emulator
 - [playerctl](https://github.com/altdesktop/playerctl): Media player control
 - [grim](https://sr.ht/~emersion/grim/) / [slurp](https://github.com/emersion/slurp): Screenshot tools
 - [cliphist](https://github.com/sentriz/cliphist): Clipboard history
-
 - [LRO WAC moon mosaic](https://commons.wikimedia.org/wiki/File:Moon_nearside_LRO.jpg): the moon on the lock screen. NASA/GSFC/Arizona State University, public domain (bundled brightness-adjusted and scaled down to 320px)
