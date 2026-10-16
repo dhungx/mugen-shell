@@ -29,6 +29,7 @@ QtObject {
     property bool notificationSuppressOnFullscreen: false
     property string launcherTerminal: "kitty"  // command used to launch Terminal=true apps
     property string timerSound: "None"  // filename in Paths.timerSoundsDir, or "None"
+    property int volumeStep: 2
     property int lockTimerMinutes: 10  // hypridle screen-lock idle timeout
     property int idleSuspendMinutes: 30  // hypridle suspend timeout, 0 = disabled
     property int idleDpmsMinutes: 0  // hypridle screen-off timeout, 0 = disabled
@@ -183,6 +184,9 @@ QtObject {
             "timer": {
                 "sound": timerSound
             },
+            "volume": {
+                "step": volumeStep
+            },
             "lockTimer": {
                 "minutes": lockTimerMinutes
             },
@@ -268,6 +272,11 @@ QtObject {
     function _unitOr(v, fallback) {
         const n = Number(v)
         return isFinite(n) ? Math.max(0, Math.min(1, n)) : fallback
+    }
+
+    // volume-key.sh applies the same clamp and fallback, so the keys and the panel agree on a hand-edited value.
+    function _volumeStepOf(v) {
+        return (typeof v === "number" && isFinite(v)) ? Math.max(1, Math.min(10, Math.round(v))) : 2
     }
 
     function applySettingsFromJson(jsonString) {
@@ -401,6 +410,14 @@ QtObject {
                 }
             } catch (e) {
                 console.error("Failed to apply settings.timer:", e)
+            }
+
+            try {
+                if (settings.volume && settings.volume.step !== undefined) {
+                    volumeStep = _volumeStepOf(settings.volume.step)
+                }
+            } catch (e) {
+                console.error("Failed to apply settings.volume:", e)
             }
 
             try {

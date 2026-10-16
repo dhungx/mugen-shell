@@ -29,7 +29,7 @@ Item {
 
     readonly property var categories: [
         { id: "appearance", label: "Appearance",   types: ["theme", "barSurface", "moduleBackground", "blur", "animation", "dateFormat", "clock", "weather", "calendarWeekStart", "barLayout"] },
-        { id: "sound",      label: "Sound",        types: ["notificationSound", "timerSound"] },
+        { id: "sound",      label: "Sound",        types: ["volumeStep", "notificationSound", "timerSound"] },
         { id: "notifications", label: "Notifications", types: ["doNotDisturb", "notificationTimeout"] },
         { id: "timer",      label: "Idle & Lock",  types: ["timer", "lockTimer", "lockScreen", "idlePower"] },
         { id: "system",     label: "System",       types: ["battery", "workspaces", "launcherTerminal", "displayMonitor"] },
@@ -50,6 +50,7 @@ Item {
             case "animation":         return animationSection
             case "notificationSound": return notificationSoundSection
             case "timerSound":        return timerSoundSection
+            case "volumeStep":        return volumeStepSection
             case "lockTimer":         return lockTimerSection
             case "lockScreen":        return lockScreenSection
             case "idlePower":         return idlePowerSection
@@ -137,6 +138,11 @@ Item {
         folderPath: root.timerSoundsDir
         onApplySound: name => root.applyTimerSound(name)
     }}
+    Component { id: volumeStepSection; Settings.VolumeStepSection {
+        theme: root.theme
+        modeManager: root.modeManager
+        settingsManager: root.settingsManager
+    }}
     Component { id: lockTimerSection; Settings.LockTimerSection {
         theme: root.theme
         modeManager: root.modeManager
@@ -205,6 +211,7 @@ Item {
     Component { id: keybindsSection; Settings.KeybindsSection {
         theme: root.theme
         modeManager: root.modeManager
+        settingsManager: root.settingsManager
         onOpenUrl: url => root.openUrl(url)
     }}
     Component { id: aboutSection; Settings.AboutSection {

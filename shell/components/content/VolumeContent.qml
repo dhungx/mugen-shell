@@ -14,6 +14,7 @@ Item {
     property var cavaManager
     property var micCavaManager
     property var musicPlayerManager
+    property var settingsManager
     required property var theme
     required property var typo
 
@@ -40,6 +41,11 @@ Item {
     function setCurrentVolume(v) {
         if (isMicMode) audioManager.setMicVolume(v)
         else audioManager.setVolume(v)
+    }
+
+    function nudgeVolume(direction, coarse) {
+        const step = coarse ? 10 : (settingsManager ? settingsManager.volumeStep : 2)
+        setCurrentVolume(Math.max(0, Math.min(100, currentVolume + direction * step)))
     }
 
     function toggleCurrentMute() {
@@ -164,15 +170,13 @@ Item {
                 return
             }
 
-            let step = (event.modifiers & Qt.ShiftModifier) ? 10 : 2
+            const coarse = (event.modifiers & Qt.ShiftModifier) !== 0
 
             if (event.key === Qt.Key_Up) {
-                let v = Math.max(0, Math.min(100, root.currentVolume + step))
-                root.setCurrentVolume(v)
+                root.nudgeVolume(1, coarse)
                 event.accepted = true
             } else if (event.key === Qt.Key_Down) {
-                let v = Math.max(0, Math.min(100, root.currentVolume - step))
-                root.setCurrentVolume(v)
+                root.nudgeVolume(-1, coarse)
                 event.accepted = true
             } else if (event.key === Qt.Key_M) {
                 root.toggleCurrentMute()
@@ -554,9 +558,7 @@ Item {
                 }
 
                 onWheel: (wheel) => {
-                    let delta = wheel.angleDelta.y > 0 ? 2 : -2
-                    let newVolume = Math.max(0, Math.min(100, root.currentVolume + delta))
-                    root.setCurrentVolume(newVolume)
+                    root.nudgeVolume(wheel.angleDelta.y > 0 ? 1 : -1, false)
                     contentLayer.startInteraction()
                     root.startVolumeChangeTimer()
                 }

@@ -42,6 +42,9 @@
   "timer": {
     "sound": "None"
   },
+  "volume": {
+    "step": 2
+  },
   "lockTimer": {
     "minutes": 10
   },

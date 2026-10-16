@@ -886,6 +886,7 @@ PanelWindow {
             property var cavaManagerRef: cavaManager
             property var micCavaManagerRef: micCavaManager
             property var musicPlayerManagerRef: musicPlayerManager
+            property var settingsManagerRef: settingsManager
             active: modeManagerRef.isMode("volume")
             sourceComponent: Content.VolumeContent {
                 anchors.fill: parent
@@ -895,6 +896,7 @@ PanelWindow {
                 cavaManager: volumeLoader.cavaManagerRef
                 micCavaManager: volumeLoader.micCavaManagerRef
                 musicPlayerManager: volumeLoader.musicPlayerManagerRef
+                settingsManager: volumeLoader.settingsManagerRef
                 theme: volumeLoader.themeRef
                 typo: volumeLoader.typoRef
             }

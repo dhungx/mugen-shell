@@ -156,7 +156,7 @@ in
           pavucontrol
           pulseaudio   # provides `pactl`, which the audio panel shells out to
           brightnessctl
-          jq             # take-screenshot.sh parses hyprctl JSON with it
+          jq             # take-screenshot.sh and volume-key.sh parse JSON with it
           glib           # `gsettings`, how the theme toggle reaches portal-aware apps
           gsettings-desktop-schemas  # the org.gnome.desktop.interface schema it writes into
           gnome-themes-extra  # the Adwaita-dark theme dir; without it GTK3 silently stays light

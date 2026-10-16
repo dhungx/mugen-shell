@@ -10,6 +10,7 @@ Rectangle {
 
     required property var theme
     required property var modeManager
+    property var settingsManager
 
     signal openUrl(string url)
 
@@ -64,7 +65,7 @@ Rectangle {
                 { keys: "→", desc: "Next track" }
             ]},
             { name: "Volume", rows: [
-                { keys: "↑↓", desc: "Adjust ±2%" },
+                { keys: "↑↓", desc: "Adjust ±" + (section.settingsManager ? section.settingsManager.volumeStep : 2) + "%" },
                 { keys: "Shift+↑↓", desc: "Adjust ±10%" },
                 { keys: "M", desc: "Mute toggle" },
                 { keys: "Tab", desc: "Speaker / Mic mode" }
