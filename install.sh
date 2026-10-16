@@ -5,7 +5,7 @@ set -euo pipefail
 repo=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # AUR-only, so pacman cannot resolve them and the helper has to.
-aur_deps=(mpvpaper awww matugen ttf-mplus-git libcava)
+aur_deps=(mpvpaper ttf-mplus-git libcava)
 default_apps=(kitty thunar firefox)
 zsh_pkgs=(zsh starship jp2a fastfetch fzf eza bat ugrep
           zsh-syntax-highlighting zsh-autosuggestions zsh-history-substring-search)
