@@ -96,7 +96,7 @@ func execCommand(ctx context.Context, name string, args []string) (string, error
 	return strings.TrimSpace(string(out)), err
 }
 
-// The service unit sets no PATH, so re-invoking by name would miss the binary.
+// Re-invoking by name would run whichever mugen-ai PATH finds first, not this binary.
 var selfPath = sync.OnceValue(func() string {
 	if path, err := os.Executable(); err == nil {
 		return path

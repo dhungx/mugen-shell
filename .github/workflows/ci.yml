@@ -1,6 +1,6 @@
 name: CI
 
-# No QML job: its harness lives in the untracked dev/. Run dev/test-all.sh locally for that half.
+# No QML job: the QML harness is kept out of the repo and runs locally.
 
 on:
   push:

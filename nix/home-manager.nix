@@ -271,7 +271,7 @@ in
         ExecStart = "${cfg.ai.package}/bin/mugen-ai serve";
         # An MCP server's command (npx, uvx, ...) is resolved by this PATH.
         Environment = [ "PATH=${unitPath}" ];
-        # The socket lives here; systemd creates it 0700 and clears it on stop.
+        # The socket lives here; systemd clears it on stop.
         RuntimeDirectory = "mugen-ai";
         # Leading dash marks the API-key file optional, so the service still
         # starts for users on local Ollama models only.

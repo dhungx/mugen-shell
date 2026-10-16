@@ -7,6 +7,7 @@ extern "C" {
 }
 
 #include <QMetaObject>
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
