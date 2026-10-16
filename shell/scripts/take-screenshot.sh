@@ -5,7 +5,7 @@ set -euo pipefail
 
 MODE="${1:-region}"
 
-OUTPUT_DIR="${XDG_PICTURES_DIR:-$HOME/Pictures}/mugen-screenshots"
+OUTPUT_DIR="$(bash "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/pictures-dir.sh")/mugen-screenshots"
 mkdir -p "$OUTPUT_DIR"
 stamp=$(date +%Y%m%d_%H%M%S)
 output_path="$OUTPUT_DIR/screenshot_$stamp.png"

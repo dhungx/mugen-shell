@@ -8,15 +8,14 @@ import "../../lib" as Theme
 QtObject {
     id: screenshotManager
 
-    readonly property string picturesDir: Quickshell.env("XDG_PICTURES_DIR") || (Quickshell.env("HOME") + "/Pictures")
-    readonly property string screenshotDir: picturesDir + "/mugen-screenshots"
+    property string picturesDir: ""
+    readonly property string screenshotDir: picturesDir ? picturesDir + "/mugen-screenshots" : ""
 
     property var folderModel: null
     property var screenshots: null
 
     Component.onCompleted: {
         folderModel = Qt.createQmlObject('import Qt.labs.folderlistmodel 2.15; FolderListModel {}', screenshotManager)
-        folderModel.folder = "file://" + screenshotManager.screenshotDir
         folderModel.showDirs = false
         folderModel.nameFilters = ["*.png", "*.jpg", "*.jpeg", "*.webp"]
         folderModel.sortField = FolderListModel.Time
@@ -26,12 +25,23 @@ QtObject {
         screenshots = folderModel
     }
 
+    property Process resolveDirProcess: Process {
+        command: ["bash", Quickshell.shellDir + "/scripts/pictures-dir.sh"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                screenshotManager.picturesDir = text.trim() || Quickshell.env("HOME") + "/Pictures"
+            }
+        }
+        onExited: if (screenshotManager.screenshotDir) screenshotManager.ensureDirProcess.running = true
+    }
+
     property Process ensureDirProcess: Process {
         command: ["mkdir", "-p", screenshotManager.screenshotDir]
-        running: true
+        running: false
         onExited: {
             if (folderModel) {
-                folderModel.folder = "file://" + screenshotManager.screenshotDir
+                folderModel.folder = "file://" + screenshotManager.screenshotDir.split("/").map(encodeURIComponent).join("/")
                 folderModel.sortField = FolderListModel.Time
                 folderModel.sortReversed = false
             }
@@ -52,7 +62,7 @@ QtObject {
     }
 
     function filePath(index) {
-        if (index < 0 || index >= folderModel.count) return ""
+        if (!screenshotManager.screenshotDir || index < 0 || index >= folderModel.count) return ""
         return screenshotManager.screenshotDir + "/" + folderModel.get(index, "fileName")
     }
 
