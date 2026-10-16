@@ -47,15 +47,16 @@ Item {
         }
     }
 
-    function clearPairingError() {
+    function clearDeviceErrors() {
         bluetoothManager.pairingError = ""
+        bluetoothManager.connectionError = ""
     }
 
     Connections {
         target: modeManager
         function onCurrentModeChanged() {
             if (modeManager.isMode("bluetooth")) {
-                root.clearPairingError()
+                root.clearDeviceErrors()
                 bluetoothManager.refreshStatus()
                 bluetoothManager.refreshPairedDevices()
                 root.showAvailableDevices = false
@@ -690,7 +691,7 @@ Item {
             modeManager.registerMode("bluetooth", root)
             if (modeManager.isMode("bluetooth")) {
                 modeManager.bump()
-                root.clearPairingError()
+                root.clearDeviceErrors()
                 bluetoothManager.refreshStatus()
                 bluetoothManager.refreshPairedDevices()
                 root.showAvailableDevices = false

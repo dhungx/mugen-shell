@@ -14,6 +14,11 @@ QtObject {
     property string connectionError: ""
     property string pairingError: ""
     property string pairingAddress: ""
+    property string connectionAddress: ""
+    property string pendingConnectAddress: ""
+    property bool pendingDisconnect: false
+    property string runningConnectAddress: ""
+    property bool runningDisconnect: false
 
     readonly property bool hasConnectedDevices: {
         if (!pairedDevices || pairedDevices.length === 0) return false
@@ -67,6 +72,8 @@ QtObject {
     function toggleDeviceConnection(deviceAddress, deviceName, isCurrentlyConnected) {
         isConnecting = true
         connectionError = ""
+        pendingConnectAddress = deviceAddress
+        pendingDisconnect = isCurrentlyConnected
 
         let escapedAddress = deviceAddress.replace(/'/g, "'\\''")
         deviceConnectProcess.deviceAddress = deviceAddress
@@ -476,12 +483,19 @@ QtObject {
             }
         }
 
+        // A toggle during a run only queues the next one, so the pending target is already the next device's.
+        onStarted: {
+            bluetoothManager.runningConnectAddress = bluetoothManager.pendingConnectAddress
+            bluetoothManager.runningDisconnect = bluetoothManager.pendingDisconnect
+        }
+
         onExited: (code, status) => {
             if (code === 0) {
                 bluetoothManager.connectionError = ""
                 bluetoothManager.refreshPairedDevices()
             } else {
                 let errorMsg = (deviceConnectProcess.errorData + deviceConnectProcess.outputData).toLowerCase()
+                bluetoothManager.connectionAddress = bluetoothManager.runningConnectAddress
 
                 if (errorMsg.includes("not available") || errorMsg.includes("not found")) {
                     bluetoothManager.connectionError = "Device not available"
@@ -491,7 +505,7 @@ QtObject {
                     bluetoothManager.connectionError = ""
                     bluetoothManager.refreshPairedDevices()
                 } else {
-                    bluetoothManager.connectionError = "Connection failed"
+                    bluetoothManager.connectionError = bluetoothManager.runningDisconnect ? "Disconnect failed" : "Connection failed"
                 }
             }
 

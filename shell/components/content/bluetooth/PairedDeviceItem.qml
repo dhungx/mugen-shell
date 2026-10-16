@@ -17,6 +17,8 @@ Rectangle {
 
     signal connectRequested()
 
+    readonly property bool showsConnectionError: deviceItem.bluetoothManager.connectionError !== "" && deviceItem.bluetoothManager.connectionAddress === deviceItem.modelData.address
+
     readonly property bool isHighlighted: deviceMouseArea.containsMouse || deviceItem.ListView.isCurrentItem
 
     height: 60
@@ -91,8 +93,10 @@ Rectangle {
             }
 
             Text {
-                text: deviceItem.modelData.connected ? "Connected" : "Saved"
-                color: deviceItem.modelData.connected
+                text: deviceItem.showsConnectionError ? deviceItem.bluetoothManager.connectionError
+                    : deviceItem.modelData.connected ? "Connected" : "Saved"
+                color: deviceItem.showsConnectionError ? Qt.rgba(0.90, 0.45, 0.55, 1.0)
+                    : deviceItem.modelData.connected
                     ? (deviceItem.theme ? deviceItem.theme.accent : Qt.rgba(0.65, 0.55, 0.85, 0.9))
                     : (deviceItem.theme ? deviceItem.theme.textSecondary : Qt.rgba(0.72, 0.72, 0.82, 0.70))
                 font.pixelSize: 11
