@@ -12,7 +12,7 @@ Rectangle {
     readonly property var rows: [
         { key: "barHeight", label: "Bar height", from: 40, to: 90, unit: "px" },
         { key: "barRadius", label: "Bar corner radius", from: 0, to: 60, unit: "px" },
-        { key: "barMarginH", label: "Bar side margin", from: 0, to: 40, unit: "px" },
+        { key: "barMarginH", label: "Bar side margin", from: 0, to: 600, unit: "px" },
         { key: "barMarginV", label: "Bar top/bottom margin", from: 0, to: 30, unit: "px" }
     ]
 
