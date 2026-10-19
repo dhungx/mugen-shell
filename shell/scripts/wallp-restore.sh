@@ -44,5 +44,6 @@ if is_video "$TARGET"; then
   spawn_daemon mpvpaper "${MPVPAPER_FLAGS[@]}" -o "$MPV_OPTS" '*' "$TARGET"
 else
   ensure_swww
-  awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$(wallpaper_adjusted_still "$TARGET" "$WALLP_DIR/still.png")" "${TRANS_OPTS[@]}"
+  awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$(wallpaper_adjusted_still "$TARGET" "$WALLP_DIR/still.png")" \
+    --transition-type none --transition-duration 0 --transition-fps 60
 fi
