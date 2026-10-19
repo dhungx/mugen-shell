@@ -45,6 +45,21 @@
   "volume": {
     "step": 2
   },
+  "wallpaper": {
+    "pauseWhen": "fullscreen",
+    "pauseApps": [],
+    "speed": 1.0,
+    "sound": false,
+    "volume": 50,
+    "fit": "fill",
+    "brightness": 0,
+    "saturation": 0,
+    "transition": "wave",
+    "transitionSeconds": 1.3,
+    "slideshow": false,
+    "slideshowMinutes": 15,
+    "slideshowOrder": "shuffle"
+  },
   "lockTimer": {
     "minutes": 10
   },

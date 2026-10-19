@@ -30,6 +30,19 @@ QtObject {
     property string launcherTerminal: "kitty"  // command used to launch Terminal=true apps
     property string timerSound: "None"  // filename in Paths.timerSoundsDir, or "None"
     property int volumeStep: 2
+    property string wallpaperPauseWhen: "fullscreen"
+    property var wallpaperPauseApps: []
+    property real wallpaperSpeed: 1
+    property bool wallpaperSound: false
+    property int wallpaperVolume: 50
+    property string wallpaperFit: "fill"
+    property int wallpaperBrightness: 0
+    property int wallpaperSaturation: 0
+    property string wallpaperTransition: "wave"
+    property real wallpaperTransitionSeconds: 1.3
+    property bool wallpaperSlideshow: false
+    property int wallpaperSlideshowMinutes: 15
+    property string wallpaperSlideshowOrder: "shuffle"
     property int lockTimerMinutes: 10  // hypridle screen-lock idle timeout
     property int idleSuspendMinutes: 30  // hypridle suspend timeout, 0 = disabled
     property int idleDpmsMinutes: 0  // hypridle screen-off timeout, 0 = disabled
@@ -186,6 +199,21 @@ QtObject {
             },
             "volume": {
                 "step": volumeStep
+            },
+            "wallpaper": {
+                "pauseWhen": wallpaperPauseWhen,
+                "pauseApps": wallpaperPauseApps,
+                "speed": wallpaperSpeed,
+                "sound": wallpaperSound,
+                "volume": wallpaperVolume,
+                "fit": wallpaperFit,
+                "brightness": wallpaperBrightness,
+                "saturation": wallpaperSaturation,
+                "transition": wallpaperTransition,
+                "transitionSeconds": wallpaperTransitionSeconds,
+                "slideshow": wallpaperSlideshow,
+                "slideshowMinutes": wallpaperSlideshowMinutes,
+                "slideshowOrder": wallpaperSlideshowOrder
             },
             "lockTimer": {
                 "minutes": lockTimerMinutes
@@ -418,6 +446,44 @@ QtObject {
                 }
             } catch (e) {
                 console.error("Failed to apply settings.volume:", e)
+            }
+
+            try {
+                const wp = settings.wallpaper
+                if (_isPlainObject(wp)) {
+                    const R = WallpaperRules
+                    if (wp.pauseWhen !== undefined)
+                        wallpaperPauseWhen = R.enumOf(wp.pauseWhen, R.pauseWhenValues, "fullscreen")
+                    if (wp.pauseApps !== undefined) {
+                        const apps = R.pauseAppsOf(wp.pauseApps)
+                        if (JSON.stringify(apps) !== JSON.stringify(wallpaperPauseApps))
+                            wallpaperPauseApps = apps
+                    }
+                    if (wp.speed !== undefined)
+                        wallpaperSpeed = R.speedOf(wp.speed)
+                    if (wp.sound !== undefined)
+                        wallpaperSound = R.boolOf(wp.sound, false)
+                    if (wp.volume !== undefined)
+                        wallpaperVolume = R.volumeOf(wp.volume)
+                    if (wp.fit !== undefined)
+                        wallpaperFit = R.enumOf(wp.fit, R.fitValues, "fill")
+                    if (wp.brightness !== undefined)
+                        wallpaperBrightness = R.brightnessOf(wp.brightness)
+                    if (wp.saturation !== undefined)
+                        wallpaperSaturation = R.saturationOf(wp.saturation)
+                    if (wp.transition !== undefined)
+                        wallpaperTransition = R.enumOf(wp.transition, R.transitionValues, "wave")
+                    if (wp.transitionSeconds !== undefined)
+                        wallpaperTransitionSeconds = R.transitionSecondsOf(wp.transitionSeconds)
+                    if (wp.slideshow !== undefined)
+                        wallpaperSlideshow = R.boolOf(wp.slideshow, false)
+                    if (wp.slideshowMinutes !== undefined)
+                        wallpaperSlideshowMinutes = R.slideshowMinutesOf(wp.slideshowMinutes)
+                    if (wp.slideshowOrder !== undefined)
+                        wallpaperSlideshowOrder = R.enumOf(wp.slideshowOrder, R.slideshowOrderValues, "shuffle")
+                }
+            } catch (e) {
+                console.error("Failed to apply settings.wallpaper:", e)
             }
 
             try {

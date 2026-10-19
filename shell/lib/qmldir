@@ -7,6 +7,7 @@ singleton Keybinds 1.0 Keybinds.qml
 singleton ModulePalettes 1.0 ModulePalettes.qml
 singleton Motion 1.0 Motion.qml
 singleton Rig 1.0 Rig.qml
+singleton WallpaperRules 1.0 WallpaperRules.qml
 singleton Metrics 1.0 Metrics.qml
 singleton Paths 1.0 Paths.qml
 AiBackend 1.0 AiBackend.qml
