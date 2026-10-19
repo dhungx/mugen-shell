@@ -483,6 +483,13 @@ PanelWindow {
 
     Managers.WallpaperManager { id: wallpaperManager }
 
+    Managers.WallpaperPlayback {
+        id: wallpaperPlayback
+        settingsManager: settingsManager
+        toplevels: ToplevelManager.toplevels.values
+        videoPath: wallpaperManager.isVideoFile(wallpaperManager.currentWallpaperPath) ? wallpaperManager.currentWallpaperPath : ""
+    }
+
     Managers.IdleInhibitorManager { id: idleInhibitorManager }
 
     Managers.WiFiManager { id: wifiManager }
