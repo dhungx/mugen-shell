@@ -57,7 +57,10 @@ The details behind each item in the [README](README.en.md) feature list.
 
 ## Wallpapers and colors
 
-- Image and video wallpapers, switched with an animation
+- Image and video wallpapers, with a choice of switch effect (wave, fade, wipe, grow, random or none) and its length
+- Adjust brightness, saturation and how the wallpaper fits the screen (fill, fit or stretch), for images and videos alike
+- Video wallpapers can play slower or faster and with sound, and can pause while a fullscreen window is open or while apps you pick are open
+- Slideshow: rotates through your wallpaper folder every 1 to 60 minutes, in order or shuffled, and the colors follow each wallpaper
 - The picker has search, and Yura can switch to a random wallpaper
 - Colors are generated from the wallpaper and applied to your apps (GTK), window borders and the terminal (kitty) too
 - When a panel opens, the bar's backdrop becomes a moving gradient from the wallpaper colors (the music and weather panels have their own; pick from 5 palettes)
@@ -91,6 +94,7 @@ The details behind each item in the [README](README.en.md) feature list.
 
 - Change it all in the Settings window (`Super + ,`), where you can search for any option
 - **Appearance**: bar shape, color, size, margins and auto-hide, transparency, blur, animation speed, reduce motion, clock format, first day of the week
+- **Wallpaper**: when videos pause, speed and sound, apps that pause them, brightness and saturation, fit, the switch effect, slideshow
 - **Sound**: the volume step, notification and timer sounds; drop in audio files of your own to use any sound you like
 - **Idle & Lock**: time until screen-off, sleep and lock
 - **System**: which monitor shows the bar, workspace count

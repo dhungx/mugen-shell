@@ -23,7 +23,7 @@ My dotfiles for a Hyprland + Quickshell desktop, packaged so they can be install
 - **Clipboard**: searchable history that keeps images too
 - **Notifications**: do not disturb, click to jump to the sending app
 - **Screenshots**: region, window or full screen, plus a gallery
-- **Wallpapers and colors**: image and video wallpapers, with their colors carried into your apps
+- **Wallpapers and colors**: image and video wallpapers and a slideshow, with their colors carried into your apps
 - **Light / dark**: GTK apps switch along
 - **Lock screen**: clock and weather, and an animation that moves as you type
 - **System controls**: audio, brightness, WiFi, Bluetooth, IME and more
