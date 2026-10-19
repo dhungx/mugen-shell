@@ -2,9 +2,9 @@
 set -euo pipefail
 
 WALLP_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/mugen-shell/wallp"
+mkdir -p "$WALLP_DIR"
 CURRENT_WALLPAPER_FILE="$WALLP_DIR/current_wallpaper_path.txt"
-source "$(dirname "${BASH_SOURCE[0]}")/mpvpaper-opts.sh"
-TRANS_OPTS=(--transition-type any --transition-fps 60)
+source "$(dirname "${BASH_SOURCE[0]}")/wallpaper-opts.sh"
 
 is_video() { case "${1,,}" in *.mp4|*.webm|*.mkv|*.gif) return 0;; *) return 1;; esac; }
 
@@ -44,5 +44,5 @@ if is_video "$TARGET"; then
   spawn_daemon mpvpaper "${MPVPAPER_FLAGS[@]}" -o "$MPV_OPTS" '*' "$TARGET"
 else
   ensure_swww
-  awww img --resize crop "$TARGET" "${TRANS_OPTS[@]}"
+  awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$(wallpaper_adjusted_still "$TARGET" "$WALLP_DIR/still.png")" "${TRANS_OPTS[@]}"
 fi

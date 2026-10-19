@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SHELL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 THUMB_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/mugen-shell/wallp"
 mkdir -p "$THUMB_DIR"
-source "$SCRIPT_DIR/mpvpaper-opts.sh"
+source "$SCRIPT_DIR/wallpaper-opts.sh"
 
 DEBUG_LOG="$THUMB_DIR/debug.log"
 
@@ -32,32 +32,37 @@ abort_daemon_unavailable() {
   exit 1
 }
 
-WALLPAPER="$1"
-[[ -z "${WALLPAPER:-}" ]] && { echo "Usage: $0 <wallpaper-path>" >&2; exit 1; }
+CURRENT_WALLPAPER_FILE="$THUMB_DIR/current_wallpaper_path.txt"
+
+read_current_wallpaper() {
+  if [[ -r "$CURRENT_WALLPAPER_FILE" ]]; then tr -d '\n' < "$CURRENT_WALLPAPER_FILE" || true; fi
+}
+
+absolute_path() {
+  printf '%s' "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+}
+
+REAPPLY=false
+if [[ "${1:-}" == "--reapply" ]]; then REAPPLY=true; shift; fi
+
+if [[ $REAPPLY == true ]]; then
+  WALLPAPER="$(read_current_wallpaper)"
+  [[ -f "$WALLPAPER" ]] || exit 0
+else
+  WALLPAPER="${1:-}"
+fi
+[[ -z "${WALLPAPER:-}" ]] && { echo "Usage: $0 [--reapply] <wallpaper-path>" >&2; exit 1; }
 [[ ! -f "$WALLPAPER" ]] && {
   echo "File not found: $WALLPAPER" >&2
   notify_failure "File not found: ${WALLPAPER##*/}"
   exit 1
 }
 
-WALLPAPER_ABS="$(cd "$(dirname "$WALLPAPER")" && pwd)/$(basename "$WALLPAPER")"
+WALLPAPER_ABS="$(absolute_path "$WALLPAPER")"
 
 THUMB_FILE="$THUMB_DIR/current_wallpaper_thumb.png"
-CURRENT_WALLPAPER_FILE="$THUMB_DIR/current_wallpaper_path.txt"
 LOCK="$THUMB_DIR/.wallp.lock"
 THEME_MODE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/mugen-shell/theme-mode"
-
-TRANS_DURATION=1.3
-
-TRANS_OPTS=(
-  --transition-type wave
-  --transition-fps 144
-  --transition-duration "$TRANS_DURATION"
-  --transition-angle 30
-  --transition-wave 40,40
-  --transition-step 20
-  --transition-bezier 0.25,0.1,0.25,1.0
-)
 
 # Hyprland draws a closing layer's fade-out on top of the stack, so it bleeds through for this long.
 LAYER_FADE_SEC=0.5
@@ -71,7 +76,14 @@ MPV_WARMUP_SEC=0.4
 
 # awww-daemon and mpvpaper are spawned with 9>&-: an inherited fd holds the flock for their whole life.
 exec 9>"$LOCK"
-if ! flock -n 9; then
+if [[ $REAPPLY == true ]]; then
+  flock -w 10 9 || exit 0
+  # A switch that held the lock may have replaced the wallpaper while this waited.
+  WALLPAPER="$(read_current_wallpaper)"
+  [[ -f "$WALLPAPER" ]] || exit 0
+  WALLPAPER_ABS="$(absolute_path "$WALLPAPER")"
+  source "$SCRIPT_DIR/wallpaper-opts.sh"
+elif ! flock -n 9; then
   echo "Already running" >&2
   notify_failure "Another wallpaper change is still running"
   exit 1
@@ -162,10 +174,10 @@ swww_set_no_transition() {
   ensure_swww || return 1
 
   if awww img --help 2>/dev/null | grep -q -- '--transition-type'; then
-    awww img --resize crop "$1" --transition-type none --transition-duration 0 --transition-fps "$STILL_SET_FPS" 2>/dev/null \
-    || awww img --resize crop "$1" --transition-duration 0 --transition-fps "$STILL_SET_FPS"
+    awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$1" --transition-type none --transition-duration 0 --transition-fps "$STILL_SET_FPS" 2>/dev/null \
+    || awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$1" --transition-duration 0 --transition-fps "$STILL_SET_FPS"
   else
-    awww img --resize crop "$1" --transition-duration 0 --transition-fps "$STILL_SET_FPS"
+    awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$1" --transition-duration 0 --transition-fps "$STILL_SET_FPS"
   fi
 }
 
@@ -237,13 +249,24 @@ grab_current_video_frame_via_ipc() {
   done
 
   out="$(mktemp "$THUMB_DIR/wprev.XXXXXX.png")"
-  ffmpeg -y -v error -i "$path" -ss "$curtime" \
-    -frames:v 1 -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=0x00000000" \
+  ffmpeg -nostdin -y -v error -i "$path" -ss "$curtime" \
+    -frames:v 1 -update 1 \
     "$out" >/dev/null 2>&1 || return 1
 
   [[ -s "$out" ]] || return 1
   printf '%s' "$out"
 }
+
+if [[ $REAPPLY == true ]]; then
+  if is_video "$WALLPAPER_ABS"; then
+    debug_log "Reapply skipped: a video wallpaper is updated live"
+    exit 0
+  fi
+  ensure_swww || abort_daemon_unavailable
+  awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$(wallpaper_adjusted_still "$WALLPAPER_ABS" "$THUMB_DIR/still.png")" \
+    --transition-type none --transition-duration 0 --transition-fps "$STILL_SET_FPS"
+  exit 0
+fi
 
 # Tear the video layer down while awww already holds the same frame, so the flash shows nothing new.
 if pgrep mpvpaper >/dev/null 2>&1; then
@@ -253,16 +276,18 @@ if pgrep mpvpaper >/dev/null 2>&1; then
   [[ -z "${prev_png:-}" ]] && prev_png="$(grab_current_video_frame_via_ipc 2>/dev/null || true)"
 
   if [[ -n "${prev_png:-}" && -s "$prev_png" ]]; then
+    # mpv's screenshot leaves out its brightness and saturation (measured), so the frame gets them like a still.
+    shown_png="$(wallpaper_adjusted_still "$prev_png" "${prev_png%.png}.adjusted.png")"
     if ! ensure_swww; then
       mpv_ipc_send '{"command":["set_property","pause",false]}' >/dev/null 2>&1 || true
-      rm -f "$prev_png"
+      rm -f "$prev_png" "${prev_png%.png}.adjusted.png"
       abort_daemon_unavailable
     fi
-    if swww_set_no_transition "$prev_png"; then
+    if swww_set_no_transition "$shown_png"; then
       sleep "$STILL_COMMIT_SEC"
       echo "Current frame captured and displayed"
     fi
-    rm -f "$prev_png"
+    rm -f "$prev_png" "${prev_png%.png}.adjusted.png"
   fi
 
   stop_mpvpaper
@@ -289,7 +314,7 @@ if is_image "$WALLPAPER_ABS"; then
 
   ensure_swww || abort_daemon_unavailable
   debug_log "Running awww img with TRANS_OPTS"
-  if swww_output=$(awww img --resize crop "$WALLPAPER_ABS" "${TRANS_OPTS[@]}" 2>&1); then
+  if swww_output=$(awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$(wallpaper_adjusted_still "$WALLPAPER_ABS" "$THUMB_DIR/still.png")" "${TRANS_OPTS[@]}" 2>&1); then
     echo "$swww_output" >> "$DEBUG_LOG"
     debug_log "awww img: success"
   else
@@ -306,7 +331,7 @@ elif is_video "$WALLPAPER_ABS"; then
   debug_log "Setting video wallpaper: $WALLPAPER_ABS"
 
   if command -v ffmpeg >/dev/null 2>&1; then
-    ffmpeg -y -v error -i "$WALLPAPER_ABS" \
+    ffmpeg -nostdin -y -v error -i "$WALLPAPER_ABS" \
       -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=0x00000000" \
       -frames:v 1 "$THUMB_FILE" >/dev/null 2>&1 || true
   fi
@@ -326,12 +351,17 @@ elif is_video "$WALLPAPER_ABS"; then
   fi
 
   ensure_swww || abort_daemon_unavailable
-  if [[ -f "$THUMB_FILE" ]]; then
-    awww img --resize crop "$THUMB_FILE" "${TRANS_OPTS[@]}"
+  FIRST_FRAME="$THUMB_DIR/video-first.png"
+  first_frame_vf="$(wallpaper_adjust_filter)"
+  if command -v ffmpeg >/dev/null 2>&1 \
+    && ffmpeg -nostdin -y -v error -i "$WALLPAPER_ABS" -frames:v 1 ${first_frame_vf:+-vf "$first_frame_vf"} -update 1 "$FIRST_FRAME" >/dev/null 2>&1; then
+    awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$FIRST_FRAME" "${TRANS_OPTS[@]}"
+  elif [[ -f "$THUMB_FILE" ]]; then
+    awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$THUMB_FILE" "${TRANS_OPTS[@]}"
   else
     if command -v ffmpeg >/dev/null 2>&1; then
-      ffmpeg -v error -f lavfi -i color=c=#222222:s=1920x1080 -frames:v 1 -y "$THUMB_FILE" >/dev/null 2>&1 || true
-      [[ -f "$THUMB_FILE" ]] && awww img --resize crop "$THUMB_FILE" "${TRANS_OPTS[@]}"
+      ffmpeg -nostdin -v error -f lavfi -i color=c=#222222:s=1920x1080 -frames:v 1 -y "$THUMB_FILE" >/dev/null 2>&1 || true
+      [[ -f "$THUMB_FILE" ]] && awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$THUMB_FILE" "${TRANS_OPTS[@]}"
     fi
   fi
 
