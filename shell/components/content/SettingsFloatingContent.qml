@@ -29,6 +29,7 @@ Item {
 
     readonly property var categories: [
         { id: "appearance", label: "Appearance",   types: ["theme", "barSurface", "moduleBackground", "blur", "animation", "dateFormat", "clock", "weather", "calendarWeekStart", "barLayout"] },
+        { id: "wallpaper",  label: "Wallpaper",    types: ["wallpaperPlayback", "wallpaperPauseApps", "wallpaperDisplay", "wallpaperTransition", "wallpaperSlideshow"] },
         { id: "sound",      label: "Sound",        types: ["volumeStep", "notificationSound", "timerSound"] },
         { id: "notifications", label: "Notifications", types: ["doNotDisturb", "notificationTimeout"] },
         { id: "timer",      label: "Idle & Lock",  types: ["timer", "lockTimer", "lockScreen", "idlePower"] },
@@ -51,6 +52,11 @@ Item {
             case "notificationSound": return notificationSoundSection
             case "timerSound":        return timerSoundSection
             case "volumeStep":        return volumeStepSection
+            case "wallpaperPlayback": return wallpaperPlaybackSection
+            case "wallpaperPauseApps": return wallpaperPauseAppsSection
+            case "wallpaperDisplay":  return wallpaperDisplaySection
+            case "wallpaperTransition": return wallpaperTransitionSection
+            case "wallpaperSlideshow": return wallpaperSlideshowSection
             case "lockTimer":         return lockTimerSection
             case "lockScreen":        return lockScreenSection
             case "idlePower":         return idlePowerSection
@@ -139,6 +145,31 @@ Item {
         onApplySound: name => root.applyTimerSound(name)
     }}
     Component { id: volumeStepSection; Settings.VolumeStepSection {
+        theme: root.theme
+        modeManager: root.modeManager
+        settingsManager: root.settingsManager
+    }}
+    Component { id: wallpaperPlaybackSection; Settings.WallpaperPlaybackSection {
+        theme: root.theme
+        modeManager: root.modeManager
+        settingsManager: root.settingsManager
+    }}
+    Component { id: wallpaperPauseAppsSection; Settings.WallpaperPauseAppsSection {
+        theme: root.theme
+        modeManager: root.modeManager
+        settingsManager: root.settingsManager
+    }}
+    Component { id: wallpaperDisplaySection; Settings.WallpaperDisplaySection {
+        theme: root.theme
+        modeManager: root.modeManager
+        settingsManager: root.settingsManager
+    }}
+    Component { id: wallpaperTransitionSection; Settings.WallpaperTransitionSection {
+        theme: root.theme
+        modeManager: root.modeManager
+        settingsManager: root.settingsManager
+    }}
+    Component { id: wallpaperSlideshowSection; Settings.WallpaperSlideshowSection {
         theme: root.theme
         modeManager: root.modeManager
         settingsManager: root.settingsManager

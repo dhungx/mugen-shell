@@ -43,7 +43,7 @@ Rectangle {
 
         Text {
             Layout.fillWidth: true
-            text: "Restores every setting on these pages — bar, workspaces, display, weather, calendar, notifications, animations, sounds, timers, launcher, idle, and Yura — to their defaults. Theme mode, blur preset, wallpapers, calendar events, conversations, and notification history are not touched."
+            text: "Restores every setting on these pages (bar, workspaces, display, wallpaper, weather, calendar, notifications, animations, blur, sounds, timers, launcher, idle, and Yura) to their defaults. Theme mode, the current wallpaper, calendar events, conversations, and notification history are not touched."
             color: theme ? theme.textSecondary : Qt.rgba(0.72, 0.72, 0.82, 0.80)
             font.pixelSize: 11
             font.weight: Font.Light
