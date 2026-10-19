@@ -64,13 +64,73 @@ QtObject {
             wallpaperProcess.running = true
     }
 
+    function restartSlideshowCountdown() {
+        if (slideshowTimer.running)
+            slideshowTimer.restart()
+    }
+
     function setWallpaper(path) {
+        restartSlideshowCountdown()
         // Detached: the script runs for seconds and a hot-reload would SIGTERM a tracked Process.
         Quickshell.execDetached([
             "bash",
             Quickshell.shellDir + "/scripts/change-wallpaper.sh",
             path
         ])
+    }
+
+    property var settingsManager
+    property bool slideshowBlocked: false
+    property var shuffleBag: []
+
+    function nextSlide() {
+        if (settingsManager && settingsManager.wallpaperSlideshowOrder === "inOrder")
+            return Theme.WallpaperRules.nextInOrder(orderedWallpapers, currentWallpaperPath)
+
+        const pick = Theme.WallpaperRules.nextShuffled(wallpapers || [], currentWallpaperPath, shuffleBag, Math.random)
+        shuffleBag = pick.bag
+        return pick.path
+    }
+
+    function advanceSlideshow() {
+        const next = nextSlide()
+        if (next)
+            setWallpaper(next)
+    }
+
+    function reapplyStill() {
+        if (currentWallpaperPath === "" || isVideoFile(currentWallpaperPath))
+            return
+
+        Quickshell.execDetached(["bash", Quickshell.shellDir + "/scripts/change-wallpaper.sh", "--reapply"])
+    }
+
+    function scheduleReapply() {
+        // The first settings load would otherwise redo the still at every bar start.
+        if (settingsManager && settingsManager._settingsLoaded)
+            reapplyTimer.restart()
+    }
+
+    onCurrentWallpaperPathChanged: restartSlideshowCountdown()
+
+    property Timer slideshowTimer: Timer {
+        interval: (wallpaperManager.settingsManager ? wallpaperManager.settingsManager.wallpaperSlideshowMinutes : 15) * 60000
+        repeat: true
+        running: !!wallpaperManager.settingsManager && wallpaperManager.settingsManager.wallpaperSlideshow
+            && (wallpaperManager.wallpapers || []).length > 1 && !wallpaperManager.slideshowBlocked
+        onTriggered: wallpaperManager.advanceSlideshow()
+    }
+
+    property Timer reapplyTimer: Timer {
+        interval: 300
+        onTriggered: wallpaperManager.reapplyStill()
+    }
+
+    property Connections displaySettingsWatch: Connections {
+        target: wallpaperManager.settingsManager
+        function onWallpaperFitChanged() { wallpaperManager.scheduleReapply() }
+        function onWallpaperBrightnessChanged() { wallpaperManager.scheduleReapply() }
+        function onWallpaperSaturationChanged() { wallpaperManager.scheduleReapply() }
     }
 
     function isVideoFile(path) {

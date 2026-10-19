@@ -481,7 +481,11 @@ PanelWindow {
         onTriggered: barWindow.yuraPanelOpen = false
     }
 
-    Managers.WallpaperManager { id: wallpaperManager }
+    Managers.WallpaperManager {
+        id: wallpaperManager
+        settingsManager: settingsManager
+        slideshowBlocked: wallpaperPlayback.wantPause || barWindow.lockHidden
+    }
 
     Managers.WallpaperPlayback {
         id: wallpaperPlayback
