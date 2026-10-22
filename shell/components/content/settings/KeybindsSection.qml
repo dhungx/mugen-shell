@@ -307,6 +307,15 @@ Rectangle {
                                 font.family: "M PLUS 2"
                                 font.italic: true
                             }
+
+                            Text {
+                                visible: modelData.fixed === true
+                                text: "fixed"
+                                color: section.theme ? section.theme.textFaint : Qt.rgba(0.62, 0.62, 0.72, 0.60)
+                                font.pixelSize: 10
+                                font.family: "M PLUS 2"
+                                font.italic: true
+                            }
                         }
                     }
                 }
@@ -319,7 +328,7 @@ Rectangle {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "Rebind by editing keybind-overrides.lua, e.g. return { keys = { [\"panel.launcher\"] = \"SUPER + K\" } }, then reload Hyprland."
+                    text: "Rebind by editing keybind-overrides.lua, e.g. return { keys = { [\"panel.launcher\"] = \"SUPER + K\" } }, then reload Hyprland. Rows marked fixed can't be rebound there."
                     color: section.theme ? section.theme.textFaint : Qt.rgba(0.62, 0.62, 0.72, 0.60)
                     font.pixelSize: 10
                     font.family: "M PLUS 2"
