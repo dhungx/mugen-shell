@@ -3,7 +3,6 @@ import QtQuick.Layouts
 import Quickshell
 import "../../lib" as Theme
 import "../ui" as UI
-import "../common" as Common
 import "./right" as Right
 
 RowLayout {

@@ -20,21 +20,6 @@ ShellRoot {
         id: settingsManager
     }
 
-    QtObject {
-        id: modeStub
-
-        function scale(v) {
-            return v
-        }
-
-        function bump() {
-        }
-
-        function quitApp() {
-            Qt.quit()
-        }
-    }
-
     FloatingWindow {
         id: calendarWindow
 
@@ -49,7 +34,6 @@ ShellRoot {
 
         Content.CalendarFloatingContent {
             anchors.fill: parent
-            modeManager: modeStub
             theme: themeColors
             settingsManager: settingsManager
         }

@@ -4,7 +4,6 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Io
-import Qt5Compat.GraphicalEffects
 import "../components/ui" as UI
 import "../components/content" as Content
 import "../components/managers" as Managers

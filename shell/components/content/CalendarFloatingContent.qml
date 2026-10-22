@@ -9,7 +9,6 @@ import "../../lib" as Theme
 Item {
     id: root
 
-    required property var modeManager
     property var theme
     property var settingsManager
 
