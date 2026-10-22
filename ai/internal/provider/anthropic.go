@@ -465,14 +465,13 @@ func (a *Anthropic) chat(ctx context.Context, model string, messages []Message, 
 			Type         string `json:"type"`
 			Index        int    `json:"index"`
 			ContentBlock struct {
-				Type      string         `json:"type"`
-				Text      string         `json:"text"`
-				Thinking  string         `json:"thinking"`
-				Signature string         `json:"signature"`
-				Data      string         `json:"data"`
-				ID        string         `json:"id"`
-				Name      string         `json:"name"`
-				Input     map[string]any `json:"input"`
+				Type      string `json:"type"`
+				Text      string `json:"text"`
+				Thinking  string `json:"thinking"`
+				Signature string `json:"signature"`
+				Data      string `json:"data"`
+				ID        string `json:"id"`
+				Name      string `json:"name"`
 			} `json:"content_block"`
 			Delta struct {
 				Type        string `json:"type"`
