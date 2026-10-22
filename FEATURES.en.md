@@ -8,6 +8,7 @@ The details behind each item in the [README](README.en.md) feature list.
 
 - Genre tabs and favorites
 - Drop one app onto another to make a group
+- Start typing on an empty desktop and the launcher opens, searching for what you type (can be turned off in Settings)
 - Right-click menu: open, the app's own actions, add to favorites, open file location, uninstall (pacman / Flatpak / Steam)
 
 ## Calendar

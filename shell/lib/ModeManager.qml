@@ -151,7 +151,7 @@ QtObject {
 
         switch(cmd) {
             case "launcher-query": {
-                if (parts.length < 2) break
+                if (parts.length < 2 || (settingsManager && !settingsManager.launcherTypeToSearch)) break
                 const wasOpen = isMode("launcher")
                 safeOpen("launcher")
                 launcherQueryRequested(parts.slice(1).join(" "), wasOpen)

@@ -37,7 +37,8 @@
     "popupTimeout": 5000
   },
   "launcher": {
-    "terminal": "kitty"
+    "terminal": "kitty",
+    "typeToSearch": true
   },
   "timer": {
     "sound": "None"

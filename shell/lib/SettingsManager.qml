@@ -28,6 +28,7 @@ QtObject {
     property int notificationPopupTimeout: 5000  // ms, 0 = never auto-close
     property bool notificationSuppressOnFullscreen: false
     property string launcherTerminal: "kitty"  // command used to launch Terminal=true apps
+    property bool launcherTypeToSearch: true
     property string timerSound: "None"  // filename in Paths.timerSoundsDir, or "None"
     property int volumeStep: 2
     property string wallpaperPauseWhen: "fullscreen"
@@ -192,7 +193,8 @@ QtObject {
                 "popupTimeout": notificationPopupTimeout
             },
             "launcher": {
-                "terminal": launcherTerminal
+                "terminal": launcherTerminal,
+                "typeToSearch": launcherTypeToSearch
             },
             "timer": {
                 "sound": timerSound
@@ -424,6 +426,9 @@ QtObject {
                 if (settings.launcher) {
                     if (settings.launcher.terminal !== undefined) {
                         launcherTerminal = settings.launcher.terminal
+                    }
+                    if (settings.launcher.typeToSearch !== undefined) {
+                        launcherTypeToSearch = settings.launcher.typeToSearch
                     }
                 }
             } catch (e) {

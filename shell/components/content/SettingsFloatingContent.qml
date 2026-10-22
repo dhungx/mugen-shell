@@ -33,7 +33,7 @@ Item {
         { id: "sound",      label: "Sound",        types: ["volumeStep", "notificationSound", "timerSound"] },
         { id: "notifications", label: "Notifications", types: ["doNotDisturb", "notificationTimeout"] },
         { id: "timer",      label: "Idle & Lock",  types: ["timer", "lockTimer", "lockScreen", "idlePower"] },
-        { id: "system",     label: "System",       types: ["battery", "workspaces", "launcherTerminal", "displayMonitor"] },
+        { id: "system",     label: "System",       types: ["battery", "workspaces", "launcherTerminal", "launcherTypeToSearch", "displayMonitor"] },
         { id: "keybinds",   label: "Keyboard",     types: ["keybinds"] },
         { id: "yura",       label: "Yura →",       action: "yura-settings" },
         { id: "about",      label: "About",        types: ["about"] },
@@ -68,6 +68,7 @@ Item {
             case "doNotDisturb":      return doNotDisturbSection
             case "notificationTimeout": return notificationTimeoutSection
             case "launcherTerminal":  return launcherTerminalSection
+            case "launcherTypeToSearch": return launcherTypeToSearchSection
             case "workspaces":        return workspaceSection
             case "displayMonitor":    return displayMonitorSection
             case "keybinds":          return keybindsSection
@@ -225,6 +226,11 @@ Item {
         settingsManager: root.settingsManager
     }}
     Component { id: launcherTerminalSection; Settings.LauncherTerminalSection {
+        theme: root.theme
+        modeManager: root.modeManager
+        settingsManager: root.settingsManager
+    }}
+    Component { id: launcherTypeToSearchSection; Settings.LauncherTypeToSearchSection {
         theme: root.theme
         modeManager: root.modeManager
         settingsManager: root.settingsManager
