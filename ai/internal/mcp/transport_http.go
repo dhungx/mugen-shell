@@ -117,10 +117,11 @@ func (t *httpTransport) post(callCtx context.Context, data []byte) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json, text/event-stream")
 	t.mu.Lock()
-	if t.session != "" {
-		req.Header.Set("Mcp-Session-Id", t.session)
-	}
+	sentSession := t.session
 	t.mu.Unlock()
+	if sentSession != "" {
+		req.Header.Set("Mcp-Session-Id", sentSession)
+	}
 
 	resp, err := t.client.Do(req)
 	if err != nil {
@@ -146,8 +147,8 @@ func (t *httpTransport) post(callCtx context.Context, data []byte) {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, errorBodyWindow))
 		redacted := t.redactURL(strings.TrimSpace(string(body)))
 		text := fmt.Sprintf("http transport: server returned status %d: %s", resp.StatusCode, truncateRunes(redacted, errorBodyMax))
-		// A rejected session cannot be re-initialized in place, so hand the whole transport back to re-dial.
-		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusUnauthorized {
+		// A rejected session cannot be re-initialized in place; python-sdk < 1.26 and the TS SDK's example server answer one with 400, not the spec's 404.
+		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusUnauthorized || (resp.StatusCode == http.StatusBadRequest && sentSession != "") {
 			t.fail(errors.New(text))
 			return
 		}
