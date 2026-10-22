@@ -565,6 +565,7 @@ Item {
                         anchors.bottomMargin: root.cellH * 0.17
                         width: parent.width * 0.9
                         text: root.noticeText
+                        textFormat: Text.PlainText
                         color: root.errorColor
                         opacity: root.noticeShown ? 0.9 : 0
                         horizontalAlignment: Text.AlignHCenter
