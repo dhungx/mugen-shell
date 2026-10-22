@@ -778,20 +778,25 @@ QtObject {
     }
 
     property Process saveSettingsProcess: Process {
+        id: saveProc
         command: []
         running: false
+        property string errors: ""
+        onRunningChanged: if (running) errors = ""
 
         stdout: SplitParser {
             onRead: data => {}
         }
 
         stderr: SplitParser {
-            onRead: data => {}
+            onRead: data => saveProc.errors += data + "\n"
         }
 
         onExited: (exitCode) => {
             if (exitCode === 0) {
                 settingsChanged()
+            } else {
+                console.warn("SettingsManager: saving", settingsManager.userSettingsFile, "failed (exit " + exitCode + "):", errors.trim())
             }
         }
     }
