@@ -679,6 +679,18 @@ FocusScope {
         }
     }
 
+    // Bar.qml's escKeyHandler holds focus until focusTimer fires, so it hands typed keys here.
+    function forwardPrintableToSearch(event) {
+        const code = event.text ? event.text.charCodeAt(0) : 0
+        if (code < 0x20 || code === 0x7f || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
+            return false
+        if (!searchField || !searchField.searchFieldItem) return false
+        focusTimer.stop()
+        searchField.searchFieldItem.forceActiveFocus()
+        searchField.text = root.searchText + event.text
+        return true
+    }
+
     Timer {
         id: focusTimer
         interval: 500
