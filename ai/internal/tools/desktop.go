@@ -177,7 +177,7 @@ func (r *Registry) DesktopContext(ctx context.Context) string {
 		}
 		var parts []string
 		for i, e := range payload.Events {
-			if i == 4 {
+			if i == 4 && len(payload.Events) > 5 {
 				parts = append(parts, fmt.Sprintf("+%d more", len(payload.Events)-i))
 				break
 			}
