@@ -72,9 +72,9 @@ QtObject {
         })
 
         root.notifications = newNotifications
-        root.unreadCount++
-        // A reload re-emits every live notification; only a new arrival should pop up and chime.
+        // A reload re-emits every live notification; only a new arrival should count, pop up and chime.
         if (!n.lastGeneration) {
+            root.unreadCount++
             root.notificationReceived(newNotif)
             playSound()
         }
