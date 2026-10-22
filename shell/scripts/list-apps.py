@@ -32,12 +32,8 @@ CACHE_JSON = os.path.join(CACHE_DIR, "apps_v4.json")
 CACHE_SIG = os.path.join(CACHE_DIR, "apps_v4.sha256")
 
 
-def ensure_cache_dir() -> None:
-    os.makedirs(CACHE_DIR, exist_ok=True)
-
-
-def compute_signature(apps: list) -> str:
-    lines = []
+def compute_signature(apps: list, icon_theme_name: str) -> str:
+    lines = [f"icon-theme:{icon_theme_name}"]
     for app in apps:
         filename = app.get_filename()
         if not filename:
@@ -68,6 +64,7 @@ def load_from_cache(signature: str) -> Optional[str]:
 
 def save_cache(signature: str, json_data: str) -> None:
     try:
+        os.makedirs(CACHE_DIR, exist_ok=True)
         with open(CACHE_JSON, "w", encoding="utf-8") as f:
             f.write(json_data)
         with open(CACHE_SIG, "w", encoding="utf-8") as f:
@@ -342,10 +339,8 @@ def find_icon_file(
 
     theme_name = ""
     if icon_theme:
-        try:
-            theme_name = icon_theme.get_theme_name()
-        except Exception:
-            pass
+        settings = Gtk.Settings.get_default()
+        theme_name = (settings.props.gtk_icon_theme_name if settings else "") or ""
 
     search_paths = _build_search_paths(icon_name, base_name, desktop_file_path, theme_name, home)
     return find_icon_in_paths(search_paths)
@@ -548,14 +543,13 @@ def collect_apps() -> list[dict]:
 
 
 def main() -> int:
-    ensure_cache_dir()
     Gtk.init([])
     icon_theme = Gtk.IconTheme.get_default()
     if icon_theme is None:
         raise RuntimeError("Failed to initialize GTK icon theme")
 
     all_apps = [app for app in Gio.AppInfo.get_all() if app.get_filename()]
-    signature = compute_signature(all_apps)
+    signature = compute_signature(all_apps, Gtk.Settings.get_default().props.gtk_icon_theme_name or "")
 
     cached = load_from_cache(signature)
     if cached is not None:
