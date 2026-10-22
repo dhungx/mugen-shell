@@ -634,8 +634,10 @@ FocusScope {
             // A timed-out stream can leave the strip up on a prompt the backend already abandoned.
             root.pendingConfirm = null
             // A stop is a SIGTERM, so curl's non-zero exit says nothing about the connection.
-            if (exitCode !== 0 && !root.stopRequested && root.responseDisplay.length === 0) {
-                root.responseDisplay = "[connection failed]"
+            if (exitCode !== 0 && !root.stopRequested) {
+                root.responseDisplay = root.responseDisplay.length === 0
+                    ? "[connection failed]"
+                    : root.responseDisplay + " [connection failed]"
             }
             root.stopRequested = false
             // Parked in the input field so it can be scrolled / copied.
