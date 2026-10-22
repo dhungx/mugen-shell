@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -374,6 +375,8 @@ func (r *Registry) Call(ctx context.Context, name string, args map[string]any) (
 	defer cancel()
 
 	if name == "app_launch" {
+		// Resolved in a copy: the caller's map is the model's call as history replays it.
+		args = maps.Clone(args)
 		if rejection := r.rejectAppLaunch(args); rejection != "" {
 			r.auditor.Log(name, args, rejection, nil)
 			return rejection, nil
