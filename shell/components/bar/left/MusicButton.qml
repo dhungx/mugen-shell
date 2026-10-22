@@ -15,18 +15,6 @@ Item {
 
     function scaled(v) { return modeManager ? modeManager.barScale(v) : v }
 
-    function blendColors(baseColor, accentColor, factor) {
-        const safeFactor = Math.max(0, Math.min(1, factor || 0))
-        const base = baseColor || (theme ? theme.textSecondary : Qt.rgba(0.72, 0.72, 0.82, 0.90))
-        const accent = accentColor || Qt.rgba(0.65, 0.55, 0.85, 0.9)
-        return Qt.rgba(
-            base.r + (accent.r - base.r) * safeFactor,
-            base.g + (accent.g - base.g) * safeFactor,
-            base.b + (accent.b - base.b) * safeFactor,
-            base.a + (accent.a - base.a) * safeFactor
-        )
-    }
-
     implicitWidth: isPlaying ? scaled(33) : scaled(24)
     implicitHeight: scaled(24)
     Layout.alignment: Qt.AlignVCenter
@@ -41,17 +29,8 @@ Item {
     Behavior on accentColor {
         ColorAnimation { duration: Theme.Motion.slow; easing.type: Easing.InOutCubic }
     }
-    property real colorPhase: 0
-
-    property color currentIconColor: blendColors(baseColor, accentColor, isPlaying ? colorPhase : 0)
 
     readonly property real visualizerWidth: scaled(6 * 3 + 5 * 3)
-
-    onIsPlayingChanged: {
-        if (!isPlaying) {
-            colorPhase = 0
-        }
-    }
 
     Behavior on implicitWidth {
         NumberAnimation {
@@ -81,7 +60,7 @@ Item {
             rig: musicButtonWrapper.icons && musicButtonWrapper.icons.iconData.music.type === "svg" ? musicRig : null
             iconSource: musicButtonWrapper.icons ? (musicButtonWrapper.icons.iconData.music.type === "svg" ? musicButtonWrapper.icons.iconData.music.value : "") : ""
             iconText: musicButtonWrapper.icons ? (musicButtonWrapper.icons.iconData.music.type === "text" ? musicButtonWrapper.icons.iconData.music.value : "") : ""
-            iconColor: musicButtonWrapper.currentIconColor
+            iconColor: musicButtonWrapper.baseColor
             fontSize: musicButtonWrapper.typo ? musicButtonWrapper.typo.clockStyle.size : 14
             fontFamily: musicButtonWrapper.typo ? musicButtonWrapper.typo.clockStyle.family : "M PLUS 2"
             fontWeight: musicButtonWrapper.typo ? musicButtonWrapper.typo.clockStyle.weight : Font.Normal
@@ -115,27 +94,6 @@ Item {
 
         Behavior on opacity {
             NumberAnimation { duration: Theme.Motion.gentle; easing.type: Easing.OutCubic }
-        }
-
-        Behavior on barColor {
-            ColorAnimation { duration: Theme.Motion.slow; easing.type: Easing.InOutCubic }
-        }
-    }
-
-    SequentialAnimation on colorPhase {
-        loops: Animation.Infinite
-        running: musicButtonWrapper.isPlaying
-        NumberAnimation {
-            from: 0
-            to: 1
-            duration: 1600
-            easing.type: Easing.InOutSine
-        }
-        NumberAnimation {
-            from: 1
-            to: 0
-            duration: 1600
-            easing.type: Easing.InOutSine
         }
     }
 
