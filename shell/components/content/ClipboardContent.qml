@@ -311,6 +311,8 @@ FocusScope {
                     root.modeManager.bump()
                 }
 
+                onActivity: root.modeManager.bump()
+
                 onRequestFocusResults: (backwards) => {
                     if (root.history.length === 0) return
                     clipboardLayer.forceActiveFocus()

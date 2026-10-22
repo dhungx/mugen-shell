@@ -32,7 +32,7 @@ FocusScope {
     property bool streaming: false
     property bool stopRequested: false
     // Bar.qml blocks its auto-close timer on this, so closing never eats unsent text.
-    readonly property bool hasDraft: inputField.text.trim().length > 0 && !displayingResponse
+    readonly property bool hasDraft: (inputField.text.trim().length > 0 || inputField.preeditText.length > 0) && !displayingResponse
     property bool aiAvailable: false
     property bool hasModel: false
     property bool healthChecked: false

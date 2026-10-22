@@ -325,6 +325,7 @@ FocusScope {
                         wallpaperManager.searchQuery = text
                         root.resetAutoCloseTimer()
                     }
+                    onActivity: root.resetAutoCloseTimer()
                     onRequestActivateSelected: root.activateCurrent()
                     onRequestFocusResults: backwards => root.focusResults(backwards)
                 }

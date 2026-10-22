@@ -19,6 +19,7 @@ Rectangle {
     readonly property int textSize: Math.round(fieldHeight * 0.32)
     
     signal searchTextChanged(string text)
+    signal activity()
     signal requestActivateSelected()
     signal requestFocusResults(bool backwards)
     
@@ -75,6 +76,8 @@ Rectangle {
             onTextChanged: {
                 root.searchTextChanged(text)
             }
+
+            onPreeditTextChanged: root.activity()
             
             Keys.onPressed: (event) => {
                 // Backtab too: unhandled it falls through to Qt's focus traversal and bounces focus around.

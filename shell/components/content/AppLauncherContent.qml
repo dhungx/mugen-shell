@@ -897,6 +897,8 @@ FocusScope {
                     resultCount: root.filteredApps.length
                     placeholder: "Search apps..."
 
+                    onActivity: root.modeManager.bump()
+
                     onSearchTextChanged: (text) => {
                         root.searchText = text
                         filterDebounceTimer.restart()
@@ -1239,6 +1241,7 @@ FocusScope {
                     activeFocusOnPress: true
                     selectByMouse: true
                     onTextEdited: root.modeManager.bump()
+                    onPreeditTextChanged: root.modeManager.bump()
 
                     Keys.onPressed: (event) => {
                         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Escape) {
