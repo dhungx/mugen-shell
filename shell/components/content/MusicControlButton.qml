@@ -45,12 +45,22 @@ Item {
             loops: Animation.Infinite
             running: mouseArea.containsMouse
             paused: heartbeatAnimation.running && !Theme.Motion.ambient
+            onRunningChanged: if (running) heartbeatSettle.stop(); else heartbeatSettle.start()
             NumberAnimation { to: 1.14; duration: 420; easing.type: Easing.OutCubic }
             NumberAnimation { to: 1.0; duration: 420; easing.type: Easing.InCubic }
             PauseAnimation { duration: 200 }
             NumberAnimation { to: 1.12; duration: 360; easing.type: Easing.OutCubic }
             NumberAnimation { to: 1.0; duration: 360; easing.type: Easing.InCubic }
             PauseAnimation { duration: 720 }
+        }
+
+        NumberAnimation {
+            id: heartbeatSettle
+            target: glowLayer
+            property: "heartbeat"
+            to: 1.0
+            duration: Theme.Motion.fast
+            easing.type: Easing.OutCubic
         }
 
         Common.BlobEffect {

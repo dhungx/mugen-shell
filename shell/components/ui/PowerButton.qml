@@ -57,6 +57,7 @@ Item {
             loops: Animation.Infinite
             running: button.isActive
             paused: heartbeatAnimation.running && !Theme.Motion.ambient
+            onRunningChanged: if (running) heartbeatSettle.stop(); else heartbeatSettle.start()
 
             NumberAnimation {
                 to: 1.15
@@ -80,6 +81,15 @@ Item {
                 easing.type: Easing.InCubic
             }
             PauseAnimation { duration: 850 }
+        }
+
+        NumberAnimation {
+            id: heartbeatSettle
+            target: fantasyEffect
+            property: "heartbeatScale"
+            to: 1.0
+            duration: Theme.Motion.fast
+            easing.type: Easing.OutCubic
         }
         
         Common.BlobEffect {
