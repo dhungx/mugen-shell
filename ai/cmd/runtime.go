@@ -63,7 +63,7 @@ type runtimeContext struct {
 }
 
 // Caller closes rt.Store.
-func loadRuntimeContext(modelOverride, systemOverride string) (*runtimeContext, error) {
+func loadRuntimeContext(modelOverride, systemOverride string, pruneHistory bool) (*runtimeContext, error) {
 	cfg, err := config.Load()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "warning: config load failed, using defaults: %v\n", err)
@@ -115,7 +115,7 @@ func loadRuntimeContext(modelOverride, systemOverride string) (*runtimeContext, 
 	}
 
 	// Must prune before the history layer loads, so a pruned-away current pointer self-heals.
-	if cfg.History.RetainDays > 0 {
+	if pruneHistory && cfg.History.RetainDays > 0 {
 		cutoff := time.Now().AddDate(0, 0, -cfg.History.RetainDays).Unix()
 		if n, err := st.PruneConversationsOlderThan(cutoff); err != nil {
 			fmt.Fprintf(os.Stderr, "history: prune failed: %v\n", err)

@@ -77,8 +77,8 @@
 #   disabled_categories = []
 
 # [history]
-#   # Auto-delete conversations idle longer than this many days, pruned at
-#   # mugen-ai startup. 0 keeps every conversation forever. New installs
+#   # Auto-delete conversations idle longer than this many days, pruned when
+#   # the mugen-ai service starts. 0 keeps every conversation forever. New installs
 #   # get 30; a config.toml without this key keeps everything. Edit via
 #   # Settings → AI / Yura → Conversation history.
 #   retain_days = 30

@@ -34,7 +34,8 @@ func init() {
 }
 
 func runChat(_ *cobra.Command, _ []string) error {
-	rt, err := loadRuntimeContext(chatModel, chatSystem)
+	// Only the daemon prunes: a running daemon may be serving a conversation this would delete.
+	rt, err := loadRuntimeContext(chatModel, chatSystem, false)
 	if err != nil {
 		return err
 	}

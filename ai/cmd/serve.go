@@ -34,7 +34,7 @@ func init() {
 }
 
 func runServe(_ *cobra.Command, _ []string) error {
-	rt, err := loadRuntimeContext(serveModel, serveSystem)
+	rt, err := loadRuntimeContext(serveModel, serveSystem, true)
 	if err != nil {
 		return err
 	}
