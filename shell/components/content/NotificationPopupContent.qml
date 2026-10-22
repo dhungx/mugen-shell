@@ -228,6 +228,8 @@ Item {
                     property string directImage: root.currentNotification && root.currentNotification.image
                         ? root.currentNotification.image
                         : ""
+                    property bool imageFailed: false
+                    onDirectImageChanged: imageFailed = false
 
                     Image {
                         id: appIcon
@@ -238,7 +240,7 @@ Item {
                         cache: false
                         visible: status === Image.Ready
                         source: {
-                            if (parent.directImage.length > 0) return parent.directImage
+                            if (parent.directImage.length > 0 && !parent.imageFailed) return parent.directImage
                             if (parent.iconPaths.length > 0 && parent.currentPathIndex < parent.iconPaths.length) {
                                 return "file://" + parent.iconPaths[parent.currentPathIndex]
                             }
@@ -247,9 +249,8 @@ Item {
                         onStatusChanged: {
                             if (status === Image.Error) {
                                 let p = parent
-                                if (p.currentPathIndex + 1 < p.iconPaths.length) {
-                                    p.currentPathIndex++
-                                }
+                                if (p.directImage.length > 0 && !p.imageFailed) p.imageFailed = true
+                                else if (p.currentPathIndex + 1 < p.iconPaths.length) p.currentPathIndex++
                             }
                         }
                     }

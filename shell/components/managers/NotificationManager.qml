@@ -259,11 +259,16 @@ QtObject {
             desktopEntry: n.desktopEntry,
             appIcon: n.appIcon,
             appName: n.appName,
-            image: n.image
+            image: persistableImage(n.image)
         }))
         saveProcess.command = Theme.JsonStore.atomicWriteArgv(
             Theme.Paths.stateDir, stateFile, JSON.stringify(payload))
         saveProcess.running = true
+    }
+
+    // Quickshell numbers image://qsimage handles per process, so a saved one names another notification's image.
+    function persistableImage(url) {
+        return url && !url.startsWith("image://qsimage/") ? url : ""
     }
 
     function applyFromJson(jsonString) {
@@ -278,7 +283,7 @@ QtObject {
                 if (restored[i].key && known[restored[i].key]) continue
                 let key = restored[i].key || newKey()
                 known[key] = true
-                merged.push(Object.assign({}, restored[i], { key: key, time: "", actions: [] }))
+                merged.push(Object.assign({}, restored[i], { key: key, time: "", actions: [], image: persistableImage(restored[i].image) }))
             }
             notifications = merged
             updateTimeLabels()

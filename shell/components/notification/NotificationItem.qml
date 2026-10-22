@@ -182,6 +182,8 @@ Rectangle {
                 }
                 property int currentPathIndex: 0
                 property string directImage: modelData && modelData.image ? modelData.image : ""
+                property bool imageFailed: false
+                onDirectImageChanged: imageFailed = false
 
                 Image {
                     id: itemAppIcon
@@ -192,7 +194,7 @@ Rectangle {
                     cache: false
                     visible: status === Image.Ready
                     source: {
-                        if (parent.directImage.length > 0) return parent.directImage
+                        if (parent.directImage.length > 0 && !parent.imageFailed) return parent.directImage
                         if (parent.iconPaths.length > 0 && parent.currentPathIndex < parent.iconPaths.length) {
                             return "file://" + parent.iconPaths[parent.currentPathIndex]
                         }
@@ -201,9 +203,8 @@ Rectangle {
                     onStatusChanged: {
                         if (status === Image.Error) {
                             let p = parent
-                            if (p.currentPathIndex + 1 < p.iconPaths.length) {
-                                p.currentPathIndex++
-                            }
+                            if (p.directImage.length > 0 && !p.imageFailed) p.imageFailed = true
+                            else if (p.currentPathIndex + 1 < p.iconPaths.length) p.currentPathIndex++
                         }
                     }
                 }
