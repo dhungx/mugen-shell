@@ -330,10 +330,15 @@ elif is_video "$WALLPAPER_ABS"; then
   echo "Setting video wallpaper: $WALLPAPER_ABS"
   debug_log "Setting video wallpaper: $WALLPAPER_ABS"
 
+  FIRST_FRAME="$THUMB_DIR/video-first.png"
+  rm -f "$FIRST_FRAME"
   if command -v ffmpeg >/dev/null 2>&1; then
-    ffmpeg -nostdin -y -v error -i "$WALLPAPER_ABS" \
-      -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=0x00000000" \
-      -frames:v 1 "$THUMB_FILE" >/dev/null 2>&1 || true
+    first_frame_vf="$(wallpaper_adjust_filter)"
+    # The transition waits on this: decoding and PNG-compressing a 4K frame twice takes about a second.
+    ffmpeg -nostdin -y -v error -i "$WALLPAPER_ABS" -filter_complex \
+      "[0:v]split=2[t][f];[t]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=0x00000000[thumb];[f]${first_frame_vf:-null}[first]" \
+      -map '[thumb]' -frames:v 1 -compression_level 1 -update 1 "$THUMB_FILE" \
+      -map '[first]' -frames:v 1 -compression_level 1 -update 1 "$FIRST_FRAME" >/dev/null 2>&1 || rm -f "$FIRST_FRAME"
   fi
 
   if command -v matugen >/dev/null 2>&1 && [[ -f "$THUMB_FILE" ]]; then
@@ -351,10 +356,7 @@ elif is_video "$WALLPAPER_ABS"; then
   fi
 
   ensure_swww || abort_daemon_unavailable
-  FIRST_FRAME="$THUMB_DIR/video-first.png"
-  first_frame_vf="$(wallpaper_adjust_filter)"
-  if command -v ffmpeg >/dev/null 2>&1 \
-    && ffmpeg -nostdin -y -v error -i "$WALLPAPER_ABS" -frames:v 1 ${first_frame_vf:+-vf "$first_frame_vf"} -update 1 "$FIRST_FRAME" >/dev/null 2>&1; then
+  if [[ -s "$FIRST_FRAME" ]]; then
     awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$FIRST_FRAME" "${TRANS_OPTS[@]}"
   elif [[ -f "$THUMB_FILE" ]]; then
     awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$THUMB_FILE" "${TRANS_OPTS[@]}"

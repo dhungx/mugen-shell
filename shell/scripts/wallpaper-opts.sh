@@ -86,7 +86,7 @@ wallpaper_adjusted_still() {
   vf=$(wallpaper_adjust_filter)
   if [[ -z $vf ]]; then
     printf '%s\n' "$src"
-  elif ffmpeg -nostdin -y -v error -i "$src" -vf "$vf" -frames:v 1 -update 1 "$out.tmp.png" >&2 && mv -f "$out.tmp.png" "$out"; then
+  elif ffmpeg -nostdin -y -v error -i "$src" -vf "$vf" -frames:v 1 -compression_level 1 -update 1 "$out.tmp.png" >&2 && mv -f "$out.tmp.png" "$out"; then
     printf '%s\n' "$out"
   else
     rm -f "$out.tmp.png"
