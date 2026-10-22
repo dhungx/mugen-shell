@@ -162,6 +162,7 @@ FocusScope {
     function forwardPrintableToSearch(event) {
         if (!root.isPrintable(event.text) || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
             return false
+        if (event.text === " " && searchField.text === "") return false
         // The field only exists while expanded, so it has to be shown before it can take focus.
         root.expanded = true
         searchField.searchFieldItem.forceActiveFocus()
