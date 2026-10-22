@@ -51,7 +51,9 @@ Item {
     }
 
     function startChangeTimer() {
-        if (modeManager.isMode("brightness")) changeTimer.restart()
+        if (!modeManager.isMode("brightness")) return
+        if (sliderMouse.containsMouse || sliderMouse.pressed) resetAutoClose()
+        else changeTimer.restart()
     }
 
     Connections {
@@ -68,7 +70,7 @@ Item {
         visible: enabled
         hoverEnabled: true
         onClicked: modeManager.closeAllModes()
-        onPositionChanged: if (modeManager.isMode("brightness")) modeManager.bump()
+        onPositionChanged: if (modeManager.isMode("brightness")) root.resetAutoClose()
     }
 
     MouseArea {
@@ -82,7 +84,7 @@ Item {
         visible: enabled
         hoverEnabled: true
         onClicked: modeManager.bump()
-        onPositionChanged: modeManager.bump()
+        onPositionChanged: root.resetAutoClose()
     }
 
     Item {
@@ -250,7 +252,7 @@ Item {
                                 root.resetAutoClose()
                             }
                         }
-                        onReleased: root.startChangeTimer()
+                        onReleased: root.resetAutoClose()
                         onWheel: (w) => {
                             let delta = w.angleDelta.y > 0 ? 2 : -2
                             root.setCurrent(root.currentBrightness + delta)
