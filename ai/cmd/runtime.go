@@ -220,16 +220,16 @@ func expandEnv(in map[string]string) map[string]string {
 	}
 	out := make(map[string]string, len(in))
 	for k, v := range in {
-		out[k] = os.Expand(v, os.Getenv)
+		out[k] = envRef.ReplaceAllStringFunc(v, func(ref string) string { return os.Getenv(ref[2 : len(ref)-1]) })
 	}
 	return out
 }
 
-var urlEnvRef = regexp.MustCompile(`\$\{([A-Za-z_][A-Za-z0-9_]*)\}`)
+var envRef = regexp.MustCompile(`\$\{([A-Za-z_][A-Za-z0-9_]*)\}`)
 
 // Only the ${NAME} form: a URL may carry a literal $ (OData's ?$select=).
 func expandURLEnv(server, s string) string {
-	return urlEnvRef.ReplaceAllStringFunc(s, func(ref string) string {
+	return envRef.ReplaceAllStringFunc(s, func(ref string) string {
 		name := ref[2 : len(ref)-1]
 		v, ok := os.LookupEnv(name)
 		if !ok {
