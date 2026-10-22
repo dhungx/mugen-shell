@@ -75,10 +75,11 @@ Item {
         }
     }
 
+    // The 2 s close is for key presses; a change made on the orb, or dragged off it, is the panel in use.
     function startVolumeChangeTimer() {
-        if (modeManager.isMode("volume")) {
-            volumeChangeTimer.restart()
-        }
+        if (!modeManager.isMode("volume")) return
+        if (contentLayer.isHovering || volumeMouseArea.pressed || contentLayer.deviceDropdownVisible) resetAutoCloseTimer()
+        else volumeChangeTimer.restart()
     }
 
     Connections {
