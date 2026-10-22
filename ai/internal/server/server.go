@@ -27,8 +27,8 @@ import (
 
 const maxRequestBody = 64 * 1024
 
-// Yura's health poll gives up after 2 s, so a provider that hangs must not hold the answer past it.
-const healthAdoptTimeout = time.Second
+// Yura's polls give up after 2 s, so a provider that hangs must not hold the answer past it.
+const pollAnswerTimeout = time.Second
 
 type Server struct {
 	registry *provider.Registry
@@ -542,7 +542,9 @@ func errString(err error) string {
 }
 
 func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
-	models, err := s.registry.Models(r.Context())
+	ctx, cancel := context.WithTimeout(r.Context(), pollAnswerTimeout)
+	defer cancel()
+	models, err := s.registry.Models(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
@@ -573,13 +575,13 @@ func (s *Server) handleSwitchModel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), healthAdoptTimeout)
+	ctx, cancel := context.WithTimeout(r.Context(), pollAnswerTimeout)
+	defer cancel()
 	model := s.registry.EnsureModel(ctx)
-	cancel()
 	status := "ok"
 	if model == "" {
 		status = "no_model"
-	} else if !s.registry.Ping(r.Context()) {
+	} else if !s.registry.Ping(ctx) {
 		status = "provider_unavailable"
 	}
 

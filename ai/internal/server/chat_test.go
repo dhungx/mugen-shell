@@ -594,7 +594,7 @@ func (p *lateModelProvider) setModels(m ...string) {
 	p.models = m
 }
 
-func newLateModelServer(t *testing.T, p *lateModelProvider) *Server {
+func newRegistryServer(t *testing.T, reg *provider.Registry) *Server {
 	t.Helper()
 	st, err := store.Open(filepath.Join(t.TempDir(), "chat.db"))
 	if err != nil {
@@ -605,7 +605,12 @@ func newLateModelServer(t *testing.T, p *lateModelProvider) *Server {
 	if err != nil {
 		t.Fatalf("history: %v", err)
 	}
-	return New(provider.NewRegistry("", p), hist, st, tools.New("", nil, nil, nil), nil, config.Context{})
+	return New(reg, hist, st, tools.New("", nil, nil, nil), nil, config.Context{})
+}
+
+func newLateModelServer(t *testing.T, p *lateModelProvider) *Server {
+	t.Helper()
+	return newRegistryServer(t, provider.NewRegistry("", p))
 }
 
 func healthOf(t *testing.T, s *Server) map[string]any {
@@ -658,16 +663,7 @@ func (p *hangingModelProvider) Models(ctx context.Context) ([]string, error) {
 }
 
 func TestHealthAnswersWithinTheClientTimeoutWhileAProviderHangs(t *testing.T) {
-	st, err := store.Open(filepath.Join(t.TempDir(), "chat.db"))
-	if err != nil {
-		t.Fatalf("store: %v", err)
-	}
-	t.Cleanup(func() { st.Close() })
-	hist, err := history.New(st, "test system prompt", 0)
-	if err != nil {
-		t.Fatalf("history: %v", err)
-	}
-	s := New(provider.NewRegistry("", &hangingModelProvider{}), hist, st, tools.New("", nil, nil, nil), nil, config.Context{})
+	s := newRegistryServer(t, provider.NewRegistry("", &hangingModelProvider{}))
 	start := time.Now()
 	got := healthOf(t, s)
 	if elapsed := time.Since(start); elapsed > 1500*time.Millisecond {
@@ -675,5 +671,59 @@ func TestHealthAnswersWithinTheClientTimeoutWhileAProviderHangs(t *testing.T) {
 	}
 	if got["status"] != "no_model" {
 		t.Fatalf("health = %v", got)
+	}
+}
+
+type delayedModelProvider struct{ scriptedProvider }
+
+func (p *delayedModelProvider) Name() string { return "openai" }
+
+func (p *delayedModelProvider) Models(ctx context.Context) ([]string, error) {
+	select {
+	case <-time.After(100 * time.Millisecond):
+		return []string{"remote-model"}, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+func TestHealthReportsAHungProviderWithinTheClientTimeout(t *testing.T) {
+	s := newRegistryServer(t, provider.NewRegistry("test-model", &hangingModelProvider{}))
+	start := time.Now()
+	got := healthOf(t, s)
+	if elapsed := time.Since(start); elapsed > 1500*time.Millisecond {
+		t.Fatalf("health took %v, longer than the UI's 2 s curl timeout allows", elapsed)
+	}
+	if got["status"] != "provider_unavailable" {
+		t.Fatalf("health = %v", got)
+	}
+}
+
+func TestHealthFindsAModelBehindAHungProvider(t *testing.T) {
+	s := newRegistryServer(t, provider.NewRegistry("remote-model", &hangingModelProvider{}, &delayedModelProvider{}))
+	start := time.Now()
+	got := healthOf(t, s)
+	if elapsed := time.Since(start); elapsed > 1500*time.Millisecond {
+		t.Fatalf("health took %v, longer than the UI's 2 s curl timeout allows", elapsed)
+	}
+	if got["status"] != "ok" {
+		t.Fatalf("health = %v", got)
+	}
+}
+
+func TestModelsListsTheRestWithinTheClientTimeoutWhileAProviderHangs(t *testing.T) {
+	s := newRegistryServer(t, provider.NewRegistry("remote-model", &hangingModelProvider{}, &delayedModelProvider{}))
+	rec := httptest.NewRecorder()
+	start := time.Now()
+	s.handleModels(rec, httptest.NewRequest(http.MethodGet, "/models", nil))
+	if elapsed := time.Since(start); elapsed > 1500*time.Millisecond {
+		t.Fatalf("/models took %v, longer than the UI's 2 s curl timeout allows", elapsed)
+	}
+	var out struct{ Models []string }
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatal(err)
+	}
+	if len(out.Models) != 1 || out.Models[0] != "remote-model" {
+		t.Fatalf("/models = %s", rec.Body.String())
 	}
 }

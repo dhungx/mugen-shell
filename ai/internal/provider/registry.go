@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 )
@@ -78,14 +79,24 @@ func (r *Registry) ProviderNameFor(ctx context.Context, model string) string {
 
 func (r *Registry) Models(ctx context.Context) ([]string, error) {
 	var all []string
-	for _, p := range r.providers {
-		models, err := probeModels(ctx, p)
-		if err != nil {
-			continue
-		}
-		all = append(all, models...)
+	for _, listed := range r.probeAll(ctx) {
+		all = append(all, <-listed...)
 	}
 	return all, nil
+}
+
+// probeAll starts every listing at once so a hung provider cannot spend a caller's deadline for the rest.
+func (r *Registry) probeAll(ctx context.Context) []<-chan []string {
+	results := make([]<-chan []string, len(r.providers))
+	for i, p := range r.providers {
+		listed := make(chan []string, 1)
+		results[i] = listed
+		go func() {
+			models, _ := probeModels(ctx, p)
+			listed <- models
+		}()
+	}
+	return results
 }
 
 func probeModels(ctx context.Context, p Provider) ([]string, error) {
@@ -112,18 +123,13 @@ func (r *Registry) providerFor(ctx context.Context, model string) (Provider, err
 	if cached != nil {
 		return cached, nil
 	}
-	for _, p := range r.providers {
-		models, err := probeModels(ctx, p)
-		if err != nil {
-			continue
-		}
-		for _, m := range models {
-			if m == model {
-				r.mu.Lock()
-				r.routeCache[model] = p
-				r.mu.Unlock()
-				return p, nil
-			}
+	for i, listed := range r.probeAll(ctx) {
+		if slices.Contains(<-listed, model) {
+			p := r.providers[i]
+			r.mu.Lock()
+			r.routeCache[model] = p
+			r.mu.Unlock()
+			return p, nil
 		}
 	}
 	return nil, fmt.Errorf("no provider found for model %q", model)
