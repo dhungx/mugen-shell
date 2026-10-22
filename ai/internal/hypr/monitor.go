@@ -17,12 +17,11 @@ const (
 	maxEventLine    = 1 << 20
 )
 
-// Substrings, not names: "activewindowv2" has to match through "window".
-var relevantEvents = []string{
-	"workspace", "window", "move", "focus", "monitor",
-	"movewindow", "moveworkspace", "focusedmon", "focusedmonv2",
-	"workspacev2", "windowtitle", "activewindow", "activewindowv2",
-}
+// Substrings, not names: "createworkspacev2" has to match through "workspace".
+var relevantEvents = []string{"workspace", "window", "move", "focus", "monitor"}
+
+// Title and focus churn never changes which workspaces hold windows.
+var ignoredEvents = []string{"windowtitle", "activewindow"}
 
 // SocketPath locates .socket2.sock for the current instance, falling back to the
 // first present. No /tmp/hypr fallback: anyone can plant a socket there.
@@ -86,6 +85,11 @@ func Monitor(out io.Writer) error {
 }
 
 func isRelevant(eventType string) bool {
+	for _, prefix := range ignoredEvents {
+		if strings.HasPrefix(eventType, prefix) {
+			return false
+		}
+	}
 	for _, keyword := range relevantEvents {
 		if strings.Contains(eventType, keyword) {
 			return true
