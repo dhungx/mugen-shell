@@ -37,7 +37,7 @@ Rectangle {
     property string formEnv: ""
 
     property var discoverCandidates: []
-    readonly property var unaddedCandidates: discoverCandidates.filter(c => !servers.some(s => s.name === c.name))
+    readonly property var unaddedCandidates: discoverCandidates.filter(c => !servers.some(s => s.name.toLowerCase() === c.name.toLowerCase()))
 
     readonly property int expandedHeight: 64 + contentColumn.implicitHeight + 16
 
@@ -105,7 +105,7 @@ Rectangle {
         if (name.length === 0) { section.statusText = "name is required"; return }
         if (!/^[a-z][a-z0-9-]*$/.test(name)) { section.statusText = "name: a-z first, then a-z, 0-9 or -"; return }
         for (let i = 0; i < servers.length; i++) {
-            if (servers[i].name === name) { section.statusText = "\"" + name + "\" already exists"; return }
+            if (servers[i].name.toLowerCase() === name) { section.statusText = "\"" + servers[i].name + "\" already exists"; return }
         }
         let toks = formCommand.trim().split(/\s+/).filter(t => t.length > 0)
         let url = formUrl.trim()
