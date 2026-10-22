@@ -2167,11 +2167,13 @@ FocusScope {
         running: false
         property string payload: ""
         property string buf: ""
+        property int startedId: 0
         command: ["curl", ...root._transportArgs, "-sS", "--max-time", "2", "-X", "DELETE",
                   root._baseUrl + "/conversations/" + payload]
 
         stdout: SplitParser { onRead: data => { deleteConvProcess.buf += data } }
-        onRunningChanged: { if (running) buf = "" }
+        // Quickshell reruns a busy Process with the newest payload, so match the id this run sent.
+        onRunningChanged: { if (running) { buf = ""; startedId = parseInt(payload) } }
 
         onExited: (exitCode) => {
             if (exitCode !== 0) return
@@ -2180,10 +2182,15 @@ FocusScope {
                 let obj = JSON.parse(deleteConvProcess.buf)
                 newCurrent = obj.current_id || 0
             } catch (e) {}
-            if (parseInt(deleteConvProcess.payload) === root.currentConvId) {
+            if (deleteConvProcess.startedId === root.currentConvId) {
                 root.currentConvId = newCurrent
                 root.messages = []
-                if (newCurrent !== 0) loadCurrentProcess.running = true
+                if (newCurrent !== 0) {
+                    loadCurrentProcess.running = true
+                } else {
+                    if (root.defaultModel !== "") root.currentModel = root.defaultModel
+                    root.currentThinking = false
+                }
             }
             root.refreshConversations()
         }
