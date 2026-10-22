@@ -22,14 +22,16 @@ QtObject {
     property int weatherCode: -1
     property bool isDay: true
     property string errorText: ""
+    property bool cacheLoaded: false
 
     property var hourly: []
     property var utcOffsetSeconds: null
     property var daily: []
 
     onEnabledChanged: {
-        if (enabled) resolveLocation()
-        else cancelRetry()
+        if (!enabled) cancelRetry()
+        else if (cacheLoaded) resolveLocation()
+        else loadCacheProcess.running = true
     }
 
     // A changed override forces a fresh resolve; clearing it falls back to IP geolocation.
@@ -115,7 +117,7 @@ QtObject {
 
         stdout: StdioCollector {
             onStreamFinished: {
-                // Settings load asynchronously too, so the unit may still be wrong here.
+                weatherManager.cacheLoaded = true
                 weatherManager.cachedText = this.text
                 // A live forecast landing first must win over the cached one.
                 if (!weatherManager.ready) weatherManager.applyCache(this.text)
@@ -169,7 +171,7 @@ QtObject {
     }
 
     function fetchForecast() {
-        if (!locationResolved) return
+        if (!enabled || !locationResolved) return
         if (forecastProcess.running) {
             pendingRefetch = true
             return

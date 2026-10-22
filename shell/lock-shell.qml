@@ -434,7 +434,7 @@ ShellRoot {
 
     Managers.WeatherManager {
         id: weatherManager
-        enabled: settingsManager.weatherEnabled
+        enabled: settingsManager._settingsLoaded && settingsManager.weatherEnabled
         locationOverride: settingsManager.weatherLocation
         unit: settingsManager.weatherUnit
     }
