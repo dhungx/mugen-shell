@@ -542,7 +542,7 @@ QtObject {
             } else {
                 let errorMsg = (devicePairProcess.errorData + devicePairProcess.outputData).toLowerCase()
 
-                if (errorMsg.includes("already exists") || errorMsg.includes("already paired")) {
+                if (errorMsg.includes("already exists") || errorMsg.includes("alreadyexists") || errorMsg.includes("already paired")) {
                     bluetoothManager.pairingError = ""
                     bluetoothManager.refreshPairedDevices()
                 } else if (errorMsg.includes("not available") || errorMsg.includes("not found")) {

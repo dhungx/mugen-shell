@@ -181,13 +181,13 @@ Item {
                 if (idx < 0) return
                 if (root.showAvailableDevices) {
                     let dev = bluetoothManager.availableDevices[idx]
-                    if (dev && !root.bluetoothManager.isPairing) {
+                    if (dev && !dev.paired && !root.bluetoothManager.isPairing) {
                         root.pairingDeviceIndex = idx
                         bluetoothManager.pairDevice(dev.address, dev.name || dev.address)
                     }
                 } else {
                     let dev = bluetoothManager.pairedDevices[idx]
-                    if (dev) {
+                    if (dev && (!root.bluetoothManager.isConnecting || root.connectingDeviceIndex === idx || dev.connected)) {
                         if (!dev.connected) root.connectingDeviceIndex = idx
                         bluetoothManager.toggleDeviceConnection(dev.address, dev.name, dev.connected)
                     }
