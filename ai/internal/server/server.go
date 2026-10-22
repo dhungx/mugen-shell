@@ -310,10 +310,10 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Only the first request is filtered: a later chain step may need an unhinted category.
-	firstTools := providerTools(selTools)
+	firstTools := ProviderTools(selTools)
 	fullTools := firstTools
 	if len(selTools) != len(allTools) {
-		fullTools = providerTools(allTools)
+		fullTools = ProviderTools(allTools)
 	}
 	opts := provider.ChatOptions{Tools: firstTools, Thinking: thinking}
 
@@ -869,7 +869,8 @@ func (s *Server) handleMCPDiscover(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]any{"candidates": mcp.Discover(r.Context())})
 }
 
-func providerTools(in []tools.Tool) []provider.Tool {
+// ProviderTools converts registry tools into the schema the providers take.
+func ProviderTools(in []tools.Tool) []provider.Tool {
 	out := make([]provider.Tool, len(in))
 	for i, t := range in {
 		out[i] = provider.Tool{

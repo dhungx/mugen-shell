@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tmy7533018/mugen-ai/internal/history"
 	"github.com/tmy7533018/mugen-ai/internal/provider"
+	"github.com/tmy7533018/mugen-ai/internal/server"
 	"github.com/tmy7533018/mugen-ai/internal/tools"
 )
 
@@ -112,7 +113,7 @@ func runChat(_ *cobra.Command, _ []string) error {
 
 func runChatTurn(rt *runtimeContext, scanner *bufio.Scanner, msgs []provider.Message, userText, providerName string) (string, []history.ToolRecord, error) {
 	const maxIterations = 5
-	opts := provider.ChatOptions{Tools: cliProviderTools(rt.Tools.List())}
+	opts := provider.ChatOptions{Tools: server.ProviderTools(rt.Tools.List())}
 	ctx := context.Background()
 	gate := rt.Tools.ChatGate(userText)
 
@@ -187,16 +188,4 @@ func cliConfirm(scanner *bufio.Scanner, tc provider.ToolCall, target string) boo
 	}
 	answer := strings.ToLower(strings.TrimSpace(scanner.Text()))
 	return answer == "y" || answer == "yes"
-}
-
-func cliProviderTools(in []tools.Tool) []provider.Tool {
-	out := make([]provider.Tool, len(in))
-	for i, t := range in {
-		out[i] = provider.Tool{
-			Name:        t.Name,
-			Description: t.Description,
-			Parameters:  t.Parameters,
-		}
-	}
-	return out
 }
