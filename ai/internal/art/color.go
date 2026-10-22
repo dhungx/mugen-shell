@@ -26,7 +26,7 @@ type RGB struct {
 }
 
 // DominantColor averages the centre of the image and lifts the result to a
-// usable lightness. Faithful port of scripts/extract-color.py.
+// usable lightness.
 func DominantColor(path string) (RGB, error) {
 	file, err := os.Open(path)
 	if err != nil {

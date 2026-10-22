@@ -67,7 +67,7 @@ func isSecretName(name string) bool {
 
 func newStdioTransport(name, command string, args []string, env map[string]string) (*stdioTransport, error) {
 	cmd := exec.Command(command, args...)
-	// The parent holds the provider API keys; a server gets only what its config declares.
+	// Secret-shaped names, the provider API keys among them, reach a server only through its own env config.
 	cmd.Env = envWithoutSecrets()
 	for k, v := range env {
 		cmd.Env = append(cmd.Env, k+"="+v)

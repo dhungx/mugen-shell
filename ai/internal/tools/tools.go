@@ -1,5 +1,4 @@
-// Package tools exposes shell-control tools to the LLM via mugen-shell's quickshell IPC.
-// Each tool maps to a `qs ipc call <target> <function> [args]` invocation.
+// Package tools is the registry of what the assistant can call: shell IPC, native and MCP tools.
 package tools
 
 import (
@@ -349,8 +348,7 @@ func (r *Registry) IsCategoryDisabled(category string) bool {
 	return r.disabledCats[category]
 }
 
-// Call executes the named tool and returns the raw stdout of the underlying
-// command.
+// Call runs the named tool and returns its result, sanitized for the LLM.
 func (r *Registry) Call(ctx context.Context, name string, args map[string]any) (string, error) {
 	t := r.Find(name)
 	if t == nil {

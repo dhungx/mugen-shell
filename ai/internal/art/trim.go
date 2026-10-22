@@ -22,7 +22,7 @@ const (
 var frameAspects = []float64{16.0 / 9.0, 1.0}
 
 // TrimBars rewrites path without its letterbox/pillarbox bars, and leaves the
-// file alone when it finds none. Port of scripts/trim-art-bars.py.
+// file alone when it finds none.
 func TrimBars(path string) error {
 	file, err := os.Open(path)
 	if err != nil {

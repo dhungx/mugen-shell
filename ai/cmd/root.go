@@ -8,8 +8,8 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "mugen-ai",
-	Short: "Local AI assistant for mugen-shell",
-	Long:  "mugen-ai is a local AI assistant powered by Ollama, designed to integrate with mugen-shell.",
+	Short: "AI assistant backend for mugen-shell",
+	Long:  "mugen-ai is the assistant backend for mugen-shell: cloud or local models, desktop tools and MCP, served over a unix socket.",
 }
 
 func Execute() {

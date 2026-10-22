@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// Golden values from scripts/extract-color.py with its swapped hls unpacking
+// Golden values from the removed shell/scripts/extract-color.py with its swapped hls unpacking
 // corrected, so the colour maths is guarded separately from image decoding.
 func TestEnsureMinLightnessMatchesReference(t *testing.T) {
 	cases := []struct{ in, want RGB }{
