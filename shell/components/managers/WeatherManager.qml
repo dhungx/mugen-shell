@@ -211,7 +211,7 @@ QtObject {
                     weatherManager.cancelRetry()
                 } else {
                     // Every way this fails is transient: no network yet, or ipwho.is rate-limiting.
-                    weatherManager.errorText = "location unavailable"
+                    weatherManager.errorText = "Location unavailable"
                     weatherManager.scheduleRetry()
                 }
                 if (weatherManager.pendingResolve) {
@@ -253,7 +253,7 @@ QtObject {
                 if (ok) {
                     weatherManager.cancelRetry()
                 } else {
-                    weatherManager.errorText = "place not found"
+                    weatherManager.errorText = answered ? "Place not found" : "Location unavailable"
                     // A parsed reply with no match is a real answer (misspelled); unparseable means it never landed.
                     if (answered) weatherManager.cancelRetry()
                     else weatherManager.scheduleRetry()
@@ -317,7 +317,7 @@ QtObject {
                     weatherManager.cancelRetry()
                     weatherManager.saveCache()
                 } catch (e) {
-                    if (!weatherManager.ready) weatherManager.errorText = "weather unavailable"
+                    if (!weatherManager.ready) weatherManager.errorText = "Weather unavailable"
                     weatherManager.scheduleRetry()
                 }
                 if (weatherManager.pendingRefetch) {

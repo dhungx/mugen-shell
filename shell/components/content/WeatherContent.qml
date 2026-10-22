@@ -14,6 +14,10 @@ Item {
     property var icons
     property bool reduceMotion: false
 
+    readonly property bool showWeather: !!weatherManager && weatherManager.enabled && weatherManager.ready
+    readonly property var shownDaily: showWeather ? weatherManager.daily : []
+    readonly property var shownHourly: showWeather ? weatherManager.hourly : []
+
     readonly property var requiredBarSize: ({
         "height": modeManager.scale(478),
         "leftMargin": modeManager.scale(576),
@@ -60,14 +64,14 @@ Item {
     readonly property color cDim: pal ? pal.dim : Qt.rgba(0.86, 0.89, 0.96, 0.58)
 
     readonly property real weekMin: {
-        let d = weatherManager ? weatherManager.daily : []
+        let d = shownDaily
         if (!d || d.length === 0) return 0
         let m = d[0].tempMin
         for (let i = 0; i < d.length; i++) m = Math.min(m, d[i].tempMin)
         return m
     }
     readonly property real weekMax: {
-        let d = weatherManager ? weatherManager.daily : []
+        let d = shownDaily
         if (!d || d.length === 0) return 1
         let m = d[0].tempMax
         for (let i = 0; i < d.length; i++) m = Math.max(m, d[i].tempMax)
@@ -80,7 +84,7 @@ Item {
     }
 
     function hourlyStart() {
-        let h = weatherManager ? weatherManager.hourly : []
+        let h = shownHourly
         if (!h || h.length === 0) return 0
         let off = weatherManager.utcOffsetSeconds
         if (typeof off !== "number") off = -new Date().getTimezoneOffset() * 60
@@ -91,7 +95,7 @@ Item {
         return 0
     }
     readonly property var hourlySlice: {
-        let h = weatherManager ? weatherManager.hourly : []
+        let h = shownHourly
         return h.slice(hourlyStart(), hourlyStart() + 24)
     }
 
@@ -198,7 +202,10 @@ Item {
 
                             Text {
                                 Layout.alignment: Qt.AlignLeft
-                                text: root.weatherManager ? root.weatherManager.locationName : ""
+                                text: !root.weatherManager || !root.weatherManager.enabled ? ""
+                                    : root.weatherManager.ready && root.weatherManager.errorText !== "" ? root.weatherManager.errorText
+                                    : root.weatherManager.locationName
+                                textFormat: Text.PlainText
                                 font.family: "M PLUS 2"; font.pixelSize: root.scaled(10.5)
                                 font.letterSpacing: 2.5
                                 font.capitalization: Font.AllUppercase
@@ -217,7 +224,7 @@ Item {
                                         id: bigTemp
                                         Layout.preferredHeight: root.scaled(62)
                                         verticalAlignment: Text.AlignVCenter
-                                        text: root.weatherManager ? Math.round(root.weatherManager.temperature) + "°" : "—"
+                                        text: root.showWeather ? Math.round(root.weatherManager.temperature) + "°" : "—"
                                         font.family: "M PLUS 2"; font.pixelSize: root.scaled(58); font.weight: Font.Light
                                         color: root.cFg
                                         layer.enabled: true
@@ -225,6 +232,7 @@ Item {
                                     }
                                     UI.SvgIcon {
                                         Layout.alignment: Qt.AlignVCenter
+                                        visible: root.showWeather
                                         Layout.preferredWidth: root.scaled(58)
                                         Layout.preferredHeight: root.scaled(58)
                                         source: (root.icons && root.weatherManager) ? root.icons.weatherIcon(root.weatherManager.weatherCode, root.weatherManager.isDay) : ""
@@ -235,16 +243,21 @@ Item {
                                 }
                                 Text {
                                     Layout.topMargin: root.scaled(5)
-                                    text: (root.icons && root.weatherManager) ? root.icons.weatherText(root.weatherManager.weatherCode) : ""
+                                    text: !root.weatherManager ? ""
+                                        : !root.weatherManager.enabled ? "Weather is turned off"
+                                        : root.weatherManager.ready ? (root.icons ? root.icons.weatherText(root.weatherManager.weatherCode) : "")
+                                        : root.weatherManager.errorText
                                     font.family: "M PLUS 2"; font.pixelSize: root.scaled(15)
                                     color: root.cDim
                                 }
                                 Text {
                                     Layout.topMargin: root.scaled(12)
+                                    visible: root.showWeather
                                     text: root.weatherManager ? ("Feels " + Math.round(root.weatherManager.feelsLike) + "°   ·   Humidity " + root.weatherManager.humidity + "%") : ""
                                     font.family: "M PLUS 2"; font.pixelSize: root.scaled(11.5); color: root.cDim
                                 }
                                 Text {
+                                    visible: root.showWeather
                                     text: root.weatherManager ? "Wind " + Math.round(root.weatherManager.wind) + " km/h" : ""
                                     font.family: "M PLUS 2"; font.pixelSize: root.scaled(11.5); color: root.cDim
                                 }
@@ -340,7 +353,7 @@ Item {
                         spacing: root.scaled(4)
 
                         Repeater {
-                            model: root.weatherManager ? root.weatherManager.daily : []
+                            model: root.shownDaily
 
                             ColumnLayout {
                                 Layout.preferredWidth: (dailyRow.width - 6 * dailyRow.spacing) / 7
