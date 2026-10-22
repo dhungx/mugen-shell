@@ -416,12 +416,20 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 
 			var result string
 			var callErr error
+			approved, answered := true, true
+			if gate.Needs(tc.Name) {
+				approved, answered = s.awaitConfirm(r.Context(), tc, sendEvent)
+			}
 			// A denial is fed back as an ordinary result, without the action having happened.
-			if gate.Needs(tc.Name) && !s.awaitConfirm(r.Context(), tc, sendEvent) {
+			switch {
+			case approved:
+				result, callErr = s.tools.Call(r.Context(), tc.Name, tc.Arguments)
+			case answered:
 				result = "error: the user declined this action. Do not retry it; acknowledge their choice and move on."
 				s.tools.Audit(tc.Name, tc.Arguments, result, nil)
-			} else {
-				result, callErr = s.tools.Call(r.Context(), tc.Name, tc.Arguments)
+			default:
+				result = "error: the approval prompt expired or was closed before the user answered, so this action did not run. Tell the user it was not done; call it again only if they ask again."
+				s.tools.Audit(tc.Name, tc.Arguments, result, nil)
 			}
 			sideEffected = true
 			resultPayload := tools.ResultPayload(result, callErr)
@@ -489,8 +497,8 @@ func firstN(s string, n int) string {
 	return string(rs[:n]) + "…"
 }
 
-// A timeout or disconnect counts as a denial, so an irreversible tool never runs unattended.
-func (s *Server) awaitConfirm(ctx context.Context, tc provider.ToolCall, send func(map[string]any)) bool {
+// A timeout or disconnect never runs the tool, but is reported as unanswered rather than declined.
+func (s *Server) awaitConfirm(ctx context.Context, tc provider.ToolCall, send func(map[string]any)) (approved, answered bool) {
 	id, ch := s.confirms.register()
 	defer s.confirms.discard(id)
 
@@ -507,11 +515,11 @@ func (s *Server) awaitConfirm(ctx context.Context, tc provider.ToolCall, send fu
 
 	select {
 	case approved := <-ch:
-		return approved
+		return approved, true
 	case <-time.After(confirmTimeout):
-		return false
+		return false, false
 	case <-ctx.Done():
-		return false
+		return false, false
 	}
 }
 
