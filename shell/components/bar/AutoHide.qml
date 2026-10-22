@@ -55,6 +55,7 @@ QtObject {
         root.dwellTimer.stop()
         root.hideTimer.stop()
         revealed = false
+        if (enabled) update()
     }
     onHeldChanged: update()
     onStripHoveredChanged: update()
