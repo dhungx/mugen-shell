@@ -23,7 +23,6 @@ var hyprMonitorCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
-// Only a window that was found but could not be raised counts as failure.
 var hyprFocusCmd = &cobra.Command{
 	Use:   "focus-or-launch <desktop-entry>",
 	Short: "Raise the window for a desktop entry, or launch it when none is open",
@@ -33,12 +32,9 @@ var hyprFocusCmd = &cobra.Command{
 		if noLaunch, _ := cmd.Flags().GetBool("no-launch"); noLaunch {
 			focus = hypr.Focus
 		}
-		matched, err := focus(cmd.Context(), args[0])
-		if err != nil {
+		if _, err := focus(cmd.Context(), args[0]); err != nil {
 			fmt.Fprintln(os.Stderr, "hypr focus-or-launch:", err)
-			if matched {
-				os.Exit(1)
-			}
+			os.Exit(1)
 		}
 		return nil
 	},
