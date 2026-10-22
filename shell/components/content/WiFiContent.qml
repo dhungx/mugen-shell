@@ -23,6 +23,9 @@ Item {
         "bottomMargin": modeManager.normalBarSize.bottomMargin
     })
     
+    property int draftIndex: -1
+    readonly property bool hasDraft: draftIndex >= 0 || wifiManager.isConnecting
+        || (wifiManager.connectionError !== "" && connectingNetworkIndex >= 0 && networkList.expandedIndex === connectingNetworkIndex)
     property string connectingSsid: ""
     property int connectingHint: -1
     // nmcli lists one row per BSSID, so the SSID alone cannot tell which of its rows was clicked.
@@ -32,6 +35,15 @@ Item {
         const hinted = nets[root.connectingHint]
         return hinted && hinted.ssid === root.connectingSsid ? root.connectingHint
             : nets.findIndex(net => net.ssid === root.connectingSsid)
+    }
+
+    function toggleExpanded(idx) {
+        networkList.expandedIndex = networkList.expandedIndex === idx ? -1 : idx
+    }
+
+    function noteDraft(idx, active) {
+        if (active) draftIndex = idx
+        else if (draftIndex === idx) draftIndex = -1
     }
 
     function startConnecting(ssid, rowIndex, password) {
@@ -595,17 +607,15 @@ Item {
                             isConnecting: root.wifiManager.isConnecting
                             connectingNetworkIndex: root.connectingNetworkIndex
                             
-                            onToggleExpanded: () => {
-                                if (networkList.expandedIndex === delegateItem.itemIndex) {
-                                    networkList.expandedIndex = -1
-                                } else {
-                                    networkList.expandedIndex = delegateItem.itemIndex
-                                }
-                            }
+                            onToggleExpanded: root.toggleExpanded(delegateItem.itemIndex)
                             
                             onResetAutoCloseTimer: () => {
                                 modeManager.bump()
                             }
+
+                            onHasDraftChanged: root.noteDraft(delegateItem.itemIndex, networkItem.hasDraft)
+
+                            Component.onDestruction: root.noteDraft(delegateItem.itemIndex, false)
                             
                             onConnectToNetwork: (ssid, password) => {
                                 root.startConnecting(ssid, delegateItem.itemIndex, password)

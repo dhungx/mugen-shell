@@ -32,6 +32,7 @@ Rectangle {
     readonly property bool showsError: root.wifiManager.connectionError !== "" && root.connectingNetworkIndex === root.index
     readonly property real errorExtra: root.showsError ? errorText.implicitHeight + 4 : 0
     readonly property bool needsPassword: !!(root.modelData && root.modelData.secured)
+    readonly property bool hasDraft: root.isExpanded && root.needsPassword && passwordInput.text.length > 0
     readonly property real passwordRowExtra: root.needsPassword ? 44 : 0
     readonly property real expandedHeight: 96 + root.passwordRowExtra + root.errorExtra
 

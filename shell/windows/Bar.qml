@@ -147,10 +147,12 @@ PanelWindow {
     readonly property bool aiQuiet: !yuraFloatThinking
         && (!aiAssistantLoader.item
             || (!aiAssistantLoader.item.streaming && !aiAssistantLoader.item.hasDraft))
+    readonly property bool wifiQuiet: !wifiLoader.item || !(wifiLoader.item as Content.WiFiContent).hasDraft
     readonly property bool autoCloseEligible: !modeManager.isMode("normal")
         && !modeManager.isMode("notification-popup")
         && settingsManager.autoCloseTimerInterval > 0
         && (!modeManager.isMode("ai") || aiQuiet)
+        && (!modeManager.isMode("wifi") || wifiQuiet)
         && !panelPointer.active
 
     Timer {
