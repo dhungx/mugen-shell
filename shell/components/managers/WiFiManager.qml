@@ -9,12 +9,16 @@ QtObject {
     property string currentSsid: "Not Connected"
     property int signalStrength: 0
     property var availableNetworks: []
+    property var savedNetworks: []
 
     property bool isConnecting: false
     property string connectionError: ""
+    property string actionError: ""
+    property string actionNetwork: ""
     property bool isRefreshing: false
 
     readonly property bool isTogglingPower: wifiToggleProcess.running
+    readonly property bool isModifyingConnection: disconnectProcess.running || savedNetworkProcess.running || forgetNetworkProcess.running || autoConnectProcess.running
 
     function togglePower() {
         wifiToggleProcess.running = true
@@ -27,6 +31,42 @@ QtObject {
 
     function scanNetworks() {
         wifiScanProcess.running = true
+    }
+
+    function refreshSavedNetworks() {
+        savedNetworksProcess.outputData = ""
+        savedNetworksProcess.running = true
+    }
+
+    function disconnectFromNetwork(ssid) {
+        actionError = ""
+        actionNetwork = ssid
+        disconnectProcess.command = ["nmcli", "connection", "down", "id", ssid]
+        disconnectProcess.running = true
+    }
+
+    function connectSavedNetwork(name) {
+        actionError = ""
+        actionNetwork = name
+        connectionError = ""
+        isConnecting = true
+        savedNetworkProcess.command = ["nmcli", "connection", "up", "id", name]
+        savedNetworkProcess.running = true
+    }
+
+    function forgetNetwork(name) {
+        actionError = ""
+        actionNetwork = name
+        forgetNetworkProcess.command = ["nmcli", "connection", "delete", "id", name]
+        forgetNetworkProcess.running = true
+    }
+
+    function setNetworkAutoConnect(name, enabled) {
+        actionError = ""
+        actionNetwork = name
+        autoConnectProcess.command = ["nmcli", "connection", "modify", "id", name,
+                                      "connection.autoconnect", enabled ? "yes" : "no"]
+        autoConnectProcess.running = true
     }
 
     function connectToNetwork(ssid, password) {
@@ -83,6 +123,82 @@ QtObject {
         isRefreshing = true
         refreshWifiStatus()
         scanNetworks()
+        refreshSavedNetworks()
+    }
+
+    property Process savedNetworksProcess: Process {
+        command: ["nmcli", "-t", "-f", "NAME,TYPE,connection.autoconnect,802-11-wireless.ssid", "connection", "show"]
+        environment: ({ "LANG": "C" })
+        running: false
+        property string outputData: ""
+
+        stdout: SplitParser {
+            onRead: data => { savedNetworksProcess.outputData += data + "\n" }
+        }
+
+        onExited: (code, status) => {
+            let networks = []
+            if (code === 0) {
+                for (const line of savedNetworksProcess.outputData.split("\n")) {
+                    if (!line.trim()) continue
+                    const fields = wifiManager.splitNmcli(line.trim())
+                    if (fields.length < 4 || fields[1] !== "802-11-wireless") continue
+                    if (!networks.some(item => item.name === fields[0]))
+                        networks.push({ name: fields[0], ssid: fields[3] || fields[0],
+                                        connected: (fields[3] || fields[0]) === wifiManager.currentSsid,
+                                        autoConnect: fields[2] === "yes" })
+                }
+            }
+            wifiManager.savedNetworks = networks
+            savedNetworksProcess.outputData = ""
+        }
+    }
+
+    property Process disconnectProcess: Process {
+        running: false
+        property string errorData: ""
+        stderr: SplitParser { onRead: data => { disconnectProcess.errorData += data } }
+        onExited: (code, status) => {
+            wifiManager.actionError = code === 0 ? "" : "Could not disconnect from " + wifiManager.actionNetwork
+            wifiManager.refreshWifiStatus()
+            disconnectProcess.errorData = ""
+        }
+    }
+
+    property Process savedNetworkProcess: Process {
+        running: false
+        property string errorData: ""
+        stderr: SplitParser { onRead: data => { savedNetworkProcess.errorData += data } }
+        onExited: (code, status) => {
+            wifiManager.actionError = code === 0 ? "" : "Could not connect to " + wifiManager.actionNetwork
+            wifiManager.connectionError = code === 0 ? "" : "Could not connect to " + wifiManager.actionNetwork
+            wifiManager.isConnecting = false
+            wifiManager.refreshWifiStatus()
+            wifiManager.refreshSavedNetworks()
+            savedNetworkProcess.errorData = ""
+        }
+    }
+
+    property Process forgetNetworkProcess: Process {
+        running: false
+        property string errorData: ""
+        stderr: SplitParser { onRead: data => { forgetNetworkProcess.errorData += data } }
+        onExited: (code, status) => {
+            wifiManager.actionError = code === 0 ? "" : "Could not forget " + wifiManager.actionNetwork
+            wifiManager.refreshSavedNetworks()
+            forgetNetworkProcess.errorData = ""
+        }
+    }
+
+    property Process autoConnectProcess: Process {
+        running: false
+        property string errorData: ""
+        stderr: SplitParser { onRead: data => { autoConnectProcess.errorData += data } }
+        onExited: (code, status) => {
+            wifiManager.actionError = code === 0 ? "" : "Could not update auto-connect for " + wifiManager.actionNetwork
+            wifiManager.refreshSavedNetworks()
+            autoConnectProcess.errorData = ""
+        }
     }
 
     property Process wifiStatusProcess: Process {
@@ -192,6 +308,7 @@ QtObject {
             if (code === 0) {
                 wifiManager.connectionError = ""
                 wifiManager.refreshWifiStatus()
+                wifiManager.refreshSavedNetworks()
             } else {
                 let errorMsg = connectToNetworkProcess.errorData.toLowerCase()
 

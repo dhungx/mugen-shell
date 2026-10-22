@@ -17,6 +17,8 @@ QtObject {
     property string connectionAddress: ""
     property string pendingConnectAddress: ""
     property bool pendingDisconnect: false
+    property string removingAddress: ""
+    property string removeError: ""
     property string runningConnectAddress: ""
     property bool runningDisconnect: false
 
@@ -26,6 +28,7 @@ QtObject {
     }
 
     readonly property bool isTogglingPower: bluetoothToggleProcess.running
+    readonly property bool isRemovingDevice: deviceRemoveProcess.running
 
     function togglePower() {
         bluetoothToggleProcess.running = true
@@ -98,6 +101,13 @@ QtObject {
         // A device wanting passkey confirmation leaves bluetoothctl on stdin, and nothing else clears isPairing.
         devicePairProcess.command = ["bash", "-c", "timeout 60 bluetoothctl pair '" + escapedAddress + "'"]
         devicePairProcess.running = true
+    }
+
+    function forgetDevice(deviceAddress) {
+        removingAddress = deviceAddress
+        removeError = ""
+        deviceRemoveProcess.command = ["bluetoothctl", "remove", deviceAddress]
+        deviceRemoveProcess.running = true
     }
 
     function refreshStatus() {
@@ -557,6 +567,25 @@ QtObject {
             bluetoothManager.isPairing = false
             devicePairProcess.outputData = ""
             devicePairProcess.errorData = ""
+        }
+    }
+
+    property Process deviceRemoveProcess: Process {
+        running: false
+        property string outputData: ""
+        property string errorData: ""
+
+        stdout: SplitParser { onRead: data => { deviceRemoveProcess.outputData += data } }
+        stderr: SplitParser { onRead: data => { deviceRemoveProcess.errorData += data } }
+
+        onExited: (code, status) => {
+            let details = (deviceRemoveProcess.errorData + deviceRemoveProcess.outputData).toLowerCase()
+            bluetoothManager.removeError = code === 0 ? ""
+                : details.includes("not available") || details.includes("not found")
+                    ? "Device not available" : "Could not forget device"
+            bluetoothManager.refreshPairedDevices()
+            deviceRemoveProcess.outputData = ""
+            deviceRemoveProcess.errorData = ""
         }
     }
 

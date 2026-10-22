@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import "./lib" as Theme
 import "./components/content" as Content
+import "./components/managers" as Managers
 
 ShellRoot {
     id: root
@@ -26,6 +27,10 @@ ShellRoot {
     Theme.SettingsManager {
         id: settingsManager
     }
+
+    Managers.WiFiManager { id: wifiManager }
+    Managers.BluetoothManager { id: bluetoothManager }
+    Managers.AirplaneManager { id: airplaneManager }
 
     QtObject {
         id: modeStub
@@ -272,6 +277,9 @@ ShellRoot {
             settingsManager: settingsManager
             notificationSounds: root.notificationSounds
             timerSounds: root.timerSounds
+            wifiManager: wifiManager
+            bluetoothManager: bluetoothManager
+            airplaneManager: airplaneManager
             soundsDir: root.soundsDir
             timerSoundsDir: root.timerSoundsDir
             initialCategory: Quickshell.env("MUGEN_SETTINGS_CATEGORY") || ""
