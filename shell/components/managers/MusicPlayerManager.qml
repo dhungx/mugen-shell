@@ -31,6 +31,8 @@ QtObject {
     property string artist: ""
     property string album: ""
     property string artUrl: ""
+    // A control character, since MPRIS titles can contain any printable separator.
+    readonly property string metadataSeparator: "\u001e"
     // Any local MPRIS client can publish an artUrl; only web and file art gets loaded.
     readonly property string safeArtUrl: /^(https?:\/\/|file:\/\/|\/)/.test(artUrl) ? artUrl : ""
     property string _artTrackKey: ""
@@ -320,7 +322,7 @@ QtObject {
         running: false
         command: activePlayer !== ""
             ? ["playerctl", "-p", activePlayer, "metadata",
-               "--format", "{{title}}|||{{artist}}|||{{album}}|||{{mpris:artUrl}}|||{{status}}|||{{xesam:url}}"]
+               "--format", ["{{title}}", "{{artist}}", "{{album}}", "{{mpris:artUrl}}", "{{status}}", "{{xesam:url}}"].join(musicManager.metadataSeparator)]
             : []
 
         property string outputData: ""
@@ -331,7 +333,7 @@ QtObject {
 
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0 && outputData.trim() !== "") {
-                let parts = outputData.trim().split("|||")
+                let parts = outputData.trim().split(musicManager.metadataSeparator)
                 if (parts.length >= 5) {
                     let newTitle = parts[0] ? parts[0].trim() : ""
                     let newArtist = parts[1] ? parts[1].trim() : ""
