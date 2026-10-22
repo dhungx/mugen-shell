@@ -2200,7 +2200,14 @@ FocusScope {
         id: copyProcess
         property string text: ""
         running: false
-        command: ["wl-copy", "--", text]
+        stdinEnabled: true
+        // Over stdin: argv caps one string at 128 KiB; --type keeps wl-copy from sniffing it with xdg-mime.
+        command: ["wl-copy", "--type", "text/plain"]
+        onStarted: {
+            copyProcess.write(copyProcess.text)
+            copyProcess.stdinEnabled = false
+        }
+        onExited: copyProcess.stdinEnabled = true
     }
 
     Process {
