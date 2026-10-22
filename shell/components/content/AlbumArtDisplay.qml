@@ -53,7 +53,7 @@ Item {
 
             onStatusChanged: {
                 if (status === Image.Error && root.musicManager) {
-                    root.musicManager.reportArtFailure(source.toString())
+                    root.musicManager.reportArtFailure(root.musicManager.safeArtUrl)
                 }
             }
         }
