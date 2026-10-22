@@ -151,6 +151,7 @@ PanelWindow {
         && !modeManager.isMode("notification-popup")
         && settingsManager.autoCloseTimerInterval > 0
         && (!modeManager.isMode("ai") || aiQuiet)
+        && !panelPointer.active
 
     Timer {
         id: autoCloseTimer
@@ -560,6 +561,54 @@ PanelWindow {
         }
 
         HoverHandler { id: barBodyHover }
+
+        // Qt re-delivers a resting pointer's position every frame while anything animates, so only real motion counts.
+        HoverHandler {
+            id: panelHover
+            enabled: !modeManager.isMode("normal")
+            property point lastScene: Qt.point(-1, -1)
+            onPointChanged: {
+                const p = panelHover.point.scenePosition
+                if (p.x === panelHover.lastScene.x && p.y === panelHover.lastScene.y) return
+                panelHover.lastScene = p
+                modeManager.bump()
+            }
+        }
+
+        Keys.onShortcutOverride: (event) => {
+            modeManager.bump()
+            event.accepted = false
+        }
+
+        // Topmost and passive, so it sees the presses, drags and wheels that the panel's own items accept.
+        Item {
+            anchors.fill: parent
+            z: 10
+
+            PointHandler {
+                id: panelPointer
+                enabled: !modeManager.isMode("normal")
+                acceptedButtons: Qt.AllButtons
+                onPointChanged: modeManager.bump()
+            }
+
+            WheelHandler {
+                target: null
+                blocking: false
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                enabled: !modeManager.isMode("normal")
+                onWheel: modeManager.bump()
+            }
+
+            WheelHandler {
+                target: null
+                blocking: false
+                orientation: Qt.Horizontal
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                enabled: !modeManager.isMode("normal")
+                onWheel: modeManager.bump()
+            }
+        }
 
         UI.MugenSurface {
             id: surface
