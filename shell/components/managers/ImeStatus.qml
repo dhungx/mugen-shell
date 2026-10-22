@@ -24,6 +24,7 @@ QtObject {
     property Timer pollTimer: Timer {
         interval: root.consecutiveFailures >= 3 ? 10000 : 1000
         repeat: true
+        triggeredOnStart: true
         running: root.active
         onTriggered: {
             if (!queryProc.running) queryProc.running = true
