@@ -386,7 +386,9 @@ Item {
             enableGlow: true
             
             SequentialAnimation on opacity {
+                id: noPlayerPulse
                 running: !root.musicManager || !root.musicManager.isAvailable
+                paused: noPlayerPulse.running && !Theme.Motion.ambient
                 loops: Animation.Infinite
                 NumberAnimation { from: 0.3; to: 0.6; duration: 1500; easing.type: Easing.InOutQuad }
                 NumberAnimation { from: 0.6; to: 0.3; duration: 1500; easing.type: Easing.InOutQuad }

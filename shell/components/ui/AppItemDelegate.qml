@@ -150,6 +150,7 @@ Item {
                 id: heartbeatAnimation
                 loops: Animation.Infinite
                 running: selectionEffect.visible && delegateRoot.visible && parent.visible
+                paused: heartbeatAnimation.running && !Theme.Motion.ambient
                 NumberAnimation { to: 1.14; duration: 420; easing.type: Easing.OutCubic }
                 NumberAnimation { to: 1.0; duration: 420; easing.type: Easing.InCubic }
                 PauseAnimation { duration: 200 }
@@ -167,7 +168,7 @@ Item {
                 animationSpeed: 0.05
                 pointCount: 16
                 running: selectionEffect.visible && delegateRoot.visible && parent.visible
-                scale: selectionEffect.heartbeatScale
+                scale: Theme.Motion.reduced ? 1.0 : selectionEffect.heartbeatScale
             }
         }
 

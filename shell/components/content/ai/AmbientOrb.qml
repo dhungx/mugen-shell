@@ -36,6 +36,7 @@ Item {
     SequentialAnimation {
         id: streamPulse
         loops: Animation.Infinite
+        paused: streamPulse.running && Theme.Motion.reduced
         NumberAnimation { target: root; property: "pulseScale"; to: 1.18; duration: 600; easing.type: Easing.InOutSine }
         NumberAnimation { target: root; property: "pulseScale"; to: 1.0; duration: 600; easing.type: Easing.InOutSine }
     }
@@ -60,8 +61,8 @@ Item {
     transform: Scale {
         origin.x: root.width / 2
         origin.y: root.height / 2
-        xScale: root.pulseScale
-        yScale: root.pulseScale
+        xScale: Theme.Motion.reduced ? 1.0 : root.pulseScale
+        yScale: Theme.Motion.reduced ? 1.0 : root.pulseScale
     }
 
     Common.BlobEffect {

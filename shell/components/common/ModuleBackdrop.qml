@@ -61,7 +61,9 @@ Item {
 
     property real time: 0
     NumberAnimation on time {
+        id: clock
         running: root.running && root.visible
+        paused: clock.running && !Theme.Motion.ambient
         loops: Animation.Infinite
         from: 0
         to: 3600

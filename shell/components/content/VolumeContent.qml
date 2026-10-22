@@ -440,8 +440,10 @@ Item {
             property real pulseScale: 1.0
 
             SequentialAnimation on pulseScale {
+                id: volumePulse
                 loops: Animation.Infinite
                 running: modeManager.isMode("volume") && !contentLayer.isInteracting
+                paused: volumePulse.running && !Theme.Motion.ambient
 
                 NumberAnimation {
                     to: 1.15
@@ -472,8 +474,8 @@ Item {
             transform: Scale {
                 origin.x: volumeBlob.width / 2
                 origin.y: volumeBlob.height / 2
-                xScale: volumeBlob.pulseScale * volumeBlob.cavaScale
-                yScale: volumeBlob.pulseScale * volumeBlob.cavaScale
+                xScale: (Theme.Motion.reduced ? 1.0 : volumeBlob.pulseScale) * volumeBlob.cavaScale
+                yScale: (Theme.Motion.reduced ? 1.0 : volumeBlob.pulseScale) * volumeBlob.cavaScale
             }
 
             Common.BlobEffect {

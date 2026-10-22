@@ -1,4 +1,5 @@
 import QtQuick
+import "../../lib" as Theme
 
 Row {
     id: root
@@ -101,15 +102,6 @@ Row {
                     }
                 }
                 
-                onCurrentLevelChanged: {
-                    topStop.color = Qt.rgba(
-                        root.barColor.r + (root.baseColor.r - root.barColor.r) * bar.currentLevel,
-                        root.barColor.g + (root.baseColor.g - root.barColor.g) * bar.currentLevel,
-                        root.barColor.b + (root.baseColor.b - root.barColor.b) * bar.currentLevel,
-                        root.barColor.a
-                    )
-                }
-                
                 property int animationDuration: 800
                 property int totalCycle: animationDuration * 2
                 property int colorOffset: Math.floor((index / root.barCount) * totalCycle)
@@ -118,6 +110,7 @@ Row {
                     id: colorAnimation
                     loops: Animation.Infinite
                     running: root.cavaManager && root.cavaManager.isActive
+                    paused: colorAnimation.running && !Theme.Motion.ambient
 
                     PauseAnimation {
                         duration: bar.colorOffset

@@ -67,7 +67,7 @@ Common.IconButton {
     Timer {
         id: idleBlinkTimer
         interval: 7000
-        running: idleToggleButton.idleInhibitorManager && idleToggleButton.idleInhibitorManager.isInhibited
+        running: idleToggleButton.idleInhibitorManager && idleToggleButton.idleInhibitorManager.isInhibited && Theme.Motion.ambient
         repeat: true
         onRunningChanged: {
             if (running) {

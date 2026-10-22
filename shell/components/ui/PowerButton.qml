@@ -56,6 +56,7 @@ Item {
             id: heartbeatAnimation
             loops: Animation.Infinite
             running: button.isActive
+            paused: heartbeatAnimation.running && !Theme.Motion.ambient
 
             NumberAnimation {
                 to: 1.15
@@ -90,7 +91,7 @@ Item {
             animationSpeed: 0.05
             pointCount: 16
             running: fantasyEffect.visible
-            scale: fantasyEffect.heartbeatScale
+            scale: Theme.Motion.reduced ? 1.0 : fantasyEffect.heartbeatScale
         }
     }
     
@@ -106,6 +107,7 @@ Item {
         id: floatXAnimation
         loops: Animation.Infinite
         running: true
+        paused: floatXAnimation.running && !Theme.Motion.ambient
         
         PauseAnimation {
             duration: button.randomDelay
@@ -137,6 +139,7 @@ Item {
         id: floatYAnimation
         loops: Animation.Infinite
         running: true
+        paused: floatYAnimation.running && !Theme.Motion.ambient
         
         PauseAnimation {
             duration: button.randomDelay
@@ -165,8 +168,8 @@ Item {
     }
     
     transform: Translate {
-        x: button.floatX
-        y: button.floatY
+        x: Theme.Motion.reduced ? 0 : button.floatX
+        y: Theme.Motion.reduced ? 0 : button.floatY
     }
     
     SvgIcon {
