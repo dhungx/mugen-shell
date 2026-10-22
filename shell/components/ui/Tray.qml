@@ -15,7 +15,7 @@ RowLayout {
     property var blockedKeywords: ["nm-applet", "networkmanager", "blueman", "bluetooth", "fcitx"]
 
     property bool expanded: false
-    readonly property bool menuOpen: trayMenuAnchor.visible
+    readonly property bool menuOpen: trayMenuAnchor.shown
 
     function isBlocked(item) {
         if (!item) return false
@@ -29,6 +29,14 @@ RowLayout {
     }
 
     function scaled(v) { return modeManager ? modeManager.barScale(v) : v }
+
+    // close() first: open() refuses while a menu that never loaded still holds the anchor.
+    function openMenu(item, menu) {
+        if (trayMenuAnchor.visible) trayMenuAnchor.close()
+        trayMenuAnchor.anchor.item = item
+        trayMenuAnchor.menu = menu
+        trayMenuAnchor.open()
+    }
 
     // Skips blocked entries so the reveal stagger has no dead beat.
     function visiblePosition(modelIndex) {
@@ -113,11 +121,7 @@ RowLayout {
                     } else if (mouse.button === Qt.MiddleButton) {
                         trayDelegate.modelData.secondaryActivate()
                     } else if (mouse.button === Qt.RightButton) {
-                        if (trayDelegate.modelData.hasMenu) {
-                            trayMenuAnchor.anchor.item = trayDelegate
-                            trayMenuAnchor.menu = trayDelegate.modelData.menu
-                            trayMenuAnchor.open()
-                        }
+                        if (trayDelegate.modelData.hasMenu) root.openMenu(trayDelegate, trayDelegate.modelData.menu)
                     }
                 }
 
@@ -166,5 +170,9 @@ RowLayout {
 
     QsMenuAnchor {
         id: trayMenuAnchor
+        // visible stays true when an app's menu never loads (Quickshell 0.3.2); opened fires once it is on screen.
+        property bool shown: false
+        onOpened: trayMenuAnchor.shown = true
+        onClosed: trayMenuAnchor.shown = false
     }
 }
