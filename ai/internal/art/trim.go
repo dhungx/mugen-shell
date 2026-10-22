@@ -48,17 +48,17 @@ func TrimBars(path string) error {
 }
 
 func unpad(img image.Image) image.Image {
+	box := img.Bounds()
 	for _, aspect := range frameAspects {
-		b := img.Bounds()
-		width, height := b.Dx(), b.Dy()
+		width, height := box.Dx(), box.Dy()
 		bar, boxes := barBoxes(width, height, aspect)
 		if bar < minBar {
 			continue
 		}
 
 		flat := true
-		for _, box := range boxes {
-			if !isFlat(img, box.Add(b.Min)) {
+		for _, b := range boxes {
+			if !isFlat(img, b.Add(box.Min)) {
 				flat = false
 				break
 			}
@@ -68,12 +68,15 @@ func unpad(img image.Image) image.Image {
 		}
 
 		if float64(width)/float64(height) > aspect {
-			img = crop(img, image.Rect(bar, 0, width-bar, height).Add(b.Min))
+			box = image.Rect(bar, 0, width-bar, height).Add(box.Min)
 		} else {
-			img = crop(img, image.Rect(0, bar, width, height-bar).Add(b.Min))
+			box = image.Rect(0, bar, width, height-bar).Add(box.Min)
 		}
 	}
-	return img
+	if box == img.Bounds() {
+		return img
+	}
+	return crop(img, box)
 }
 
 // Inset away from the art, whose edges ring against the bars and are not flat.

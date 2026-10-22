@@ -8,8 +8,8 @@ import (
 	"os"
 )
 
-// PIL's default decompression-bomb ceiling, which the move off PIL dropped.
-const maxPixels = 178956970
+// Far above any cover art that fits curl's 8 MiB cap; a 16-bit PNG this size still decodes to 320 MB.
+const maxPixels = 40_000_000
 
 var errTooLarge = errors.New("art: image is over the pixel limit")
 
