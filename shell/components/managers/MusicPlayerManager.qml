@@ -260,11 +260,11 @@ QtObject {
     property string _accentOutput: ""
 
     function extractArtAccent() {
-        if (artUrl === "") {
+        if (!artUrl.startsWith("file://")) {
             hasArtAccent = false
+            _accentSource = ""
             return
         }
-        if (!artUrl.startsWith("file://")) return
         if (artColorProcess.running || artUrl === _accentSource) return
         let path = artUrl.substring(7)
         try {
@@ -308,7 +308,7 @@ QtObject {
                 let b = parseFloat(parts[2])
                 ok = !isNaN(r) && !isNaN(g) && !isNaN(b)
                     && r >= 0 && r <= 1 && g >= 0 && g <= 1 && b >= 0 && b <= 1
-                if (ok && musicManager.artUrl === source) {
+                if (ok && source !== "" && musicManager.artUrl === source) {
                     musicManager.artAccent = musicManager.artAccentFrom(r, g, b)
                     musicManager.hasArtAccent = true
                 }
