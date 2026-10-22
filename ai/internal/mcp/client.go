@@ -187,6 +187,8 @@ func (c *Client) Initialize(ctx context.Context) error {
 func (c *Client) ListTools(ctx context.Context) ([]ToolDef, error) {
 	var all []ToolDef
 	cursor := ""
+	seen := map[string]bool{}
+	var total int64
 	for {
 		params := map[string]any{}
 		if cursor != "" {
@@ -195,6 +197,10 @@ func (c *Client) ListTools(ctx context.Context) ([]ToolDef, error) {
 		raw, err := c.call(ctx, "tools/list", params)
 		if err != nil {
 			return nil, err
+		}
+		// recvCap bounds one page; without a bound on the sum, endless paging grows until the handshake deadline.
+		if total += int64(len(raw)); total > recvCap {
+			return nil, fmt.Errorf("mcp %q: tools/list exceeds %d bytes", c.name, recvCap)
 		}
 		var res struct {
 			Tools []struct {
@@ -228,6 +234,10 @@ func (c *Client) ListTools(ctx context.Context) ([]ToolDef, error) {
 		if res.NextCursor == "" {
 			break
 		}
+		if seen[res.NextCursor] {
+			return nil, fmt.Errorf("mcp %q: tools/list repeated cursor %q", c.name, res.NextCursor)
+		}
+		seen[res.NextCursor] = true
 		cursor = res.NextCursor
 	}
 	c.tools = all
