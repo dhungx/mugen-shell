@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -23,6 +24,8 @@ type weatherAPI struct {
 	mu       sync.Mutex
 	geoCache map[string]geoPlace
 }
+
+var errNoGeocodeMatch = errors.New("no geocoding match")
 
 type geoPlace struct {
 	Name      string  `json:"name"`
@@ -91,8 +94,11 @@ func (w *weatherAPI) get(ctx context.Context, args map[string]any) (string, erro
 	}
 
 	loc, err := w.geocode(ctx, place)
+	if errors.Is(err, errNoGeocodeMatch) {
+		return fmt.Sprintf("error: could not find a place named %q.", place), nil
+	}
 	if err != nil {
-		return fmt.Sprintf("error: could not find a place named %q (%v).", place, err), nil
+		return "", fmt.Errorf("place lookup for %q failed: %w", place, err)
 	}
 
 	fc, err := w.forecast(ctx, loc)
@@ -119,7 +125,7 @@ func (w *weatherAPI) geocode(ctx context.Context, place string) (geoPlace, error
 		return geoPlace{}, err
 	}
 	if len(payload.Results) == 0 {
-		return geoPlace{}, fmt.Errorf("no geocoding match")
+		return geoPlace{}, errNoGeocodeMatch
 	}
 	loc := payload.Results[0]
 	w.mu.Lock()
