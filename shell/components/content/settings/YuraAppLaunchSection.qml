@@ -22,18 +22,19 @@ Rectangle {
 
     property bool isExpanded: false
     property bool loaded: false
-    readonly property bool canSave: loaded && !saving
+    readonly property bool canSave: loaded && dirty && !saving
     property bool saving: false
+    property bool dirty: false
     property string statusText: ""
 
     property var allowedSet: ({})
     // Mutating a JS map in place doesn't notify QML, so bindings read dirtyTick to depend on it.
     property int dirtyTick: 0
     property var installedApps: []
+    property var customBinaries: []
     property string filterText: ""
 
     readonly property var allRows: {
-        let _ = section.dirtyTick
         let known = {}
         let rows = []
         for (let i = 0; i < section.installedApps.length; i++) {
@@ -41,8 +42,12 @@ Rectangle {
             known[a.binary] = true
             rows.push({ binary: a.binary, display: a.display, custom: false })
         }
-        for (let bin in section.allowedSet) {
-            if (!known[bin]) rows.push({ binary: bin, display: bin + " (custom / CLI)", custom: true })
+        for (let i = 0; i < section.customBinaries.length; i++) {
+            let bin = section.customBinaries[i]
+            if (!known[bin]) {
+                known[bin] = true
+                rows.push({ binary: bin, display: bin + " (custom / CLI)", custom: true })
+            }
         }
         return rows
     }
@@ -75,8 +80,9 @@ Rectangle {
 
     function summary() {
         if (!loaded) return "loading…"
-        if (section.allowedCount === 0) return "no apps allowed"
-        return section.allowedCount + " app" + (section.allowedCount === 1 ? "" : "s") + " allowed"
+        let tail = dirty ? " · unsaved" : ""
+        if (section.allowedCount === 0) return "no apps allowed" + tail
+        return section.allowedCount + " app" + (section.allowedCount === 1 ? "" : "s") + " allowed" + tail
     }
 
     function isAllowed(bin) {
@@ -85,15 +91,18 @@ Rectangle {
     }
 
     function toggleAllowed(bin) {
+        if (section.saving) return
         let next = Object.assign({}, section.allowedSet)
         if (next[bin]) delete next[bin]
         else next[bin] = true
         section.allowedSet = next
         section.dirtyTick++
+        section.dirty = true
     }
 
     // Scoped to the filtered rows so "All on" can't silently allow every installed app.
     function bulkAllow(on) {
+        if (section.saving) return
         let next = Object.assign({}, section.allowedSet)
         let rows = section.filteredRows
         for (let i = 0; i < rows.length; i++) {
@@ -103,6 +112,7 @@ Rectangle {
         }
         section.allowedSet = next
         section.dirtyTick++
+        section.dirty = true
     }
 
     Behavior on height {
@@ -126,8 +136,10 @@ Rectangle {
                     : []
                 let m = {}
                 for (let i = 0; i < arr.length; i++) m[arr[i]] = true
+                section.customBinaries = arr.slice()
                 section.allowedSet = m
                 section.dirtyTick++
+                section.dirty = false
                 section.loaded = true
                 section.statusText = ""
             } catch (e) {
@@ -212,6 +224,7 @@ Rectangle {
                   "-X", "POST", aiBackend.baseUrl + "/config/restart"]
         onExited: (exitCode) => {
             section.saving = false
+            section.dirty = false
             section.statusText = exitCode === 0 ? "applied" : "applied (restart pending)"
         }
     }

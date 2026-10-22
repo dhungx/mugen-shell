@@ -21,8 +21,9 @@ Rectangle {
 
     property bool isExpanded: false
     property bool loaded: false
-    readonly property bool canSave: loaded && !saving
+    readonly property bool canSave: loaded && dirty && !saving
     property bool saving: false
+    property bool dirty: false
     property string statusText: ""
 
     property var disabledSet: ({})
@@ -56,11 +57,13 @@ Rectangle {
     }
 
     function setEnabled(catId, on) {
+        if (section.saving) return
         let next = Object.assign({}, section.disabledSet)
         if (on) delete next[catId]
         else next[catId] = true
         section.disabledSet = next
         section.dirtyTick++
+        section.dirty = true
     }
 
     function summary() {
@@ -70,7 +73,7 @@ Rectangle {
             if (disabledSet[categories[i].id]) off++
         }
         let on = categories.length - off
-        return on + " / " + categories.length + " enabled"
+        return on + " / " + categories.length + " enabled" + (dirty ? " · unsaved" : "")
     }
 
     Behavior on height {
@@ -99,6 +102,7 @@ Rectangle {
                 for (let i = 0; i < arr.length; i++) m[arr[i]] = true
                 section.disabledSet = m
                 section.dirtyTick++
+                section.dirty = false
                 section.loaded = true
                 section.statusText = ""
             } catch (e) {
@@ -144,6 +148,7 @@ Rectangle {
                   "-X", "POST", aiBackend.baseUrl + "/config/restart"]
         onExited: (exitCode) => {
             section.saving = false
+            section.dirty = false
             section.statusText = exitCode === 0 ? "applied" : "applied (restart pending)"
         }
     }
@@ -168,6 +173,7 @@ Rectangle {
 
     // Only the builtin ids are toggled: MCP server names are categories too and live in the same set.
     function setAll(on) {
+        if (section.saving) return
         let next = Object.assign({}, section.disabledSet)
         for (let i = 0; i < categories.length; i++) {
             if (on) delete next[categories[i].id]
@@ -175,6 +181,7 @@ Rectangle {
         }
         section.disabledSet = next
         section.dirtyTick++
+        section.dirty = true
     }
 
     Component.onCompleted: loadProcess.running = true
