@@ -409,6 +409,7 @@ FocusScope {
         }
         if (discardStreamTail) {
             discardStreamTail = false
+            if (unsent) restoreDraft(sentText, sentFiles)
             return
         }
         if (turnError !== "") {
