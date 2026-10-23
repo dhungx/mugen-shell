@@ -92,6 +92,7 @@ ColumnLayout {
 
     Rectangle {
         Layout.fillWidth: true
+        visible: root.airplaneManager ? root.airplaneManager.active : false
         implicitHeight: airplaneBody.implicitHeight + 20
         radius: 16
         color: root.cardFill

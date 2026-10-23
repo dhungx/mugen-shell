@@ -30,7 +30,14 @@ ShellRoot {
 
     Managers.WiFiManager { id: wifiManager }
     Managers.BluetoothManager { id: bluetoothManager }
-    Managers.AirplaneManager { id: airplaneManager }
+    Managers.AirplaneManager { id: airplaneManager; active: false }
+
+    // The bar shows its airplane toggle only on machines with a battery; Settings follows suit.
+    Process {
+        command: ["sh", "-c", "for d in /sys/class/power_supply/BAT*; do [ -d \"$d\" ] && exit 0; done; exit 1"]
+        running: true
+        onExited: code => { airplaneManager.active = code === 0 }
+    }
 
     QtObject {
         id: modeStub
