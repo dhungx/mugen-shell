@@ -38,33 +38,33 @@ QtObject {
         savedNetworksProcess.running = true
     }
 
-    function disconnectFromNetwork(ssid) {
+    function disconnectWifi() {
         actionError = ""
-        actionNetwork = ssid
-        disconnectProcess.command = ["nmcli", "connection", "down", "id", ssid]
+        actionNetwork = currentSsid
         disconnectProcess.running = true
     }
 
-    function connectSavedNetwork(name) {
+    // Profiles are addressed by UUID: names repeat ("Home 1") and need not match the SSID.
+    function connectSavedNetwork(profile) {
         actionError = ""
-        actionNetwork = name
+        actionNetwork = profile.ssid || profile.name
         connectionError = ""
         isConnecting = true
-        savedNetworkProcess.command = ["nmcli", "connection", "up", "id", name]
+        savedNetworkProcess.command = ["nmcli", "connection", "up", "uuid", profile.uuid]
         savedNetworkProcess.running = true
     }
 
-    function forgetNetwork(name) {
+    function forgetNetwork(profile) {
         actionError = ""
-        actionNetwork = name
-        forgetNetworkProcess.command = ["nmcli", "connection", "delete", "id", name]
+        actionNetwork = profile.ssid || profile.name
+        forgetNetworkProcess.command = ["nmcli", "connection", "delete", "uuid", profile.uuid]
         forgetNetworkProcess.running = true
     }
 
-    function setNetworkAutoConnect(name, enabled) {
+    function setNetworkAutoConnect(profile, enabled) {
         actionError = ""
-        actionNetwork = name
-        autoConnectProcess.command = ["nmcli", "connection", "modify", "id", name,
+        actionNetwork = profile.ssid || profile.name
+        autoConnectProcess.command = ["nmcli", "connection", "modify", "uuid", profile.uuid,
                                       "connection.autoconnect", enabled ? "yes" : "no"]
         autoConnectProcess.running = true
     }
@@ -126,9 +126,12 @@ QtObject {
         refreshSavedNetworks()
     }
 
+    // The list view of `connection show` rejects setting fields such as 802-11-wireless.ssid.
     property Process savedNetworksProcess: Process {
-        command: ["nmcli", "-t", "-f", "NAME,TYPE,connection.autoconnect,802-11-wireless.ssid", "connection", "show"]
-        environment: ({ "LANG": "C" })
+        command: ["bash", "-c",
+            "export LANG=C; nmcli -t -f UUID,TYPE connection show | " +
+            "awk -F: '$2 == \"802-11-wireless\" { print \"uuid\"; print $1 }' | " +
+            "xargs -r -d '\\n' nmcli -t -e no -f connection.uuid,connection.id,connection.autoconnect,802-11-wireless.ssid connection show"]
         running: false
         property string outputData: ""
 
@@ -138,15 +141,25 @@ QtObject {
 
         onExited: (code, status) => {
             let networks = []
+            let profile = null
             if (code === 0) {
                 for (const line of savedNetworksProcess.outputData.split("\n")) {
-                    if (!line.trim()) continue
-                    const fields = wifiManager.splitNmcli(line.trim())
-                    if (fields.length < 4 || fields[1] !== "802-11-wireless") continue
-                    if (!networks.some(item => item.name === fields[0]))
-                        networks.push({ name: fields[0], ssid: fields[3] || fields[0],
-                                        connected: (fields[3] || fields[0]) === wifiManager.currentSsid,
-                                        autoConnect: fields[2] === "yes" })
+                    const sep = line.indexOf(":")
+                    if (sep < 0) continue
+                    const key = line.slice(0, sep)
+                    const value = line.slice(sep + 1)
+                    if (key === "connection.uuid") {
+                        profile = { uuid: value, name: "", ssid: "", autoConnect: false }
+                        networks.push(profile)
+                    } else if (!profile) {
+                        continue
+                    } else if (key === "connection.id") {
+                        profile.name = value
+                    } else if (key === "connection.autoconnect") {
+                        profile.autoConnect = value === "yes"
+                    } else if (key === "802-11-wireless.ssid") {
+                        profile.ssid = value
+                    }
                 }
             }
             wifiManager.savedNetworks = networks
@@ -154,7 +167,12 @@ QtObject {
         }
     }
 
+    // `connection down` leaves the device free to autoconnect straight to another saved network.
     property Process disconnectProcess: Process {
+        command: ["bash", "-c",
+            "LANG=C nmcli -t -f DEVICE,TYPE,STATE device | " +
+            "awk -F: '$2 == \"wifi\" && $3 ~ /^connected/ { print $1 }' | " +
+            "xargs -r -n1 nmcli device disconnect"]
         running: false
         property string errorData: ""
         stderr: SplitParser { onRead: data => { disconnectProcess.errorData += data } }

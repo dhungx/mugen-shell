@@ -221,7 +221,7 @@ ColumnLayout {
                 theme: root.theme
                 compact: true
                 enabled: root.wifiManager && !root.wifiManager.isModifyingConnection
-                onClicked: root.wifiManager.disconnectFromNetwork(root.wifiManager.currentSsid)
+                onClicked: root.wifiManager.disconnectWifi()
             }
 
             Common.Switch {
@@ -295,7 +295,7 @@ ColumnLayout {
                     required property int index
                     property bool expanded: root.expandedNetworkIndex === index
                     readonly property var savedProfile: root.wifiManager
-                        ? root.wifiManager.savedNetworks.find(profile => profile.ssid === modelData.ssid || profile.name === modelData.ssid) : null
+                        ? root.wifiManager.savedNetworks.find(profile => profile.ssid === modelData.ssid) : null
                     readonly property bool isSaved: !!savedProfile
                     readonly property bool connected: root.wifiManager.isConnected
                         && root.wifiManager.currentSsid === modelData.ssid
@@ -373,7 +373,7 @@ ColumnLayout {
                                     } else if (networkDelegate.isSaved) {
                                         root.connectingHint = networkDelegate.index
                                         root.connectingSsid = networkDelegate.modelData.ssid
-                                        root.wifiManager.connectSavedNetwork(networkDelegate.savedProfile.name)
+                                        root.wifiManager.connectSavedNetwork(networkDelegate.savedProfile)
                                     } else if (networkDelegate.modelData.secured) {
                                         root.expandedNetworkIndex = networkDelegate.index
                                     } else {
@@ -560,8 +560,11 @@ ColumnLayout {
             Repeater {
                 model: root.wifiManager ? root.wifiManager.savedNetworks : []
                 delegate: Item {
+                    id: knownDelegate
                     required property var modelData
                     required property int index
+                    readonly property bool connected: root.wifiManager.isConnected
+                        && root.wifiManager.currentSsid === modelData.ssid
                     Layout.fillWidth: true
                     implicitHeight: 58
 
@@ -589,8 +592,8 @@ ColumnLayout {
                                 elide: Text.ElideRight
                             }
                             Text {
-                                text: modelData.connected ? "Connected" : (modelData.autoConnect ? "Auto-join enabled" : "Auto-join off")
-                                color: modelData.connected
+                                text: knownDelegate.connected ? "Connected" : (modelData.autoConnect ? "Auto-join enabled" : "Auto-join off")
+                                color: knownDelegate.connected
                                     ? (root.theme ? root.theme.accent : Qt.rgba(0.4, 0.8, 0.55, 1))
                                     : (root.theme ? root.theme.textFaint : Qt.rgba(0.62, 0.62, 0.72, 0.8))
                                 font.pixelSize: 9
@@ -598,16 +601,16 @@ ColumnLayout {
                             }
                         }
                         ConnectivityAction {
-                            label: modelData.connected ? "Connected" : "Connect"
+                            label: knownDelegate.connected ? "Connected" : "Connect"
                             theme: root.theme
                             compact: true
                             enabled: root.wifiManager && root.wifiManager.isPowered
-                                && !modelData.connected && !root.wifiManager.isModifyingConnection
+                                && !knownDelegate.connected && !root.wifiManager.isModifyingConnection
                             onClicked: {
                                 root.connectingSsid = ""
                                 root.connectingHint = -1
                                 root.expandedNetworkIndex = -1
-                                root.wifiManager.connectSavedNetwork(modelData.name)
+                                root.wifiManager.connectSavedNetwork(modelData)
                             }
                         }
                         ConnectivityAction {
@@ -616,7 +619,7 @@ ColumnLayout {
                             compact: true
                             selected: modelData.autoConnect
                             enabled: root.wifiManager && !root.wifiManager.isModifyingConnection
-                            onClicked: root.wifiManager.setNetworkAutoConnect(modelData.name, !modelData.autoConnect)
+                            onClicked: root.wifiManager.setNetworkAutoConnect(modelData, !modelData.autoConnect)
                         }
                         ConnectivityAction {
                             label: "Forget"
@@ -624,7 +627,7 @@ ColumnLayout {
                             compact: true
                             destructive: true
                             enabled: root.wifiManager && !root.wifiManager.isModifyingConnection
-                            onClicked: root.wifiManager.forgetNetwork(modelData.name)
+                            onClicked: root.wifiManager.forgetNetwork(modelData)
                         }
                     }
 
