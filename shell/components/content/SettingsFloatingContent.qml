@@ -9,6 +9,9 @@ Item {
     required property var settingsManager
     required property var notificationSounds
     required property var timerSounds
+    required property var wifiManager
+    required property var bluetoothManager
+    required property var airplaneManager
     property string soundsDir: ""
     property string timerSoundsDir: ""
     property string initialCategory: ""
@@ -31,6 +34,7 @@ Item {
         { id: "appearance", label: "Appearance",   types: ["theme", "barSurface", "moduleBackground", "blur", "animation", "dateFormat", "clock", "weather", "calendarWeekStart", "barLayout"] },
         { id: "wallpaper",  label: "Wallpaper",    types: ["wallpaperPlayback", "wallpaperPauseApps", "wallpaperDisplay", "wallpaperTransition", "wallpaperSlideshow"] },
         { id: "sound",      label: "Sound",        types: ["volumeStep", "notificationSound", "timerSound"] },
+        { id: "connectivity", label: "Connectivity", types: ["connectivity"] },
         { id: "notifications", label: "Notifications", types: ["doNotDisturb", "notificationTimeout"] },
         { id: "timer",      label: "Idle & Lock",  types: ["timer", "lockTimer", "lockScreen", "idlePower"] },
         { id: "system",     label: "System",       types: ["battery", "workspaces", "launcherTerminal", "launcherTypeToSearch", "displayMonitor"] },
@@ -52,6 +56,7 @@ Item {
             case "notificationSound": return notificationSoundSection
             case "timerSound":        return timerSoundSection
             case "volumeStep":        return volumeStepSection
+            case "connectivity":      return connectivitySection
             case "wallpaperPlayback": return wallpaperPlaybackSection
             case "wallpaperPauseApps": return wallpaperPauseAppsSection
             case "wallpaperDisplay":  return wallpaperDisplaySection
@@ -149,6 +154,13 @@ Item {
         theme: root.theme
         modeManager: root.modeManager
         settingsManager: root.settingsManager
+    }}
+    Component { id: connectivitySection; Settings.ConnectivitySection {
+        theme: root.theme
+        modeManager: root.modeManager
+        wifiManager: root.wifiManager
+        bluetoothManager: root.bluetoothManager
+        airplaneManager: root.airplaneManager
     }}
     Component { id: wallpaperPlaybackSection; Settings.WallpaperPlaybackSection {
         theme: root.theme
