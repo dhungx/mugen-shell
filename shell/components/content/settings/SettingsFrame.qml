@@ -329,6 +329,7 @@ Item {
                     target: frame
                     function onSelectedCategoryChanged() { settingsList.rebuild() }
                     function onQueryChanged() { settingsList.rebuild() }
+                    function onCategoriesChanged() { settingsList.rebuild() }
                 }
             }
         }

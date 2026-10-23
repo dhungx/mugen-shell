@@ -30,11 +30,13 @@ Item {
         else frame.selectedCategory = id
     }
 
+    readonly property bool hasAirplane: !!airplaneManager && airplaneManager.active
+
     readonly property var categories: [
         { id: "appearance", label: "Appearance",   types: ["theme", "barSurface", "moduleBackground", "blur", "animation", "dateFormat", "clock", "weather", "calendarWeekStart", "barLayout"] },
         { id: "wallpaper",  label: "Wallpaper",    types: ["wallpaperPlayback", "wallpaperPauseApps", "wallpaperDisplay", "wallpaperTransition", "wallpaperSlideshow"] },
         { id: "sound",      label: "Sound",        types: ["volumeStep", "notificationSound", "timerSound"] },
-        { id: "connectivity", label: "Connectivity", types: ["connectivity"] },
+        { id: "connectivity", label: "Connectivity", types: root.hasAirplane ? ["airplaneMode", "wifi", "knownNetworks", "bluetooth"] : ["wifi", "knownNetworks", "bluetooth"] },
         { id: "notifications", label: "Notifications", types: ["doNotDisturb", "notificationTimeout"] },
         { id: "timer",      label: "Idle & Lock",  types: ["timer", "lockTimer", "lockScreen", "idlePower"] },
         { id: "system",     label: "System",       types: ["battery", "workspaces", "launcherTerminal", "launcherTypeToSearch", "displayMonitor"] },
@@ -56,7 +58,10 @@ Item {
             case "notificationSound": return notificationSoundSection
             case "timerSound":        return timerSoundSection
             case "volumeStep":        return volumeStepSection
-            case "connectivity":      return connectivitySection
+            case "airplaneMode":      return airplaneModeSection
+            case "wifi":              return wifiSection
+            case "knownNetworks":     return knownNetworksSection
+            case "bluetooth":         return bluetoothSection
             case "wallpaperPlayback": return wallpaperPlaybackSection
             case "wallpaperPauseApps": return wallpaperPauseAppsSection
             case "wallpaperDisplay":  return wallpaperDisplaySection
@@ -155,12 +160,25 @@ Item {
         modeManager: root.modeManager
         settingsManager: root.settingsManager
     }}
-    Component { id: connectivitySection; Settings.ConnectivitySection {
+    Component { id: airplaneModeSection; Settings.AirplaneModeSection {
+        theme: root.theme
+        modeManager: root.modeManager
+        airplaneManager: root.airplaneManager
+    }}
+    Component { id: wifiSection; Settings.WifiSection {
         theme: root.theme
         modeManager: root.modeManager
         wifiManager: root.wifiManager
+    }}
+    Component { id: knownNetworksSection; Settings.KnownNetworksSection {
+        theme: root.theme
+        modeManager: root.modeManager
+        wifiManager: root.wifiManager
+    }}
+    Component { id: bluetoothSection; Settings.BluetoothSection {
+        theme: root.theme
+        modeManager: root.modeManager
         bluetoothManager: root.bluetoothManager
-        airplaneManager: root.airplaneManager
     }}
     Component { id: wallpaperPlaybackSection; Settings.WallpaperPlaybackSection {
         theme: root.theme
