@@ -86,7 +86,7 @@ programs.mugen-shell.fcitx5Addons = with pkgs; [ fcitx5-mozc ];
 
 </details>
 
-Personal Hyprland settings go in `~/.config/hypr/configs/user-overrides.lua` (keybindings in `keybind-overrides.lua`). Edits to the files mugen-shell ships under `~/.config/hypr` (except `hypridle.conf`) and `~/.config/matugen` get reverted; a file of your own that mugen-shell replaced the first time is kept as `*.pre-mugen-shell`. Your own matugen templates go in `~/.config/matugen/user.toml`, which must start with a `[config]` line. If `~/.config/hypr` itself or the `hyprland.lua` in it is a symlink (a dotfiles setup), mugen-shell leaves it alone and the bar does not start; make them a real directory and file.
+Personal Hyprland settings go in `~/.config/hypr/configs/user-overrides.lua` (keybindings in `keybind-overrides.lua`). Edits to the files mugen-shell ships under `~/.config/hypr` (except `hypridle.conf`) and `~/.config/matugen` get reverted; a file of your own that mugen-shell replaced the first time is kept as `*.pre-mugen-shell`. Hyprland stops reading `~/.config/hypr/hyprland.conf` from then on, in a plain Hyprland session too, so move what you need into `user-overrides.lua`. Your own matugen templates go in `~/.config/matugen/user.toml`, which must start with a `[config]` line. If `~/.config/hypr` itself or the `hyprland.lua` in it is a symlink (a dotfiles setup), mugen-shell leaves it alone and the bar does not start; make them a real directory and file.
 
 If you already had `~/.config/gtk-3.0/gtk.css` or `~/.config/gtk-4.0/gtk.css`, add `@import url("colors.css");` at the top of each; without it GTK apps do not follow the wallpaper colors.
 

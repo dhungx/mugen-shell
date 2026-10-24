@@ -30,8 +30,15 @@ install_dir() {
 }
 
 # A tree mugen never synced into holds the user's own configs, so the first overwrite keeps a copy.
+shipped_header='-- Hyprland Lua config (mugen-shell)'
 first_sync=1
-[[ -e "$CONFIG/hypr/configs/mugen-shell.lua" ]] && first_sync=0
+[[ "$(head -n 1 "$CONFIG/hypr/hyprland.lua" 2> /dev/null)" == "$shipped_header"* ]] && first_sync=0
+[[ -L "$CONFIG/hypr/hyprland.lua" && -e "$CONFIG/hypr/configs/mugen-shell.lua" ]] && first_sync=0
+
+# Hyprland skips hyprland.conf whenever a hyprland.lua sits beside it.
+if (( first_sync && ! ${#RUN[@]} )) && [[ ! -L "$CONFIG/hypr" && -f "$CONFIG/hypr/hyprland.conf" && ! -e "$CONFIG/hypr/hyprland.lua" ]]; then
+  echo "mugen-shell: Hyprland now reads the shipped hyprland.lua instead of $CONFIG/hypr/hyprland.conf; move what you need into configs/user-overrides.lua" >&2
+fi
 
 same_content() { [[ "$(cksum < "$1")" == "$(cksum < "$2")" ]]; }
 
