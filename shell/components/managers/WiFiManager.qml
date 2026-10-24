@@ -48,7 +48,6 @@ QtObject {
     // Profiles are addressed by UUID: names repeat ("Home 1") and need not match the SSID.
     function connectSavedNetwork(profile) {
         actionError = ""
-        actionNetwork = profile.ssid || profile.name
         connectionError = ""
         isConnecting = true
         savedNetworkProcess.command = ["nmcli", "connection", "up", "uuid", profile.uuid]
@@ -101,6 +100,17 @@ QtObject {
         }
 
         connectToNetworkProcess.running = true
+    }
+
+    function describeConnectError(stderr) {
+        const errorMsg = stderr.toLowerCase()
+        if (errorMsg.includes("secret") || errorMsg.includes("password") || errorMsg.includes("psk"))
+            return "Incorrect password"
+        if (errorMsg.includes("timeout") || errorMsg.includes("no reply"))
+            return "Connection timeout"
+        if (errorMsg.includes("not found"))
+            return "Network not found"
+        return "Connection failed"
     }
 
     // nmcli -t escapes a literal ':' as '\:', so a plain split(":") would over-split an SSID.
@@ -193,8 +203,7 @@ QtObject {
         property string errorData: ""
         stderr: SplitParser { onRead: data => { savedNetworkProcess.errorData += data } }
         onExited: (code, status) => {
-            wifiManager.actionError = code === 0 ? "" : "Could not connect to " + wifiManager.actionNetwork
-            wifiManager.connectionError = code === 0 ? "" : "Could not connect to " + wifiManager.actionNetwork
+            wifiManager.connectionError = code === 0 ? "" : wifiManager.describeConnectError(errorData)
             wifiManager.isConnecting = false
             wifiManager.refreshWifiStatus()
             wifiManager.refreshSavedNetworks()
@@ -333,17 +342,7 @@ QtObject {
                 wifiManager.refreshWifiStatus()
                 wifiManager.refreshSavedNetworks()
             } else {
-                let errorMsg = connectToNetworkProcess.errorData.toLowerCase()
-
-                if (errorMsg.includes("secret") || errorMsg.includes("password") || errorMsg.includes("psk")) {
-                    wifiManager.connectionError = "Incorrect password"
-                } else if (errorMsg.includes("timeout") || errorMsg.includes("no reply")) {
-                    wifiManager.connectionError = "Connection timeout"
-                } else if (errorMsg.includes("not found")) {
-                    wifiManager.connectionError = "Network not found"
-                } else {
-                    wifiManager.connectionError = "Connection failed"
-                }
+                wifiManager.connectionError = wifiManager.describeConnectError(errorData)
             }
 
             wifiManager.isConnecting = false

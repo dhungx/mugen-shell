@@ -56,7 +56,6 @@ Rectangle {
             } else {
                 section.connectingSsid = ""
                 section.expandedSsid = ""
-                section.wifiManager.refreshSavedNetworks()
             }
         }
     }
