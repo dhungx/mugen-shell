@@ -90,7 +90,7 @@ PanelWindow {
 
             // Per-panel Keys handlers never fire: escKeyHandler owns focus while a panel is open.
             if (modeManager.isMode("launcher") && appLauncherLoader.item
-                    && (appLauncherLoader.item as Content.AppLauncherContent).forwardPrintableToSearch(event)) {
+                    && (appLauncherLoader.item as Content.AppLauncherContent).forwardKeyToSearch(event)) {
                 event.accepted = true
                 return
             }

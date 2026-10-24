@@ -496,6 +496,12 @@ FocusScope {
         return base
     }
 
+    function applyPendingFilter() {
+        if (!filterDebounceTimer.running) return
+        filterDebounceTimer.stop()
+        filterApps()
+    }
+
     function filterApps() {
         // trim: a trailing space would fail the substring tiers and drop real hits
         let search = searchText.trim().toLowerCase()
@@ -680,14 +686,19 @@ FocusScope {
     }
 
     // Bar.qml's escKeyHandler holds focus until focusTimer fires, so it hands typed keys here.
-    function forwardPrintableToSearch(event) {
-        const code = event.text ? event.text.charCodeAt(0) : 0
-        if (code < 0x20 || code === 0x7f || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
-            return false
+    function forwardKeyToSearch(event) {
+        if (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) return false
         if (!searchField || !searchField.searchFieldItem) return false
+        const code = event.text ? event.text.charCodeAt(0) : 0
+        const printable = code >= 0x20 && code !== 0x7f
+        if (printable || event.key === Qt.Key_Backspace) {
+            focusTimer.stop()
+            searchField.searchFieldItem.forceActiveFocus()
+            searchField.text = printable ? root.searchText + event.text : root.searchText.slice(0, -1)
+            return true
+        }
+        if (!searchField.handleNavigationKey(event.key)) return false
         focusTimer.stop()
-        searchField.searchFieldItem.forceActiveFocus()
-        searchField.text = root.searchText + event.text
         return true
     }
 
@@ -911,7 +922,7 @@ FocusScope {
                     theme: root.theme
                     typo: root.typo
                     icons: root.icons
-                    resultCount: root.filteredApps.length
+                    resultCount: filterDebounceTimer.running ? Math.max(1, root.filteredApps.length) : root.filteredApps.length
                     placeholder: "Search apps..."
 
                     onActivity: root.modeManager.bump()
@@ -942,6 +953,7 @@ FocusScope {
 
                     // The grid keeps its highlight while the field has focus, so honour it over the top hit.
                     onRequestActivateSelected: () => {
+                        root.applyPendingFilter()
                         if (root.isHome) {
                             root.launchApp(homeView.current ? homeView.current : root.filteredApps[0])
                             return
