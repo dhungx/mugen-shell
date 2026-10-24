@@ -34,10 +34,6 @@ Rectangle {
         return saved.length === 1 ? "1 network" : saved.length + " networks"
     }
 
-    Component.onCompleted: {
-        if (wifiManager) wifiManager.refreshSavedNetworks()
-    }
-
     Behavior on height {
         NumberAnimation { duration: Theme.Motion.standard; easing.type: Easing.OutCubic }
     }

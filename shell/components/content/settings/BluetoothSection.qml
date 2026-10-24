@@ -34,10 +34,6 @@ Rectangle {
         if (modeManager && modeManager.isMode("settings")) modeManager.bump()
     }
 
-    Component.onCompleted: {
-        if (bluetoothManager) bluetoothManager.refreshStatus()
-    }
-
     Theme.IconProvider { id: icons }
 
     Component {

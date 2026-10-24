@@ -98,6 +98,7 @@ Item {
         onCategoryAction: action => {
             if (action === "yura-settings") root.openYuraSettings()
         }
+        onSelectedCategoryChanged: if (frame.selectedCategory === "connectivity") root.wifiManager.fullRefresh()
     }
 
     Component { id: themeSection; Settings.ThemeSection {

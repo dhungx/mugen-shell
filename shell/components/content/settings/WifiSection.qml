@@ -43,7 +43,7 @@ Rectangle {
     }
 
     Component.onCompleted: Qt.callLater(() => {
-        if (section.wifiManager) section.wifiManager.fullRefresh()
+        if (section.wifiManager && !section.wifiManager.hasRefreshed) section.wifiManager.fullRefresh()
     })
 
     Connections {

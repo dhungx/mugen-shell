@@ -16,6 +16,7 @@ QtObject {
     property string actionError: ""
     property string actionNetwork: ""
     property bool isRefreshing: false
+    property bool hasRefreshed: false
 
     readonly property bool isTogglingPower: wifiToggleProcess.running
     readonly property bool isModifyingConnection: disconnectProcess.running || savedNetworkProcess.running || forgetNetworkProcess.running || autoConnectProcess.running
@@ -120,6 +121,7 @@ QtObject {
     }
 
     function fullRefresh() {
+        hasRefreshed = true
         isRefreshing = true
         refreshWifiStatus()
         scanNetworks()
