@@ -58,7 +58,20 @@ SECONDS_VAL=$((MINUTES * 60))
 
 # 0 minutes removes the block entirely, so hypridle.conf stays a truthful description of what's active.
 python3 - "$CFG" "$SECONDS_VAL" "$TIMEOUT_CMD" "$RESUME_CMD" "$KNOWN_LINES_JSON" <<'PY'
-import re, sys
+import os, re, sys, tempfile
+
+# Writing in place truncates first, and the replace lives here because closing Settings kills the bash above.
+def write_atomic(path, text):
+    dest = os.path.realpath(path)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(dest), prefix=os.path.basename(dest) + ".")
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(text)
+        os.chmod(tmp, os.stat(dest).st_mode & 0o7777)
+        os.replace(tmp, dest)
+    except BaseException:
+        os.unlink(tmp)
+        raise
 
 cfg, seconds = sys.argv[1], int(sys.argv[2])
 timeout_cmd, resume_cmd = sys.argv[3], sys.argv[4]
@@ -112,8 +125,7 @@ else:
         lines.append("\n")
         lines.extend(build_block())
 
-with open(cfg, "w") as f:
-    f.writelines(lines)
+write_atomic(cfg, "".join(lines))
 PY
 
 if command -v systemctl >/dev/null 2>&1; then

@@ -11,7 +11,20 @@ if [[ ! -f "$CFG" ]]; then
 fi
 
 python3 - "$CFG" "$SECONDS_VAL" <<'PY'
-import re, sys
+import os, re, sys, tempfile
+
+# Writing in place truncates first, and the replace lives here because closing Settings kills the bash above.
+def write_atomic(path, text):
+    dest = os.path.realpath(path)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(dest), prefix=os.path.basename(dest) + ".")
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(text)
+        os.chmod(tmp, os.stat(dest).st_mode & 0o7777)
+        os.replace(tmp, dest)
+    except BaseException:
+        os.unlink(tmp)
+        raise
 
 cfg, seconds = sys.argv[1], int(sys.argv[2])
 with open(cfg) as f:
@@ -28,8 +41,7 @@ new = re.sub(r"listener\s*\{[^}]+\}", replace, content)
 if new == content:
     sys.stderr.write("warning: no lockscreen listener matched; nothing changed\n")
 
-with open(cfg, "w") as f:
-    f.write(new)
+write_atomic(cfg, new)
 PY
 
 if command -v systemctl >/dev/null 2>&1; then
