@@ -197,14 +197,15 @@ func mcpServerConfigs(c config.MCP, trusted map[string]bool) map[string]mcp.Serv
 	}
 	out := make(map[string]mcp.ServerConfig, len(c.Servers))
 	for name, s := range c.Servers {
-		url := s.URL
+		url, env := s.URL, s.Env
 		if !s.Disabled {
-			url = expandURLEnv(name, url)
+			url = expandEnvRefs(name, "url", url)
+			env = expandEnv(name, env)
 		}
 		out[name] = mcp.ServerConfig{
 			Command:  s.Command,
 			Args:     s.Args,
-			Env:      expandEnv(s.Env),
+			Env:      env,
 			URL:      url,
 			Disabled: s.Disabled,
 			Trusted:  trusted[name],
@@ -214,26 +215,26 @@ func mcpServerConfigs(c config.MCP, trusted map[string]bool) map[string]mcp.Serv
 }
 
 // Resolving ${VAR} against our own environment keeps a secret out of config.toml.
-func expandEnv(in map[string]string) map[string]string {
+func expandEnv(server string, in map[string]string) map[string]string {
 	if len(in) == 0 {
 		return in
 	}
 	out := make(map[string]string, len(in))
 	for k, v := range in {
-		out[k] = envRef.ReplaceAllStringFunc(v, func(ref string) string { return os.Getenv(ref[2 : len(ref)-1]) })
+		out[k] = expandEnvRefs(server, "env "+k, v)
 	}
 	return out
 }
 
 var envRef = regexp.MustCompile(`\$\{([A-Za-z_][A-Za-z0-9_]*)\}`)
 
-// Only the ${NAME} form: a URL may carry a literal $ (OData's ?$select=).
-func expandURLEnv(server, s string) string {
+// Only the ${NAME} form: a URL may carry a literal $ (OData's ?$select=), an env value a password's $$.
+func expandEnvRefs(server, field, s string) string {
 	return envRef.ReplaceAllStringFunc(s, func(ref string) string {
 		name := ref[2 : len(ref)-1]
 		v, ok := os.LookupEnv(name)
 		if !ok {
-			fmt.Fprintf(os.Stderr, "mcp[%s]: url references unset ${%s}\n", server, name)
+			fmt.Fprintf(os.Stderr, "mcp[%s]: %s references unset ${%s}\n", server, field, name)
 		}
 		return v
 	})
