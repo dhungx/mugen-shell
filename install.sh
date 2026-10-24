@@ -75,12 +75,13 @@ usage() {
   cat <<'USAGE'
 usage: ./install.sh [--yes] [--with-X | --without-X] ...
 
-  --yes            take the defaults without showing the menu
-  --with-ime=ENGINE   mozc, rime or hangul (default: guessed from $LANG)
+  --yes               take the defaults without showing the menu
+  --with-ime=ENGINE   mozc, rime or hangul (default: the one already installed, else from the locale)
   --with-X            X is one of: ime zsh apps dm
   --without-X         the same names, turned off
+  -h, --help          show this help
 
-With no arguments the menu is shown.
+The menu is shown only when no option is given.
 USAGE
 }
 
