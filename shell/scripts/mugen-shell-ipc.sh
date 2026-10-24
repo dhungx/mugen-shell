@@ -7,7 +7,9 @@ IPC_FILE="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/mugen-shell-ipc"
 
 if [ $# -eq 0 ]; then
     cat << EOF
-Usage: $0 <mode-name>
+Usage: $0 <mode-name>             Toggle a panel
+       $0 open <mode-name>        Open a panel, or keep it open
+       $0 launcher-query <text>   Open the launcher searching for <text>
 
 Available modes:
   launcher            Open app launcher
