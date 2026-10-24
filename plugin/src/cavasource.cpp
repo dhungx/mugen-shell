@@ -142,7 +142,7 @@ void CavaSource::start() {
     std::thread(&CavaSource::run, m_worker, m_bars, m_source.toUtf8()).detach();
 }
 
-// Never joined: cava's input thread only sees `terminate` once PipeWire delivers a buffer.
+// Never joined: once streaming, cava sees `terminate` only on a graph cycle, which a stalled graph never runs.
 void CavaSource::stop() {
     if (!m_worker) {
         return;
