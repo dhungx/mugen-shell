@@ -67,8 +67,6 @@ QtObject {
     }
 
     function refreshPairedDevices() {
-        pairedDevicesProcess.devices = []
-        pairedDevicesProcess.allOutput = ""
         pairedDevicesProcess.running = true
     }
 

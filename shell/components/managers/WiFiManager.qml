@@ -35,7 +35,6 @@ QtObject {
     }
 
     function refreshSavedNetworks() {
-        savedNetworksProcess.outputData = ""
         savedNetworksProcess.running = true
     }
 
