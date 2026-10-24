@@ -4,7 +4,7 @@
 
 ## インストール
 
-**Hyprland 0.55 以上**と **PipeWire** (`pipewire-pulse`) が前提です。
+**Hyprland 0.56 以上**と **PipeWire** (`pipewire-pulse`) が前提です。
 
 ### Arch Linux
 

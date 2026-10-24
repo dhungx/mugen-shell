@@ -1,4 +1,4 @@
--- Hyprland Lua config (mugen-shell), needing Hyprland 0.55+. Personal tweaks
+-- Hyprland Lua config (mugen-shell), needing Hyprland 0.56+. Personal tweaks
 -- belong in configs/user-overrides.lua, not here.
 
 local HOME = os.getenv("HOME")
