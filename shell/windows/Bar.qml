@@ -59,17 +59,14 @@ PanelWindow {
     exclusiveZone: (fullscreenHidden || settingsManager.barAutoHide) ? 0 : modeManager.normalBarSize.height
     // The lock path fades to zero instead of unmapping: an unmapped layer has no exclusive zone.
     visible: !fullscreenHidden
-    // Release keyboard focus in normal mode so launched apps can receive it.
-    focusable: !modeManager.isMode("normal")
+    focusable: modeManager.wantsKeyboard
     color: "transparent"
-
-    readonly property bool modeWantsKeyboard: !modeManager.isMode("notification-popup")
 
     HyprlandFocusGrab {
         windows: [barWindow]
         // Clicking the bar does not hand the layer surface keyboard focus, so a panel that takes keys needs the grab.
         // A module open at lock time would leave a grab pulling focus toward an unmapped bar.
-        active: !modeManager.isMode("normal") && barWindow.modeWantsKeyboard && !barWindow.lockHidden
+        active: modeManager.wantsKeyboard && !barWindow.lockHidden
     }
 
     Item {
@@ -138,7 +135,7 @@ PanelWindow {
         target: modeManager
         function onCurrentModeChanged() {
             // Every open, not just IPC: a click focuses the surface but leaves QML focus elsewhere, so Escape dies.
-            if (!modeManager.isMode("normal") && barWindow.modeWantsKeyboard) {
+            if (modeManager.wantsKeyboard) {
                 // PanelWindow has no requestActivate(); focusable + FocusGrab give focus, then push inward.
                 Qt.callLater(() => {
                     escKeyHandler.forceActiveFocus()

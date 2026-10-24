@@ -79,6 +79,9 @@ QtObject {
         return currentMode === modeName
     }
 
+    // A notification popup is not a panel: the keyboard stays with the app under it.
+    readonly property bool wantsKeyboard: currentMode !== "normal" && currentMode !== "notification-popup"
+
     // Bar.qml restarts the central autoCloseTimer when this fires.
     signal interaction()
 
