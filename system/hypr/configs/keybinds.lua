@@ -59,16 +59,19 @@ local function nothingTakesKeys()
     return true
 end
 
--- auto_consuming hands the key on when the callback returns ok = false.
-local function bindDesktopSearchKey(letter)
-    hl.bind(letter, function()
-        if not nothingTakesKeys() then return { ok = false } end
-        hl.dispatch(ipc("launcher-query " .. letter))
-    end, { auto_consuming = true, description = "Type to search apps on desktop" })
+local letters = {}
+for byte = string.byte("a"), string.byte("z") do
+    local letter = string.char(byte)
+    letters[#letters + 1] = { key = letter, text = letter }
+    letters[#letters + 1] = { key = "SHIFT + " .. letter, text = string.upper(letter) }
 end
 
-for byte = string.byte("a"), string.byte("z") do
-    bindDesktopSearchKey(string.char(byte))
+-- auto_consuming hands the key on when the callback returns ok = false.
+local function desktopSearch(letter)
+    return function()
+        if not nothingTakesKeys() then return { ok = false } end
+        hl.dispatch(ipc("launcher-query " .. letter))
+    end
 end
 
 -- `each` binds one row many times; keybind-overrides.lua can't target a family by id, only a plain bind.
@@ -82,6 +85,11 @@ local binds = {
 
     { id = "panel.launcher", cat = "shell", desc = "App launcher",
       keys = mainMod .. " + R", action = ipc("launcher") },
+    { id = "launcher.typeToSearch", cat = "shell", desc = "Type to search apps",
+      each = letters, display = "a–z on an empty desktop",
+      keys   = function(l) return l.key end,
+      action = function(l) return desktopSearch(l.text) end,
+      opts   = { auto_consuming = true, description = "Type to search apps on desktop" } },
     { id = "panel.wallpaper", cat = "shell", desc = "Wallpaper picker",
       keys = mainMod .. " + W", action = ipc("wallpaper") },
     { id = "panel.music", cat = "shell", desc = "Music player",
