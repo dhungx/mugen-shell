@@ -8,6 +8,12 @@ mkdir -p "$THUMB_DIR"
 source "$SCRIPT_DIR/wallpaper-opts.sh"
 
 DEBUG_LOG="$THUMB_DIR/debug.log"
+DEBUG_LOG_MAX_BYTES=1048576
+
+# The log is the only trace a detached run leaves, so it is rotated rather than switched off.
+if [[ -f "$DEBUG_LOG" ]] && (( $(wc -c < "$DEBUG_LOG") > DEBUG_LOG_MAX_BYTES )); then
+  mv -f "$DEBUG_LOG" "$DEBUG_LOG.1" 2>/dev/null || true
+fi
 
 debug_log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$DEBUG_LOG"
