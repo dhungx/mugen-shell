@@ -181,6 +181,12 @@ swww_set_no_transition() {
   fi
 }
 
+# mpvpaper covers this frame once it maps, so a failed set must not keep the video from starting.
+show_bridge_frame() {
+  awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$1" "${TRANS_OPTS[@]}" \
+    || debug_log "awww img: FAILED with exit code $?"
+}
+
 mpv_ipc_send() {
   local payload="$1"
   if command -v socat >/dev/null 2>&1; then
@@ -263,8 +269,12 @@ if [[ $REAPPLY == true ]]; then
     exit 0
   fi
   ensure_swww || abort_daemon_unavailable
-  awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$(wallpaper_adjusted_still "$WALLPAPER_ABS" "$THUMB_DIR/still.png")" \
-    --transition-type none --transition-duration 0 --transition-fps "$STILL_SET_FPS"
+  if ! awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$(wallpaper_adjusted_still "$WALLPAPER_ABS" "$THUMB_DIR/still.png")" \
+    --transition-type none --transition-duration 0 --transition-fps "$STILL_SET_FPS"; then
+    debug_log "Reapply: awww img FAILED"
+    notify_failure "Could not redraw the wallpaper with the new settings"
+    exit 1
+  fi
   exit 0
 fi
 
@@ -306,8 +316,9 @@ if is_image "$WALLPAPER_ABS"; then
       echo "Color palette generated successfully"
       debug_log "matugen: success"
     else
+      matugen_rc=$?
       echo "$matugen_output" >> "$DEBUG_LOG"
-      echo "matugen failed with exit code $?"
+      echo "matugen failed with exit code $matugen_rc"
       debug_log "matugen: FAILED"
     fi
   fi
@@ -318,8 +329,11 @@ if is_image "$WALLPAPER_ABS"; then
     echo "$swww_output" >> "$DEBUG_LOG"
     debug_log "awww img: success"
   else
+    swww_rc=$?
     echo "$swww_output" >> "$DEBUG_LOG"
-    debug_log "awww img: FAILED with exit code $?"
+    debug_log "awww img: FAILED with exit code $swww_rc"
+    notify_failure "Could not set ${WALLPAPER_ABS##*/} as the wallpaper"
+    exit 1
   fi
 
   echo "$WALLPAPER_ABS" > "$CURRENT_WALLPAPER_FILE"
@@ -349,21 +363,22 @@ elif is_video "$WALLPAPER_ABS"; then
       echo "Color palette generated successfully"
       debug_log "matugen: success"
     else
+      matugen_rc=$?
       echo "$matugen_output" >> "$DEBUG_LOG"
-      echo "matugen failed with exit code $?"
+      echo "matugen failed with exit code $matugen_rc"
       debug_log "matugen: FAILED"
     fi
   fi
 
   ensure_swww || abort_daemon_unavailable
   if [[ -s "$FIRST_FRAME" ]]; then
-    awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$FIRST_FRAME" "${TRANS_OPTS[@]}"
+    show_bridge_frame "$FIRST_FRAME"
   elif [[ -f "$THUMB_FILE" ]]; then
-    awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$THUMB_FILE" "${TRANS_OPTS[@]}"
+    show_bridge_frame "$THUMB_FILE"
   else
     if command -v ffmpeg >/dev/null 2>&1; then
       ffmpeg -nostdin -v error -f lavfi -i color=c=#222222:s=1920x1080 -frames:v 1 -y "$THUMB_FILE" >/dev/null 2>&1 || true
-      [[ -f "$THUMB_FILE" ]] && awww img --resize "$AWWW_RESIZE" --fill-color "$AWWW_FILL" "$THUMB_FILE" "${TRANS_OPTS[@]}"
+      [[ -f "$THUMB_FILE" ]] && show_bridge_frame "$THUMB_FILE"
     fi
   fi
 
@@ -386,5 +401,6 @@ elif is_video "$WALLPAPER_ABS"; then
   echo "mpvpaper failed to start, check $THUMB_DIR/mpvpaper.log" >&2
   debug_log "mpvpaper: FAILED to start"
   cat "$THUMB_DIR/mpvpaper.log" >> "$DEBUG_LOG" 2>/dev/null || true
+  notify_failure "Could not start the video wallpaper"
   exit 1
 fi
