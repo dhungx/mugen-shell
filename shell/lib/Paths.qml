@@ -3,11 +3,12 @@ import QtQuick
 import Quickshell
 
 QtObject {
-    readonly property string dataDir: {
+    readonly property string dataHome: {
         let xdg = Quickshell.env("XDG_DATA_HOME")
         if (!xdg || xdg === "") xdg = Quickshell.env("HOME") + "/.local/share"
-        return xdg + "/mugen-shell"
+        return xdg
     }
+    readonly property string dataDir: dataHome + "/mugen-shell"
     readonly property string cacheDir: {
         let xdg = Quickshell.env("XDG_CACHE_HOME")
         if (!xdg || xdg === "") xdg = Quickshell.env("HOME") + "/.cache"

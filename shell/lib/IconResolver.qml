@@ -8,10 +8,7 @@ QtObject {
 
     // From XDG_DATA_DIRS, not a hardcoded /usr/share, so lookup works on NixOS as well as FHS.
     readonly property var dataDirs: {
-        let dirs = []
-        const home = Quickshell.env("HOME") || ""
-        if (home !== "")
-            dirs.push(home + "/.local/share")
+        let dirs = [Paths.dataHome]
         const xdg = Quickshell.env("XDG_DATA_DIRS") || "/usr/local/share:/usr/share"
         for (const d of xdg.split(":")) {
             if (d !== "" && dirs.indexOf(d) === -1)

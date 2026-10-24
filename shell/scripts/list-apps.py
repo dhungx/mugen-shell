@@ -180,10 +180,10 @@ def normalize_icon_name(icon_name: str) -> str:
     return re.sub(r"\.(png|svg|xpm)$", "", icon_name, flags=re.IGNORECASE)
 
 
-def build_theme_icon_paths(base_name: str, theme_name: str, home: str) -> list[str]:
+def build_theme_icon_paths(base_name: str, theme_name: str) -> list[str]:
     paths = []
 
-    user_base = os.path.join(home, ".local/share/icons", theme_name)
+    user_base = os.path.join(user_data_dir(), "icons", theme_name)
     sizes = ["scalable", "512x512", "256x256", "128x128", "96x96", "64x64", "48x48", "32x32"]
     for size in sizes:
         if size == "scalable":
@@ -208,6 +208,10 @@ def build_theme_icon_paths(base_name: str, theme_name: str, home: str) -> list[s
     return paths
 
 
+def user_data_dir() -> str:
+    return os.environ.get("XDG_DATA_HOME") or os.path.join(os.path.expanduser("~"), ".local", "share")
+
+
 def system_data_dirs() -> list[str]:
     """XDG_DATA_DIRS instead of a hardcoded /usr/share, so NixOS-style layouts work."""
     raw = os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share"
@@ -227,14 +231,15 @@ def build_beautyline_icon_paths(base_name: str) -> list[str]:
     return paths
 
 
-def build_hicolor_icon_paths(base_name: str, home: str) -> list[str]:
+def build_hicolor_icon_paths(base_name: str) -> list[str]:
     paths = []
 
+    user_data = user_data_dir()
     user_paths = [
-        os.path.join(home, ".local/share/icons/hicolor/scalable/apps", base_name + ".svg"),
-        os.path.join(home, ".local/share/icons/hicolor/48x48/apps", base_name + ".png"),
-        os.path.join(home, ".local/share/pixmaps", base_name + ".png"),
-        os.path.join(home, ".local/share/pixmaps", base_name + ".svg"),
+        os.path.join(user_data, "icons/hicolor/scalable/apps", base_name + ".svg"),
+        os.path.join(user_data, "icons/hicolor/48x48/apps", base_name + ".png"),
+        os.path.join(user_data, "pixmaps", base_name + ".png"),
+        os.path.join(user_data, "pixmaps", base_name + ".svg"),
     ]
     paths.extend(user_paths)
 
@@ -279,13 +284,12 @@ def _build_search_paths(
     icon_name: str,
     base_name: str,
     desktop_file_path: str,
-    theme_name: str,
-    home: str
+    theme_name: str
 ) -> list[str]:
     search_paths = []
 
     if theme_name and theme_name != "hicolor":
-        search_paths.extend(build_theme_icon_paths(base_name, theme_name, home))
+        search_paths.extend(build_theme_icon_paths(base_name, theme_name))
 
     fallback_themes = ["BeautyLine", "Papirus", "Adwaita"]
     for fallback in fallback_themes:
@@ -293,7 +297,7 @@ def _build_search_paths(
             if fallback == "BeautyLine":
                 search_paths.extend(build_beautyline_icon_paths(base_name))
             else:
-                search_paths.extend(build_theme_icon_paths(base_name, fallback, home))
+                search_paths.extend(build_theme_icon_paths(base_name, fallback))
 
     if desktop_file_path:
         desktop_dir = os.path.dirname(desktop_file_path)
@@ -304,7 +308,7 @@ def _build_search_paths(
             os.path.join(desktop_dir, icon_name + ".svg"),
         ])
 
-    search_paths.extend(build_hicolor_icon_paths(base_name, home))
+    search_paths.extend(build_hicolor_icon_paths(base_name))
 
     if desktop_file_path:
         exec_path = read_desktop_file_exec(desktop_file_path)
@@ -335,14 +339,13 @@ def find_icon_file(
             return icon_name
 
     base_name = normalize_icon_name(icon_name)
-    home = os.path.expanduser("~")
 
     theme_name = ""
     if icon_theme:
         settings = Gtk.Settings.get_default()
         theme_name = (settings.props.gtk_icon_theme_name if settings else "") or ""
 
-    search_paths = _build_search_paths(icon_name, base_name, desktop_file_path, theme_name, home)
+    search_paths = _build_search_paths(icon_name, base_name, desktop_file_path, theme_name)
     return find_icon_in_paths(search_paths)
 
 
