@@ -148,7 +148,8 @@ func (t *httpTransport) post(callCtx context.Context, data []byte) {
 		redacted := t.redactURL(strings.TrimSpace(string(body)))
 		text := fmt.Sprintf("http transport: server returned status %d: %s", resp.StatusCode, truncateRunes(redacted, errorBodyMax))
 		// A rejected session cannot be re-initialized in place; python-sdk < 1.26 and the TS SDK's example server answer one with 400, not the spec's 404.
-		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusUnauthorized || (resp.StatusCode == http.StatusBadRequest && sentSession != "") {
+		staleSession := resp.StatusCode == http.StatusBadRequest && sentSession != "" && !rejectsOnlyThisMessage(body)
+		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusUnauthorized || staleSession {
 			t.fail(errors.New(text))
 			return
 		}
@@ -176,6 +177,24 @@ func (t *httpTransport) post(callCtx context.Context, data []byte) {
 	if b := bytes.TrimSpace(body); len(b) > 0 {
 		t.deliver(b)
 	}
+}
+
+const (
+	jsonrpcParseError    = -32700
+	jsonrpcInvalidParams = -32602
+)
+
+// No SDK answers a lost session with either code; both name a fault in the message itself.
+func rejectsOnlyThisMessage(body []byte) bool {
+	var reply struct {
+		Error *struct {
+			Code int `json:"code"`
+		} `json:"error"`
+	}
+	if json.Unmarshal(body, &reply) != nil || reply.Error == nil {
+		return false
+	}
+	return reply.Error.Code == jsonrpcParseError || reply.Error.Code == jsonrpcInvalidParams
 }
 
 // Redaction runs over the larger window so a secret straddling the final cut is still matched whole.
