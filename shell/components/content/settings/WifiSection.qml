@@ -75,7 +75,7 @@ Rectangle {
                 ? section.wifiManager.savedNetworks.find(p => p.ssid === modelData.ssid) : undefined
             readonly property bool isSaved: !!profile
             readonly property bool connected: section.isCurrent(modelData.ssid)
-            readonly property bool expanded: section.expandedSsid === modelData.ssid && !connected
+            readonly property bool expanded: section.expandedSsid === modelData.ssid && !connected && modelData.secured
             readonly property bool connectingThis: section.wifiManager.isConnecting
                 && section.connectingSsid === modelData.ssid
             readonly property bool showsError: section.wifiManager.connectionError !== ""

@@ -73,6 +73,7 @@ QtObject {
     function connectToNetwork(ssid, password) {
         isConnecting = true
         connectionError = ""
+        const saved = savedNetworks.find(p => p.ssid === ssid)
 
         // /proc/<pid>/cmdline is world-readable and environ is not, so the key travels in the
         // environment and only ever reaches nmcli via passwd-file, never as one of its own args.
@@ -83,10 +84,12 @@ QtObject {
                 "export LANG=C; set -e; tmp=$(mktemp); trap 'rm -f \"$tmp\"' EXIT; " +
                 "printf '802-11-wireless-security.psk:%s\\n' \"$MUGEN_WIFI_PSK\" > \"$tmp\"; " +
                 // Reuse an existing profile so its custom settings (e.g. a static IP) survive.
+                "if [ -n \"$2\" ] && nmcli connection show uuid \"$2\" >/dev/null 2>&1; then " +
+                "nmcli connection up uuid \"$2\" passwd-file \"$tmp\"; exit; fi; " +
                 "nmcli connection show \"$1\" >/dev/null 2>&1 || " +
                 "nmcli connection add type wifi con-name \"$1\" ssid \"$1\" -- wifi-sec.key-mgmt wpa-psk >/dev/null; " +
                 "nmcli connection up \"$1\" passwd-file \"$tmp\"",
-                "bash", ssid
+                "bash", ssid, saved ? saved.uuid : ""
             ]
         } else {
             connectToNetworkProcess.environment = ({})
