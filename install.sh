@@ -41,7 +41,8 @@ preflight() {
 # Prefer the display manager already in charge; only offer SDDM when nothing is.
 dm_present() {
   systemctl list-unit-files --no-legend 'display-manager.service' 2>/dev/null | grep -q . \
-    || [[ -e /etc/systemd/system/display-manager.service ]]
+    || systemctl list-unit-files --no-legend --state=enabled,indirect 'ly@.service' 'ly-kmsconvt@.service' 2>/dev/null | grep -q . \
+    || [[ -e ${MUGEN_DM_ALIAS:-/etc/systemd/system/display-manager.service} ]]
 }
 
 guess_ime_engine() {
@@ -236,6 +237,10 @@ setup_zsh() {
 }
 
 setup_dm() {
+  if dm_present; then
+    warn "a display manager is already set up; leaving it in charge instead of enabling SDDM"
+    return 0
+  fi
   say "Installing SDDM"
   pac_install sddm
   as_root "enable sddm" systemctl enable sddm.service
