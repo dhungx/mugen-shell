@@ -351,14 +351,15 @@ elif is_video "$WALLPAPER_ABS"; then
   debug_log "Setting video wallpaper: $WALLPAPER_ABS"
 
   FIRST_FRAME="$THUMB_DIR/video-first.png"
-  rm -f "$FIRST_FRAME"
+  # apply-theme-mode.sh repaints from whatever thumb is here, so a stale one would outlive this video.
+  rm -f "$FIRST_FRAME" "$THUMB_FILE"
   if command -v ffmpeg >/dev/null 2>&1; then
     first_frame_vf="$(wallpaper_adjust_filter)"
     # The transition waits on this: decoding and PNG-compressing a 4K frame twice takes about a second.
     ffmpeg -nostdin -y -v error -i "$WALLPAPER_ABS" -filter_complex \
       "[0:v]split=2[t][f];[t]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=0x00000000[thumb];[f]${first_frame_vf:-null}[first]" \
       -map '[thumb]' -frames:v 1 -compression_level 1 -update 1 "$THUMB_FILE" \
-      -map '[first]' -frames:v 1 -compression_level 1 -update 1 "$FIRST_FRAME" >/dev/null 2>&1 || rm -f "$FIRST_FRAME"
+      -map '[first]' -frames:v 1 -compression_level 1 -update 1 "$FIRST_FRAME" >/dev/null 2>&1 || rm -f "$FIRST_FRAME" "$THUMB_FILE"
   fi
 
   if command -v matugen >/dev/null 2>&1 && [[ -f "$THUMB_FILE" ]]; then
@@ -383,8 +384,9 @@ elif is_video "$WALLPAPER_ABS"; then
     show_bridge_frame "$THUMB_FILE"
   else
     if command -v ffmpeg >/dev/null 2>&1; then
-      ffmpeg -nostdin -v error -f lavfi -i color=c=#222222:s=1920x1080 -frames:v 1 -y "$THUMB_FILE" >/dev/null 2>&1 || true
-      [[ -f "$THUMB_FILE" ]] && show_bridge_frame "$THUMB_FILE"
+      placeholder="$THUMB_DIR/video-placeholder.png"
+      ffmpeg -nostdin -v error -f lavfi -i color=c=#222222:s=1920x1080 -frames:v 1 -y "$placeholder" >/dev/null 2>&1 || true
+      [[ -f "$placeholder" ]] && show_bridge_frame "$placeholder"
     fi
   fi
 
