@@ -290,8 +290,8 @@ Item {
                             : null
                     }
 
-                    function rebuild() {
-                        settingsModel.clear()
+                    function shownTypes() {
+                        const types = []
                         const needle = frame.query.trim().toLowerCase()
                         for (let i = 0; i < frame.categories.length; i++) {
                             const category = frame.categories[i]
@@ -302,9 +302,25 @@ Item {
                             for (let j = 0; j < category.types.length; j++) {
                                 const type = category.types[j]
                                 if (needle.length === 0 || frame.matches(type, category, needle))
-                                    settingsModel.append({ "type": type })
+                                    types.push(type)
                             }
                         }
+                        return types
+                    }
+
+                    // A recreated section loses what was typed into it and reruns its loading commands.
+                    function rebuild() {
+                        const types = shownTypes()
+                        let i = 0
+                        for (; i < types.length; i++) {
+                            while (i < settingsModel.count && settingsModel.get(i).type !== types[i]
+                                   && types.indexOf(settingsModel.get(i).type, i) < 0)
+                                settingsModel.remove(i)
+                            if (i >= settingsModel.count || settingsModel.get(i).type !== types[i])
+                                settingsModel.insert(i, { "type": types[i] })
+                        }
+                        if (settingsModel.count > i)
+                            settingsModel.remove(i, settingsModel.count - i)
                     }
 
                     Component.onCompleted: rebuild()
