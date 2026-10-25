@@ -95,35 +95,33 @@ install_file "$SHARE/starship.toml" "$CONFIG/starship.toml"
 install_file "$SHARE/gtk/gtk.css"   "$CONFIG/gtk-3.0/gtk.css"
 install_file "$SHARE/gtk/gtk.css"   "$CONFIG/gtk-4.0/gtk.css"
 
-# matugen, hypridle and the hyprlang snippet expand ~ but not $XDG_CONFIG_HOME.
-rewrite_config_home() {
-  if [[ "$CONFIG" == "$HOME/.config" ]]; then
-    return 0
-  fi
-  local f
+rewrite_paths() {
+  local script="$1" f real; shift
   for f in "$@"; do
     [[ -f "$f" ]] || continue
-    "${RUN[@]}" sed -i "s|~/\.config/|$CONFIG/|g; s|\$HOME/\.config/|$CONFIG/|g" "$f"
+    real=$(realpath -m "$f")
+    # A link out of $CONFIG belongs to a checkout or dotfiles repo, where this would rewrite a tracked file.
+    if [[ "$real" != "$(realpath -m "$CONFIG")"/* ]]; then
+      echo "mugen-shell: $f links outside $CONFIG, leaving its paths alone" >&2
+      continue
+    fi
+    # `sed -i` on the link itself would replace it with a copy.
+    "${RUN[@]}" sed -i "$script" "$real"
   done
 }
-rewrite_config_home "$CONFIG/matugen/config.toml" \
-                    "$CONFIG/hypr/hypridle.conf" \
-                    "$CONFIG/hypr/configs/mugen-shell.conf"
+
+# matugen, hypridle and the hyprlang snippet expand ~ but not $XDG_CONFIG_HOME.
+if [[ "$CONFIG" != "$HOME/.config" ]]; then
+  rewrite_paths "s|~/\.config/|$CONFIG/|g; s|\$HOME/\.config/|$CONFIG/|g" \
+                "$CONFIG/matugen/config.toml" \
+                "$CONFIG/hypr/hypridle.conf" \
+                "$CONFIG/hypr/configs/mugen-shell.conf"
+fi
 
 # matugen expands ~ but not $XDG_CACHE_HOME either, and the bar reads the palette from the latter.
-rewrite_cache_home() {
-  if [[ "$CACHE" == "$HOME/.cache" ]]; then
-    return 0
-  fi
-  local f
-  for f in "$@"; do
-    [[ -f "$f" ]] || continue
-    # A linked matugen dir belongs to a checkout or dotfiles repo, where this would rewrite a tracked file.
-    [[ "$(realpath -m "$f")" == "$(realpath -m "$CONFIG")"/* ]] || continue
-    "${RUN[@]}" sed -i "s|~/\.cache/|$CACHE/|g" "$f"
-  done
-}
-rewrite_cache_home "$CONFIG/matugen/config.toml"
+if [[ "$CACHE" != "$HOME/.cache" ]]; then
+  rewrite_paths "s|~/\.cache/|$CACHE/|g" "$CONFIG/matugen/config.toml"
+fi
 
 # `quickshell -c mugen-shell` resolves the config name through this path only.
 if [[ -d "$SHARE/qml" ]]; then
