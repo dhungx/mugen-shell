@@ -129,8 +129,7 @@ Rectangle {
         let q = languageFilter.toLowerCase()
         return languageOptions.filter(l => l.code.toLowerCase().indexOf(q) >= 0 || l.name.toLowerCase().indexOf(q) >= 0)
     }
-    readonly property int languageDropdownExtra: languageDropdownOpen ? 200 : 0
-    readonly property int expandedHeight: 64 + 24 + 36 + 12 + 36 + 12 + (28 + languageDropdownExtra) + 12 + 24 + 12 + 160 + 12 + 40 + 16
+    readonly property int expandedHeight: 64 + contentColumn.implicitHeight + 16
 
     function bump() {
         if (modeManager && modeManager.isMode("settings")) modeManager.bump()
@@ -300,6 +299,7 @@ Rectangle {
     }
 
     ColumnLayout {
+        id: contentColumn
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: header.bottom
