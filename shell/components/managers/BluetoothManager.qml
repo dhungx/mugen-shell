@@ -236,17 +236,28 @@ QtObject {
         }
     }
 
+    readonly property var advertisementProperties: ["RSSI", "TxPower", "ManufacturerData", "ServiceData", "AdvertisingData", "AdvertisingFlags"]
+
+    // dbus-monitor prints a header per signal, then each interface or property name on a line of its own.
+    function monitorLineMatters(line) {
+        if (line.startsWith("signal ")) return !line.endsWith("member=PropertiesChanged")
+        const named = line.match(/^\s*string "([\w.]+)"$/)
+        return !!named && named[1] !== "org.bluez.Device1" && !advertisementProperties.includes(named[1])
+    }
+
     property Process dbusMonitor: Process {
         command: [
             "dbus-monitor",
             "--system",
-            "type='signal',sender='org.bluez'"
+            "type='signal',sender='org.bluez',interface='org.freedesktop.DBus.ObjectManager'",
+            "type='signal',sender='org.bluez',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',arg0='org.bluez.Adapter1'",
+            "type='signal',sender='org.bluez',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',arg0='org.bluez.Device1'"
         ]
         running: !bluetoothManager.monitorRestartTimer.running
 
         stdout: SplitParser {
             onRead: data => {
-                bluetoothDebounceTimer.restart()
+                if (bluetoothManager.monitorLineMatters(data)) bluetoothDebounceTimer.restart()
             }
         }
 
@@ -264,11 +275,8 @@ QtObject {
     property Timer bluetoothDebounceTimer: Timer {
         interval: 200
         repeat: false
-        onTriggered: {
-            if (!bluetoothStatusProcess.running && !pairedDevicesProcess.running) {
-                refreshStatus()
-            }
-        }
+        // Quickshell reruns a busy Process once it exits, so a change the running pass read past still lands.
+        onTriggered: refreshStatus()
     }
 
     property Process pairedDevicesProcess: Process {
