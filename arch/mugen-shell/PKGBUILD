@@ -95,6 +95,8 @@ package_mugen-shell() {
     'thunar: the default $fileManager'
     'firefox: the default $browser'
     'qt6-imageformats: WebP album art and notification images'
+    'fcitx5: input method, started by the packaged Hyprland config and shown in the bar'
+    'fcitx5-qt: typing through the input method in the launcher and Yura'
     'starship: prompt for the packaged zsh config'
     'jp2a: ascii art for the packaged zsh config'
     'fastfetch: system info for the packaged zsh config'
