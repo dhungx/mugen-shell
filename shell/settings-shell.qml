@@ -81,8 +81,18 @@ ShellRoot {
 
     function applyBlur(params) {
         settingsManager.saveSettings()
+        root.writeBlurConfig(params)
+    }
+
+    function writeBlurConfig(params) {
+        root._appliedBlur = root.blurStamp(params)
         applyBlurProcess.command = ["bash", Quickshell.shellDir + "/scripts/blur.sh", "apply", JSON.stringify(params)]
         applyBlurProcess.running = true
+    }
+
+    // Params that crossed a signal arrive as a QVariantMap, which sorts its keys.
+    function blurStamp(params) {
+        return Object.keys(params).sort().map(k => k + "=" + params[k]).join(",")
     }
 
     function loadNotificationSounds() {
@@ -315,6 +325,8 @@ ShellRoot {
     // Without this the first load's property-changed storm would rewrite hypridle.conf and restart it.
     // Applied on save rather than on every slider step: each script restarts hypridle.
     property var _appliedHyprIdle: null
+    // The Blur section writes blur.lua itself; this catches settings.json changing under it, as Reset does.
+    property string _appliedBlur: ""
 
     Connections {
         target: settingsManager
@@ -324,12 +336,17 @@ ShellRoot {
                 suspend: settingsManager.idleSuspendMinutes,
                 dpms: settingsManager.idleDpmsMinutes
             }
+            let blur = settingsManager.blurParams()
             let prev = root._appliedHyprIdle
             root._appliedHyprIdle = now
-            if (prev === null) return
+            if (prev === null) {
+                root._appliedBlur = root.blurStamp(blur)
+                return
+            }
             if (now.lock !== prev.lock) root.applyLockTimer(now.lock)
             if (now.suspend !== prev.suspend) root.applyIdleSuspend(now.suspend)
             if (now.dpms !== prev.dpms) root.applyIdleDpms(now.dpms)
+            if (root.blurStamp(blur) !== root._appliedBlur) root.writeBlurConfig(blur)
         }
     }
 
