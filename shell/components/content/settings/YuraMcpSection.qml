@@ -827,12 +827,9 @@ Rectangle {
                                 anchors.fill: parent
                                 anchors.leftMargin: 8
                                 anchors.rightMargin: 8
-                                // Typing severs the text binding, so the source is mirrored and re-applied.
-                                property string sourceValue: fieldRow.modelData.key === "name" ? section.formName
+                                text: fieldRow.modelData.key === "name" ? section.formName
                                     : fieldRow.modelData.key === "command" ? section.formCommand
                                     : section.formUrl
-                                text: sourceValue
-                                onSourceValueChanged: if (text !== sourceValue) text = sourceValue
                                 color: section.theme ? section.theme.textPrimary : Qt.rgba(0.91, 0.91, 0.94, 0.9)
                                 selectionColor: section.theme ? Qt.rgba(section.theme.glowPrimary.r, section.theme.glowPrimary.g, section.theme.glowPrimary.b, 0.4) : Qt.rgba(0.65, 0.55, 0.85, 0.4)
                                 font.pixelSize: 11
