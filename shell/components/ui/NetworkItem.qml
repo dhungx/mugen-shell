@@ -293,7 +293,7 @@ Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 32
                     radius: height / 2
-                    color: root.theme ? root.theme.accent : Qt.rgba(0.65, 0.55, 0.85, connectMouseArea.containsMouse ? 0.4 : 0.3)
+                    color: root.theme ? (connectMouseArea.containsMouse ? Qt.lighter(root.theme.accent, 1.15) : root.theme.accent) : Qt.rgba(0.65, 0.55, 0.85, connectMouseArea.containsMouse ? 0.4 : 0.3)
 
                     signal clicked()
 

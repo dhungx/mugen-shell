@@ -114,7 +114,7 @@ Rectangle {
                 } else if (deviceItem.modelData.connected) {
                     return Qt.rgba(0.90, 0.45, 0.55, connectButtonArea.containsMouse ? 0.4 : 0.3)
                 } else {
-                    return (deviceItem.theme ? deviceItem.theme.accent : Qt.rgba(0.65, 0.55, 0.85, connectButtonArea.containsMouse ? 0.4 : 0.3))
+                    return (deviceItem.theme ? (connectButtonArea.containsMouse ? Qt.lighter(deviceItem.theme.accent, 1.15) : deviceItem.theme.accent) : Qt.rgba(0.65, 0.55, 0.85, connectButtonArea.containsMouse ? 0.4 : 0.3))
                 }
             }
 

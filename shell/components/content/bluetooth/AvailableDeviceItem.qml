@@ -103,7 +103,7 @@ Rectangle {
                 } else if (deviceItem.modelData.paired) {
                     return Qt.rgba(0.5, 0.5, 0.5, 0.2)
                 } else {
-                    return (deviceItem.theme ? deviceItem.theme.accent : Qt.rgba(0.65, 0.55, 0.85, pairButtonArea.containsMouse ? 0.4 : 0.3))
+                    return (deviceItem.theme ? (pairButtonArea.containsMouse ? Qt.lighter(deviceItem.theme.accent, 1.15) : deviceItem.theme.accent) : Qt.rgba(0.65, 0.55, 0.85, pairButtonArea.containsMouse ? 0.4 : 0.3))
                 }
             }
 
