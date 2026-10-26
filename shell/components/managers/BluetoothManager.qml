@@ -272,7 +272,7 @@ QtObject {
     }
 
     property Process pairedDevicesProcess: Process {
-        command: ["bash", "-c", "bluetoothctl devices Paired | while read dev; do if [ -n \"$dev\" ]; then addr=$(echo $dev | awk '{print $2}'); name=$(echo $dev | cut -d' ' -f3-); connected=$(bluetoothctl info $addr 2>/dev/null | grep -q 'Connected: yes' && echo 'true' || echo 'false'); printf \"%s|%s|%s\\n\" \"$name\" \"$addr\" \"$connected\"; fi; done"]
+        command: ["bash", "-c", "bluetoothctl devices Paired | while read -r _ addr name; do [ -n \"$addr\" ] || continue; connected=$(bluetoothctl info \"$addr\" 2>/dev/null | grep -q 'Connected: yes' && echo 'true' || echo 'false'); printf '%s|%s|%s\\n' \"$addr\" \"$connected\" \"$name\"; done"]
         running: false
 
         property var devices: []
@@ -297,9 +297,9 @@ QtObject {
                     if (trimmed.length > 0) {
                         let parts = trimmed.split("|")
                         if (parts.length >= 3) {
-                            let name = parts[0].trim()
-                            let address = parts[1].trim()
-                            let connected = parts[2].trim()
+                            let address = parts[0].trim()
+                            let connected = parts[1].trim()
+                            let name = parts.slice(2).join("|").trim()
 
                             if (address.match(/^[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}$/)) {
                                 pairedDevicesProcess.devices.push({
