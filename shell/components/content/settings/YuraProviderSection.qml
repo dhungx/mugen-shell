@@ -51,7 +51,7 @@ Rectangle {
         stdout: SplitParser { onRead: data => loadProcess.buf += data }
         onRunningChanged: { if (running) buf = "" }
         onExited: (exitCode) => {
-            if (exitCode !== 0) return
+            if (exitCode !== 0) { loadRetry.restart(); return }
             try {
                 let obj = JSON.parse(loadProcess.buf)
                 let cfg = obj.config || {}
@@ -104,6 +104,12 @@ Rectangle {
     }
 
     Component.onCompleted: loadProcess.running = true
+
+    Timer {
+        id: loadRetry
+        interval: 3000
+        onTriggered: if (!section.loaded) loadProcess.running = true
+    }
 
     MouseArea {
         id: header

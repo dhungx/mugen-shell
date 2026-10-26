@@ -31,6 +31,7 @@ Rectangle {
     // Mutating a JS map in place doesn't notify QML, so bindings read dirtyTick to depend on it.
     property int dirtyTick: 0
     property var installedApps: []
+    property bool appListFailed: false
     property var customBinaries: []
     property string filterText: ""
 
@@ -156,7 +157,8 @@ Rectangle {
         stdout: SplitParser { onRead: data => loadApps.buf += data }
         onRunningChanged: { if (running) buf = "" }
         onExited: (exitCode) => {
-            if (exitCode !== 0 || !loadApps.buf) return
+            section.appListFailed = exitCode !== 0 || !loadApps.buf
+            if (section.appListFailed) return
             try {
                 let arr = JSON.parse(loadApps.buf)
                 let pool = []
@@ -183,7 +185,9 @@ Rectangle {
                 for (let i = 0; i < pool.length; i++) pool[i].display = pool[i].names.join(", ")
                 pool.sort((a, b) => a.display.toLowerCase().localeCompare(b.display.toLowerCase()))
                 section.installedApps = pool
-            } catch (e) {}
+            } catch (e) {
+                section.appListFailed = true
+            }
         }
     }
 
@@ -534,11 +538,11 @@ Rectangle {
             Text {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                text: section.statusText
+                text: section.statusText || (section.appListFailed ? "listing installed apps failed" : "")
                 color: section.theme ? section.theme.textSecondary : Qt.rgba(0.72, 0.72, 0.82, 0.70)
                 font.pixelSize: 10
                 font.family: "M PLUS 2"
-                opacity: section.statusText ? 0.85 : 0
+                opacity: text ? 0.85 : 0
                 elide: Text.ElideRight
                 Behavior on opacity { NumberAnimation { duration: Theme.Motion.fast } }
             }

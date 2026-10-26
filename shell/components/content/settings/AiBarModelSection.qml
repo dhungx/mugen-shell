@@ -159,7 +159,7 @@ Rectangle {
         onRunningChanged: { if (running) buf = "" }
 
         onExited: (exitCode) => {
-            if (exitCode !== 0) return
+            if (exitCode !== 0) { loadRetry.restart(); return }
             try {
                 let obj = JSON.parse(modelsProcess.buf)
                 if (obj.models) section.availableModels = obj.models
@@ -168,4 +168,10 @@ Rectangle {
     }
 
     Component.onCompleted: modelsProcess.running = true
+
+    Timer {
+        id: loadRetry
+        interval: 3000
+        onTriggered: modelsProcess.running = true
+    }
 }
