@@ -62,9 +62,6 @@ Item {
         function onDisplayTextChanged() {
             pulseAnimation.restart()
         }
-        function onTextChanged() {
-            pulseAnimation.restart()
-        }
     }
 
     readonly property string japaneseIcon: Quickshell.shellDir + "/assets/icons/japanese-aquare.svg"

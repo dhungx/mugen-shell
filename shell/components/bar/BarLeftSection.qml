@@ -93,7 +93,6 @@ RowLayout {
                 showSeconds: root.settingsManager ? root.settingsManager.clockShowSeconds : false
                 use24Hour: root.settingsManager ? root.settingsManager.clockShow24Hour : true
                 reduceMotion: root.settingsManager ? root.settingsManager.reduceMotion : false
-                isHovered: clockMouseArea.containsMouse
                 glowColor: timeBlock.glowColor
                 opacity: clockMouseArea.containsMouse ? 1.0 : 0.6
                 scale: clockMouseArea.containsMouse ? 1.15 : 1.0
@@ -132,8 +131,6 @@ RowLayout {
                 theme: root.theme
                 typo: root.typo
                 format: root.settingsManager ? root.settingsManager.dateFormat : "ddd M/d"
-                isHovered: dateMouseArea.containsMouse
-                glowColor: timeBlock.glowColor
                 opacity: dateMouseArea.containsMouse ? 1.0 : 0.6
                 scale: dateMouseArea.containsMouse ? 1.15 : 1.0
 

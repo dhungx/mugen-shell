@@ -533,7 +533,6 @@ PanelWindow {
 
     Managers.ImeStatus {
         id: imeStatus
-        theme: theme
         active: !barWindow.barHidden && !ambientIdle.isIdle
     }
 

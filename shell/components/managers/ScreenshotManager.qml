@@ -19,9 +19,6 @@ QtObject {
         folderModel.showDirs = false
         folderModel.nameFilters = ["*.png", "*.jpg", "*.jpeg", "*.webp"]
         folderModel.sortField = FolderListModel.Time
-        folderModel.sortReversed = true
-        folderModel.statusChanged.connect(() => {
-        })
         screenshots = folderModel
     }
 

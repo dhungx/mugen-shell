@@ -6,8 +6,6 @@ Text {
     property var theme
     property var typo
     property var modeManager
-    property bool isHovered: false
-    property color glowColor: Qt.rgba(0.65, 0.55, 0.85, 0.6)
     property string format: "ddd M/d"
     property real fontScale: 0.62
 

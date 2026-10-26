@@ -6,7 +6,6 @@ Item {
     
     property string source: ""
     property color color: Qt.rgba(0.95, 0.93, 0.98, 0.95)
-    property bool invertColor: true
 
     property color glowColor: Qt.rgba(0.65, 0.55, 0.85, 0.6)
     property int glowSamples: 20

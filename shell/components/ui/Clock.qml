@@ -11,7 +11,6 @@ Text {
     property bool showSeconds: false
     property bool use24Hour: true
     property bool reduceMotion: false
-    property bool isHovered: false
     property color glowColor: Qt.rgba(0.65, 0.55, 0.85, 0.6)
     
     property string timeString: "--:--:--"

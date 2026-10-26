@@ -6,7 +6,6 @@ Item {
     
     property string source: ""
     property color color: Qt.rgba(0.92, 0.92, 0.96, 0.90)
-    property bool invertColor: true
     
     implicitWidth: 24
     implicitHeight: 24
