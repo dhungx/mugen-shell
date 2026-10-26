@@ -23,13 +23,11 @@ QtObject {
     }
 
     function syncThumbnails(ids) {
-        if (thumbSyncProcess.running) return
         thumbSyncProcess.command = [
             "bash",
             Quickshell.shellDir + "/scripts/sync-clipboard-thumbs.sh",
             thumbDir
         ].concat(ids)
-        thumbSyncProcess.pending = {}
         thumbSyncProcess.running = true
     }
 
@@ -48,8 +46,11 @@ QtObject {
             }
         }
 
+        // A sync asked for while one runs is queued by Quickshell and starts right after this.
         onRunningChanged: {
-            if (!thumbSync.running) root.thumbTokens = thumbSync.pending
+            if (thumbSync.running) return
+            root.thumbTokens = thumbSync.pending
+            thumbSync.pending = {}
         }
     }
     property bool reloadQueued: false
