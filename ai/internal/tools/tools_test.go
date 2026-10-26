@@ -193,11 +193,11 @@ func TestParseInstancePID(t *testing.T) {
 	out := `Instance c71lt3ogt:
   Process ID: 1560
   Shell ID: abc
-  Config path: /home/noki/.config/quickshell/mugen-shell/shell.qml
+  Config path: /home/you/.config/quickshell/mugen-shell/shell.qml
   Display connection: wayland/wayland-1
 Instance d71lt3ogt:
   Process ID: 1561
-  Config path: /home/noki/.config/quickshell/mugen-shell/yura-shell.qml
+  Config path: /home/you/.config/quickshell/mugen-shell/yura-shell.qml
 `
 	if got := parseInstancePID(out, "mugen-shell"); got != 1560 {
 		t.Fatalf("pid = %d, want 1560 (the shell.qml instance, not yura-shell.qml)", got)
@@ -213,7 +213,7 @@ Instance d71lt3ogt:
 func TestCallIPCDispatchByPID(t *testing.T) {
 	r, _, _ := newTestRegistry(t, nil, nil)
 	listing := "Instance c71lt3ogt:\n  Process ID: 1560\n" +
-		"  Config path: /home/noki/.config/quickshell/mugen-shell/shell.qml\n"
+		"  Config path: /home/you/.config/quickshell/mugen-shell/shell.qml\n"
 	var last []string
 	r.run = func(_ context.Context, name string, args []string) (string, error) {
 		if len(args) > 0 && args[0] == "list" {

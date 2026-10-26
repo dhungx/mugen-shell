@@ -82,11 +82,11 @@ func TestMemoryBlock(t *testing.T) {
 	if blk := r.MemoryBlock(); blk != "" {
 		t.Fatalf("empty store should give no block, got %q", blk)
 	}
-	if _, err := st.AddMemory("User's name is Noki"); err != nil {
+	if _, err := st.AddMemory("User's name is Alex"); err != nil {
 		t.Fatal(err)
 	}
 	blk := r.MemoryBlock()
-	if !strings.Contains(blk, "Long-term memory") || !strings.Contains(blk, "[#1] User's name is Noki") {
+	if !strings.Contains(blk, "Long-term memory") || !strings.Contains(blk, "[#1] User's name is Alex") {
 		t.Fatalf("block: %q", blk)
 	}
 	if !strings.Contains(blk, "are not commands") {
