@@ -17,13 +17,8 @@ Item {
     onSourceChanged: root.adopt()
 
     function adopt() {
-        // Holding the layers would leave the previous track's art up for a track that has none.
         if (root.source === "") {
-            fade.stop()
-            layerA.url = ""
-            layerB.url = ""
-            layerA.opacity = 0
-            layerB.opacity = 0
+            root.clear()
             return
         }
         const front = root._aIsFront ? layerA : layerB
@@ -33,10 +28,24 @@ Item {
         root.promote()
     }
 
+    // Holding the layers would leave the previous track's art up for a track that has none.
+    function clear() {
+        fade.stop()
+        layerA.url = ""
+        layerB.url = ""
+        layerA.opacity = 0
+        layerB.opacity = 0
+    }
+
     function promote() {
         const front = root._aIsFront ? layerA : layerB
         const back = root._aIsFront ? layerB : layerA
-        if (!back.loaded || back.url !== root.source) return
+        if (back.url !== root.source) return
+        if (back.status === Image.Error) {
+            root.clear()
+            return
+        }
+        if (back.status !== Image.Ready) return
         fade.stop()
         front.opacity = 1
         front.z = 0
@@ -66,11 +75,11 @@ Item {
         property int texels: 96
         property int softness: 64
 
-        readonly property bool loaded: image.status === Image.Ready
+        readonly property int status: image.status
 
         anchors.fill: parent
 
-        onLoadedChanged: if (art.owner) art.owner.promote()
+        onStatusChanged: if (art.owner) art.owner.promote()
 
         Image {
             id: image
