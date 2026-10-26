@@ -8,11 +8,16 @@ QtObject {
     property bool isAvailable: false
     property bool detected: false
     property bool hasSyncedOnce: false
+    property int setCount: 0
+    property int setCountAtRead: 0
 
     // Never fires for the startup sync, so the panel's auto-close timer only arms on real changes.
     signal userChanged()
 
     function refresh() {
+        // A read that overlaps a write can return the value from before it.
+        if (setProcess.running || getProcess.running) return
+        setCountAtRead = setCount
         getProcess.running = true
     }
 
@@ -20,6 +25,7 @@ QtObject {
         let v = Math.max(0, Math.min(100, Math.round(percent)))
         if (v === brightness) return
         brightness = v
+        setCount++
         setProcess.payload = String(v) + "%"
         setProcess.running = true
         userChanged()
@@ -45,13 +51,16 @@ QtObject {
 
     property Process getProcess: Process {
         running: false
-        command: ["bash", "-c", "echo $(($(brightnessctl --class backlight get) * 100 / $(brightnessctl --class backlight max)))"]
+        // -m's percentage matches brightnessctl's own rounding of `set N%`, so a value just set reads back unchanged.
+        command: ["brightnessctl", "--class", "backlight", "-m"]
         property string buf: ""
         stdout: SplitParser { onRead: data => getProcess.buf += data }
         onExited: (exitCode) => {
             let oldValue = brightnessManager.brightness
-            if (exitCode === 0) {
-                let v = parseInt(getProcess.buf.trim())
+            const overlappedSet = brightnessManager.setCountAtRead !== brightnessManager.setCount
+            if (exitCode === 0 && !overlappedSet) {
+                const fields = getProcess.buf.trim().split(",")
+                let v = parseInt(fields[fields.length - 2])
                 if (!isNaN(v)) brightnessManager.brightness = v
             }
             let alreadySynced = brightnessManager.hasSyncedOnce
