@@ -211,11 +211,12 @@ QtObject {
     function removeNotification(key) {
         let i = notifications.findIndex(n => n.key === key)
         if (i < 0) return
+        const wasUnread = notifications[i].timestamp > readAt
         release(notifications[i])
         let next = notifications.slice(0)
         next.splice(i, 1)
         notifications = next
-        if (unreadCount > 0) unreadCount--
+        if (wasUnread && unreadCount > 0) unreadCount--
         save()
     }
     
