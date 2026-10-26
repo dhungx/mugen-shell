@@ -322,7 +322,7 @@ QtObject {
         running: false
         command: activePlayer !== ""
             ? ["playerctl", "-p", activePlayer, "metadata",
-               "--format", ["{{title}}", "{{artist}}", "{{album}}", "{{mpris:artUrl}}", "{{status}}", "{{xesam:url}}"].join(musicManager.metadataSeparator)]
+               "--format", ["{{title}}", "{{artist}}", "{{album}}", "{{mpris:artUrl}}", "{{status}}", "{{xesam:url}}", "{{mpris:length}}"].join(musicManager.metadataSeparator)]
             : []
 
         property string outputData: ""
@@ -341,6 +341,7 @@ QtObject {
                     let newArtUrl = parts[3] ? parts[3].trim() : ""
                     let newStatus = parts[4] ? parts[4].trim() : "Stopped"
                     let newUrl = (parts.length >= 6 && parts[5]) ? parts[5].trim() : ""
+                    let lengthUs = parseFloat(parts[6])
 
                     // A YouTube Music playlist reports one url for every track, and reports it bare right after a switch.
                     let trackKey = newTitle + "|" + newArtist
@@ -393,6 +394,7 @@ QtObject {
                     musicManager.wantArt(newArtUrl || "")
                     if (trackChanged && newArtUrl === musicManager.firefoxArtSource) musicManager.refetchFirefoxArt()
                     musicManager.status = newStatus || "Stopped"
+                    musicManager.duration = isNaN(lengthUs) ? 0 : lengthUs / 1e6
                 } else {
                     if (parts.length > 0) {
                         musicManager.title = parts[0] ? parts[0].trim() : ""
@@ -405,6 +407,7 @@ QtObject {
                     }
                 }
             } else {
+                musicManager.duration = 0
                 if (activePlayer !== "") {
                     Qt.callLater(() => {
                         musicManager.refreshPlayerList()
@@ -578,17 +581,10 @@ QtObject {
         }
 
         onExited: () => {
-            const trimmed = positionProcess.outputData.trim()
+            const pos = parseFloat(positionProcess.outputData)
             positionProcess.outputData = ""
             if (musicManager.seekingSuspended) return
-            const parts = trimmed.split(/\s+/)
-            if (parts.length >= 2) {
-                const pos = parseFloat(parts[0])
-                // mpris:length = µs
-                const lenUs = parseFloat(parts[1])
-                if (!isNaN(pos)) musicManager.position = pos
-                if (!isNaN(lenUs)) musicManager.duration = lenUs / 1e6
-            }
+            musicManager.position = isNaN(pos) ? 0 : pos
         }
     }
 
@@ -604,12 +600,7 @@ QtObject {
         triggeredOnStart: true
         onTriggered: {
             if (musicManager.activePlayer === "" || musicManager.seekingSuspended) return
-            positionProcess.command = [
-                "bash", "-c",
-                "echo \"$(playerctl -p \"$1\" position 2>/dev/null || echo 0) "
-                + "$(playerctl -p \"$1\" metadata mpris:length 2>/dev/null || echo 0)\"",
-                "bash", musicManager.activePlayer
-            ]
+            positionProcess.command = ["playerctl", "-p", musicManager.activePlayer, "position"]
             musicManager.updatePosition()
         }
     }
