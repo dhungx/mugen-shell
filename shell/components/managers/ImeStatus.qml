@@ -20,6 +20,8 @@ QtObject {
 
     property int consecutiveFailures: 0
     property bool queryAnswered: false
+    property bool spawnFailed: false
+    readonly property bool available: !spawnFailed && consecutiveFailures < 3
 
     property Timer pollTimer: Timer {
         interval: root.consecutiveFailures >= 3 ? 10000 : 1000
@@ -60,9 +62,15 @@ QtObject {
             }
         }
 
-        // A binary that cannot be spawned never emits exited, so the outcome is judged when running drops.
+        property bool spawned: false
+
+        onStarted: spawned = true
+
+        // A binary that cannot be spawned never emits started or exited, so the outcome is judged when running drops.
         onRunningChanged: {
             if (running) return
+            root.spawnFailed = !spawned
+            spawned = false
             root.consecutiveFailures = root.queryAnswered ? 0 : root.consecutiveFailures + 1
             root.queryAnswered = false
         }

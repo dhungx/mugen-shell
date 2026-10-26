@@ -62,7 +62,7 @@ RowLayout {
 
     UI.ImeIndicator {
         Layout.alignment: Qt.AlignVCenter
-        visible: root.imeStatus
+        visible: root.imeStatus && root.imeStatus.available
         theme: root.theme
         imeStatus: root.imeStatus
         modeManager: root.modeManager
