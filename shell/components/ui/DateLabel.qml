@@ -45,11 +45,19 @@ Text {
         dateString = result
     }
 
+    function msToNextMinute() {
+        return 60000 - Date.now() % 60000
+    }
+
     Timer {
-        interval: 60000
+        id: minuteTick
+        interval: dateText.msToNextMinute()
         repeat: true
         running: dateText.visible
-        onTriggered: dateText.update()
+        onTriggered: {
+            dateText.update()
+            minuteTick.interval = dateText.msToNextMinute()
+        }
     }
 
     Component.onCompleted: update()
