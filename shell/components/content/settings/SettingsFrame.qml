@@ -249,8 +249,9 @@ Item {
                                         frame.categoryAction(categoryRow.modelData.action)
                                         return
                                     }
-                                    searchInput.text = ""
+                                    // Category first, so clearing the search goes straight to it and keeps the sections both show.
                                     frame.selectedCategory = categoryRow.modelData.id
+                                    searchInput.text = ""
                                     surface.forceActiveFocus()
                                 }
                             }
