@@ -268,6 +268,8 @@ Item {
                     spacing: 16
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
+                    // Covers every section, since one scrolled out of the buffer is destroyed with its unsaved input.
+                    cacheBuffer: 100000
 
                     ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded
@@ -283,11 +285,20 @@ Item {
                     model: ListModel { id: settingsModel }
 
                     delegate: Loader {
+                        id: sectionLoader
                         required property var model
                         width: settingsList.width
                         sourceComponent: frame.resolveSection
                             ? frame.resolveSection(model.type)
                             : null
+
+                        Binding {
+                            target: sectionLoader.item
+                            property: "inView"
+                            when: sectionLoader.item !== null && "inView" in sectionLoader.item
+                            value: sectionLoader.y + sectionLoader.height >= sectionLoader.ListView.view.contentY
+                                && sectionLoader.y <= sectionLoader.ListView.view.contentY + sectionLoader.ListView.view.height
+                        }
                     }
 
                     function shownTypes() {

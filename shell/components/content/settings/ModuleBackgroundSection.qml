@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import "../../common" as Common
@@ -12,6 +13,7 @@ Rectangle {
 
     readonly property string currentPalette: settingsManager ? settingsManager.moduleBackdropPalette : "harmony"
     readonly property bool backdropEnabled: settingsManager ? settingsManager.moduleBackdropEnabled : true
+    property bool inView: true
 
     width: parent ? parent.width : 420
     height: column.implicitHeight + 24
@@ -88,7 +90,7 @@ Rectangle {
                         anchors.fill: parent
                         surfaceRadius: 18
                         theme: section.theme
-                        running: swatch.visible
+                        running: swatch.visible && section.inView
 
                         satMin: swatch.modelData.satMin
                         satMax: swatch.modelData.satMax
