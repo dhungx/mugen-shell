@@ -100,6 +100,46 @@ Rectangle {
         return env
     }
 
+    // The args reach exec untouched, so quoting is the only syntax; $, ~ and backslashes stay literal.
+    function splitCommand(text) {
+        let words = []
+        let word = null
+        let quote = ""
+        for (const c of text) {
+            if (quote) {
+                if (c === quote) quote = ""
+                else word += c
+            } else if (c === "'" || c === "\"") {
+                quote = c
+                if (word === null) word = ""
+            } else if (/\s/.test(c)) {
+                if (word !== null) words.push(word)
+                word = null
+            } else {
+                word = (word === null ? "" : word) + c
+            }
+        }
+        if (quote) return null
+        if (word !== null) words.push(word)
+        return words
+    }
+
+    function joinCommand(words) {
+        return words.map(w => /^[^\s'"]+$/.test(w) ? w
+            : w.indexOf("'") < 0 ? "'" + w + "'"
+            : w.indexOf("\"") < 0 ? "\"" + w + "\""
+            : "'" + w.replace(/'/g, "'\"'\"'") + "'").join(" ")
+    }
+
+    function prefillCandidate(candidate) {
+        section.formName = candidate.name
+        section.formCommand = joinCommand([candidate.command].concat(candidate.args || []))
+        section.formUrl = ""
+        section.addingServer = true
+        section.statusText = ""
+        section.bump()
+    }
+
     function addServer() {
         let name = formName.trim().toLowerCase()
         if (name.length === 0) { section.statusText = "name is required"; return }
@@ -107,15 +147,17 @@ Rectangle {
         for (let i = 0; i < servers.length; i++) {
             if (servers[i].name.toLowerCase() === name) { section.statusText = "\"" + servers[i].name + "\" already exists"; return }
         }
-        let toks = formCommand.trim().split(/\s+/).filter(t => t.length > 0)
+        let toks = splitCommand(formCommand)
+        if (toks === null) { section.statusText = "command: unclosed quote"; return }
+        let command = toks.length > 0 ? toks[0] : ""
         let url = formUrl.trim()
-        if (toks.length === 0 && url.length === 0) { section.statusText = "command or URL is required"; return }
+        if (command.length === 0 && url.length === 0) { section.statusText = "command or URL is required"; return }
         if (url.length > 0 && !/^https?:\/\//.test(url)) { section.statusText = "URL must start with http:// or https://"; return }
 
         let next = servers.slice()
         next.push({
             name: name,
-            command: toks.length > 0 ? toks[0] : "",
+            command: command,
             args: toks.slice(1),
             env: parseEnv(formEnv),
             url: url,
@@ -723,15 +765,7 @@ Rectangle {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            section.formName = candidatePill.modelData.name
-                            section.formCommand = candidatePill.modelData.command + " "
-                                + (candidatePill.modelData.args || []).join(" ")
-                            section.formUrl = ""
-                            section.addingServer = true
-                            section.statusText = ""
-                            section.bump()
-                        }
+                        onClicked: section.prefillCandidate(candidatePill.modelData)
                     }
                 }
             }
