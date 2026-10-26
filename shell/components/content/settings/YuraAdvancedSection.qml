@@ -269,43 +269,14 @@ Rectangle {
                 }
             }
 
-            Rectangle {
-                id: auditPill
-                Layout.preferredWidth: 44
-                Layout.preferredHeight: 24
+            Common.Switch {
                 Layout.alignment: Qt.AlignVCenter
-                radius: 12
+                checked: section.auditEnabled
+                theme: section.theme
+                enabled: !section.auditBusy
                 opacity: section.auditBusy ? 0.5 : 1.0
 
-                readonly property bool on: section.auditEnabled
-
-                color: auditPill.on
-                    ? (section.theme ? Qt.rgba(section.theme.accent.r, section.theme.accent.g, section.theme.accent.b, 0.55) : Qt.rgba(0.65, 0.55, 0.85, 0.55))
-                    : Qt.rgba(0.3, 0.3, 0.36, 0.5)
-                border.width: 1
-                border.color: auditPill.on
-                    ? (section.theme ? section.theme.accent : Qt.rgba(0.65, 0.55, 0.85, 0.95))
-                    : Qt.rgba(1, 1, 1, 0.10)
-                Behavior on color { ColorAnimation { duration: Theme.Motion.fast } }
-                Behavior on border.color { ColorAnimation { duration: Theme.Motion.fast } }
-
-                Rectangle {
-                    width: 18
-                    height: 18
-                    radius: 9
-                    color: section.theme ? section.theme.textPrimary : Qt.rgba(0.95, 0.95, 1.0, 0.95)
-                    y: 3
-                    x: auditPill.on ? auditPill.width - width - 3 : 3
-                    Behavior on x { NumberAnimation { duration: Theme.Motion.fast; easing.type: Easing.OutCubic } }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    enabled: !section.auditBusy
-                    onClicked: section.toggleAudit()
-                }
+                onToggled: section.toggleAudit()
             }
         }
 

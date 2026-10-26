@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import "../../../lib" as Theme
+import "../../common" as Common
 
 Rectangle {
     id: section
@@ -18,13 +18,6 @@ Rectangle {
 
     function bump() {
         if (modeManager && modeManager.isMode("settings")) modeManager.bump()
-    }
-
-    function toggle() {
-        if (!settingsManager) return
-        settingsManager.barThinking = !settingsManager.barThinking
-        settingsManager.saveSettings()
-        section.bump()
     }
 
     RowLayout {
@@ -60,40 +53,16 @@ Rectangle {
             }
         }
 
-        Rectangle {
-            id: pill
-            Layout.preferredWidth: 44
-            Layout.preferredHeight: 24
+        Common.Switch {
             Layout.alignment: Qt.AlignVCenter
-            radius: 12
+            checked: section.settingsManager ? section.settingsManager.barThinking : false
+            theme: section.theme
 
-            readonly property bool on: section.settingsManager && section.settingsManager.barThinking
-
-            color: pill.on
-                ? (section.theme ? Qt.rgba(section.theme.accent.r, section.theme.accent.g, section.theme.accent.b, 0.55) : Qt.rgba(0.65, 0.55, 0.85, 0.55))
-                : Qt.rgba(0.3, 0.3, 0.36, 0.5)
-            border.width: 1
-            border.color: pill.on
-                ? (section.theme ? section.theme.accent : Qt.rgba(0.65, 0.55, 0.85, 0.95))
-                : Qt.rgba(1, 1, 1, 0.10)
-            Behavior on color { ColorAnimation { duration: Theme.Motion.fast } }
-            Behavior on border.color { ColorAnimation { duration: Theme.Motion.fast } }
-
-            Rectangle {
-                width: 18
-                height: 18
-                radius: 9
-                color: section.theme ? section.theme.textPrimary : Qt.rgba(0.95, 0.95, 1.0, 0.95)
-                y: 3
-                x: pill.on ? pill.width - width - 3 : 3
-                Behavior on x { NumberAnimation { duration: Theme.Motion.fast; easing.type: Easing.OutCubic } }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: section.toggle()
+            onToggled: value => {
+                if (!section.settingsManager) return
+                section.settingsManager.barThinking = value
+                section.settingsManager.saveSettings()
+                section.bump()
             }
         }
     }
