@@ -1194,6 +1194,7 @@ FocusScope {
                     Text {
                         width: 76
                         text: root.dragApp ? root.dragApp.name : ""
+                        textFormat: Text.PlainText
                         color: root.theme ? root.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.90)
                         font.pixelSize: root.typo ? root.typo.sizeSmall : 11
                         font.family: root.typo ? root.typo.fontFamily : "M PLUS 2"

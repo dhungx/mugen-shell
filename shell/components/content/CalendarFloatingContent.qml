@@ -772,6 +772,7 @@ Item {
 
                                     Text {
                                         text: modelData.title
+                                        textFormat: Text.PlainText
                                         Layout.fillWidth: true
                                         Layout.leftMargin: 2
                                         color: theme ? theme.textPrimary : Qt.rgba(0.91, 0.91, 0.94, 0.9)

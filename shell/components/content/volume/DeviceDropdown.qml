@@ -106,6 +106,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.margins: dropdown.modeManager ? dropdown.modeManager.scale(8) : 8
                             text: modelData.description
+                            textFormat: Text.PlainText
                             color: dropdown.theme
                                 ? (modelData.isDefault ? dropdown.theme.textPrimary : dropdown.theme.textSecondary)
                                 : (modelData.isDefault ? Qt.rgba(0.95, 0.93, 0.98, 1.0) : Qt.rgba(0.85, 0.85, 0.9, 0.9))
@@ -166,6 +167,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.margins: dropdown.modeManager ? dropdown.modeManager.scale(8) : 8
                             text: modelData.description
+                            textFormat: Text.PlainText
                             color: dropdown.theme
                                 ? (modelData.isDefault ? dropdown.theme.textPrimary : dropdown.theme.textSecondary)
                                 : (modelData.isDefault ? Qt.rgba(0.95, 0.93, 0.98, 1.0) : Qt.rgba(0.85, 0.85, 0.9, 0.9))

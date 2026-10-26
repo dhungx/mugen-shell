@@ -344,6 +344,7 @@ Item {
                     anchors.top: parent.top
                     anchors.topMargin: 8
                     visible: settingsList.count === 0
+                    textFormat: Text.PlainText
                     text: frame.query.length > 0
                         ? "Nothing matches \"" + frame.query + "\""
                         : (frame.selectedEntry && frame.selectedEntry.action

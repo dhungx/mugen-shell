@@ -218,6 +218,7 @@ Rectangle {
                         Text {
                             Layout.fillWidth: true
                             text: memRow.modelData.content
+                            textFormat: Text.PlainText
                             color: section.theme ? section.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.92)
                             font.pixelSize: 11
                             font.family: "M PLUS 2"

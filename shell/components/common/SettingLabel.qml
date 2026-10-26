@@ -15,6 +15,7 @@ ColumnLayout {
     Text {
         Layout.fillWidth: true
         text: label.title
+        textFormat: Text.PlainText
         color: label.theme ? label.theme.textSecondary : Qt.rgba(0.72, 0.72, 0.82, 0.90)
         font.pixelSize: 12
         font.family: "M PLUS 2"
@@ -25,6 +26,7 @@ ColumnLayout {
     Text {
         Layout.fillWidth: true
         text: label.desc
+        textFormat: Text.PlainText
         color: label.theme ? label.theme.textSecondary : Qt.rgba(0.72, 0.72, 0.82, 0.60)
         font.pixelSize: 10
         font.family: "M PLUS 2"

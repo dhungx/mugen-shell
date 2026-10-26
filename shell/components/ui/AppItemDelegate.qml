@@ -287,6 +287,7 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
 
                 text: delegateRoot.currentData ? delegateRoot.currentData.name : ""
+                textFormat: Text.PlainText
                 color: delegateRoot.theme ? delegateRoot.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.90)
                 font.pixelSize: delegateRoot.typo ? delegateRoot.typo.sizeSmall : 11
                 font.family: delegateRoot.typo ? delegateRoot.typo.fontFamily : "M PLUS 2"

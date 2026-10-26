@@ -199,6 +199,7 @@ FocusScope {
                     anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
                     text: entry.modelData.label || ""
+                    textFormat: Text.PlainText
                     elide: Text.ElideRight
                     color: entry.isDanger
                         ? menuRoot.dangerColor

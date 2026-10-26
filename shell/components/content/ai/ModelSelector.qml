@@ -41,6 +41,7 @@ Item {
             text: selector.editable
                 ? selector.currentModel + (selector.isOpen ? "  ▴" : "  ▾")
                 : selector.currentModel
+            textFormat: Text.PlainText
             color: selector.theme ? selector.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.90)
             font.pixelSize: selector.modeManager ? selector.modeManager.scale(11) : 11
             font.family: "M PLUS 2"
@@ -105,6 +106,7 @@ Item {
                         id: dropdownItemText
                         anchors.centerIn: parent
                         text: modelData
+                        textFormat: Text.PlainText
                         color: modelData === selector.currentModel
                             ? (selector.theme ? selector.theme.accent : Qt.rgba(0.65, 0.85, 1.0, 1.0))
                             : (selector.theme ? selector.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.90))

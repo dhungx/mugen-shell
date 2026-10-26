@@ -79,6 +79,7 @@ Rectangle {
 
             Text {
                 text: section.labelFor(section.settingsManager ? section.settingsManager.barAiModel : "")
+                textFormat: Text.PlainText
                 color: section.theme ? section.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.90)
                 font.pixelSize: 11
                 font.family: "M PLUS 2"
@@ -127,6 +128,7 @@ Rectangle {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     text: section.labelFor(modelData)
+                    textFormat: Text.PlainText
                     color: modelRow.isSelected
                         ? (section.theme ? section.theme.accent : Qt.rgba(0.65, 0.85, 1.0, 1.0))
                         : (section.theme ? section.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.90))

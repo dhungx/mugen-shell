@@ -291,6 +291,7 @@ Rectangle {
             Layout.fillWidth: true
             visible: section.powered && text !== ""
             text: section.wifiManager ? section.wifiManager.actionError : ""
+            textFormat: Text.PlainText
             color: section.danger
             font.pixelSize: 10
             font.family: "M PLUS 2"

@@ -557,6 +557,7 @@ Rectangle {
                                     ? (serverRow.st.tool_count + " tool" + (serverRow.st.tool_count === 1 ? "" : "s")
                                        + "  ·  " + (serverRow.modelData.url || serverRow.modelData.command))
                                     : ((serverRow.st && serverRow.st.error) || "Handshake failed.")
+                        textFormat: Text.PlainText
                         color: failed
                             ? Qt.rgba(0.9, 0.55, 0.55, 0.9)
                             : (section.theme ? section.theme.textSecondary : Qt.rgba(0.72, 0.72, 0.82, 0.85))

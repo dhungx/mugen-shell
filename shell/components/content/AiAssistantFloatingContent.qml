@@ -1118,6 +1118,7 @@ FocusScope {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: userBubble.width - userBubble.hPad * 2
                                 text: delegateRoot.message.content
+                                textFormat: Text.PlainText
                                 wrapMode: Text.WordWrap
                                 color: root.theme ? root.theme.textPrimary : Qt.rgba(0.92, 0.92, 0.96, 0.90)
                                 font.pixelSize: modeManager.scale(14)
@@ -1935,6 +1936,7 @@ FocusScope {
                     : root.healthStatus === "provider_unavailable"
                         ? (root.currentModel || "The configured model") + " did not answer.\nCheck that Ollama, or whichever provider serves it, is running."
                         : "Yura needs a model of your own. Install Ollama and pull one\n(ollama pull qwen3:4b), or put an API key in ~/.config/mugen-ai/.env.\nSettings → Yura → Model lists what the backend can see."
+                textFormat: Text.PlainText
                 color: root.theme ? root.theme.textFaint : Qt.rgba(0.62, 0.62, 0.72, 0.7)
                 font.pixelSize: modeManager.scale(12)
                 font.family: !root.aiAvailable ? "monospace" : "M PLUS 2"

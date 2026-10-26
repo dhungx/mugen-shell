@@ -97,6 +97,7 @@ Rectangle {
                         anchors.leftMargin: 12
                         anchors.verticalCenter: parent.verticalCenter
                         text: modelData.label
+                        textFormat: Text.PlainText
                         color: monitorRow.isSelected
                             ? (section.theme ? section.theme.textPrimary : Qt.rgba(0.95, 0.95, 1.0, 0.95))
                             : (section.theme ? section.theme.textSecondary : Qt.rgba(0.72, 0.72, 0.82, 0.90))
